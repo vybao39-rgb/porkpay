@@ -660,6 +660,41 @@
     .wallet-payment { display: flex; align-items: center; gap: 11px; padding: 14px; border: 2px solid var(--green); border-radius: 10px; background: #f0f6ec; }
     .wallet-payment b { display: block; font-size: 10px; }
     .wallet-payment span { color: var(--muted); font-size: 8px; }
+    .testnet-demo {
+      display: grid;
+      gap: 11px;
+      padding: 15px;
+      border: 1px solid #bcd5c8;
+      border-radius: 11px;
+      background: #f4f9f3;
+    }
+    .testnet-heading { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
+    .testnet-heading strong { font-size: 10px; }
+    .live-badge {
+      padding: 5px 7px;
+      border-radius: 999px;
+      color: white;
+      background: var(--green);
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: .6px;
+    }
+    .testnet-demo p { margin: 0; color: var(--muted); font-size: 9px; line-height: 1.5; }
+    .testnet-details { display: flex; justify-content: space-between; gap: 12px; color: var(--muted); font-size: 8px; }
+    .testnet-details b { color: var(--ink); }
+    .testnet-links { display: flex; flex-wrap: wrap; gap: 12px; }
+    .testnet-links a, .transaction-link { color: var(--green); font-size: 8px; font-weight: 900; }
+    .payment-status {
+      padding: 9px 10px;
+      border-radius: 8px;
+      color: var(--muted);
+      background: white;
+      font-size: 8px;
+      line-height: 1.5;
+    }
+    .payment-status.pending { color: #815b0b; background: #fff6d9; }
+    .payment-status.success { color: var(--green); background: #e5f4e9; }
+    .payment-status.error { color: #a52e22; background: #ffe7e3; }
     .summary-line { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 10px; }
     .summary-line b { color: var(--ink); }
     .summary-line.grand { align-items: end; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink); }
@@ -709,7 +744,7 @@
     </nav>
     <div class="top-actions">
       <span class="network">Arc Testnet</span>
-      <button class="wallet" id="walletButton" type="button">Connect demo wallet</button>
+      <button class="wallet" id="walletButton" type="button">Connect Arc wallet</button>
     </div>
   </header>
 
@@ -773,11 +808,11 @@
           <div id="cartContent"></div>
           <div class="escrow"><span>●</span><span><b>USDC escrow protection</b><br>Funds release to the seller after delivery confirmation.</span></div>
           <div class="totals">
-            <div><span>Network fee</span><span>0.02 USDC</span></div>
+            <div><span>Network fee</span><span>Estimated at wallet</span></div>
             <div class="total"><span>Total</span><strong id="cartTotal">0.00 USDC</strong></div>
           </div>
           <button class="checkout" id="checkoutButton" type="button" disabled>Continue to checkout</button>
-          <p class="powered">Demo transaction · no real funds are moved</p>
+          <p class="powered">Live Arc Testnet payment demo available with an EVM wallet</p>
         </aside>
       </div>
     </section>
@@ -853,10 +888,21 @@
         <div class="checkout-summary">
           <div class="eyebrow">ORDER SUMMARY</div>
           <div id="checkoutLines"></div>
-          <div class="summary-line"><span>Network fee</span><b>0.02 USDC</b></div>
+          <div class="summary-line"><span>Network fee</span><b>Estimated by wallet</b></div>
           <div class="summary-line grand"><span>Total</span><b id="checkoutTotal">0.00 USDC</b></div>
+          <div class="testnet-demo">
+            <div class="testnet-heading"><strong>Arc Testnet proof payment</strong><span class="live-badge">LIVE TESTNET</span></div>
+            <p>Safely sends 0.01 testnet USDC back to your connected wallet. The order total is not charged.</p>
+            <div class="testnet-details"><span>Test amount <b>0.01 USDC</b></span><span>Balance <b id="testnetBalance">Connect wallet</b></span></div>
+            <div class="testnet-links">
+              <a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">Get testnet USDC ↗</a>
+              <a href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer">Open Arcscan ↗</a>
+            </div>
+            <div class="payment-status" id="paymentStatus">Ready after an Arc Testnet wallet is connected.</div>
+            <a class="transaction-link" id="transactionLink" target="_blank" rel="noreferrer" hidden>View transaction on Arcscan ↗</a>
+          </div>
           <button class="checkout" id="confirmPayment" type="button">Pay with USDC</button>
-          <p class="powered">Escrow demo only · no real funds are moved</p>
+          <p class="powered" id="paymentDisclosure">Onchain demo only · never use real funds</p>
         </div>
       </div>
     </section>
@@ -884,7 +930,16 @@
     ];
 
     const cart = new Map();
+    const ARC_CHAIN_ID = "0x4cef52";
+    const ARC_RPC_URL = "https://rpc.testnet.arc.network";
+    const ARC_EXPLORER_URL = "https://testnet.arcscan.app";
+    const USDC_CONTRACT = "0x3600000000000000000000000000000000000000";
+    const TEST_PAYMENT_UNITS = 10000n;
+    const TEST_PAYMENT_LABEL = "0.01 USDC";
     let walletAddress = "";
+    let isInjectedWallet = false;
+    let walletBalanceUnits = null;
+    let latestTransactionHash = "";
     let activeCategory = "All cuts";
     let activeSearch = "";
     let toastTimer;
@@ -904,11 +959,116 @@
     const checkoutWallet = document.querySelector("#checkoutWallet");
     const checkoutForm = document.querySelector("#checkoutForm");
     const confirmPayment = document.querySelector("#confirmPayment");
+    const testnetBalance = document.querySelector("#testnetBalance");
+    const paymentStatus = document.querySelector("#paymentStatus");
+    const transactionLink = document.querySelector("#transactionLink");
+    const paymentDisclosure = document.querySelector("#paymentDisclosure");
     const sellerOrdersContainer = document.querySelector("#sellerOrders");
     const toast = document.querySelector("#toast");
 
     const formatUSDC = value => value.toFixed(2) + " USDC";
     const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
+    const shortenAddress = address => address.slice(0, 6) + "…" + address.slice(-4);
+    const formatTokenUnits = units => {
+      const whole = units / 1000000n;
+      const fraction = (units % 1000000n).toString().padStart(6, "0").replace(/0+$/, "");
+      return whole.toString() + (fraction ? "." + fraction : "") + " USDC";
+    };
+
+    function setPaymentStatus(message, state = "") {
+      paymentStatus.textContent = message;
+      paymentStatus.className = "payment-status" + (state ? " " + state : "");
+    }
+
+    async function ensureArcTestnet() {
+      try {
+        await window.ethereum.request({
+          method: "wallet_switchEthereumChain",
+          params: [{ chainId: ARC_CHAIN_ID }]
+        });
+      } catch (switchError) {
+        const errorCode = switchError.code || switchError.data?.originalError?.code;
+        if (errorCode !== 4902) throw switchError;
+        await window.ethereum.request({
+          method: "wallet_addEthereumChain",
+          params: [{
+            chainId: ARC_CHAIN_ID,
+            chainName: "Arc Testnet",
+            nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
+            rpcUrls: [ARC_RPC_URL],
+            blockExplorerUrls: [ARC_EXPLORER_URL]
+          }]
+        });
+      }
+      const chainId = await window.ethereum.request({ method: "eth_chainId" });
+      if (chainId.toLowerCase() !== ARC_CHAIN_ID) throw new Error("Please switch your wallet to Arc Testnet.");
+    }
+
+    async function refreshTestnetBalance() {
+      if (!window.ethereum || !isInjectedWallet || !walletAddress) {
+        walletBalanceUnits = null;
+        testnetBalance.textContent = isInjectedWallet ? "Unavailable" : "Demo mode";
+        return;
+      }
+      try {
+        const paddedAddress = walletAddress.slice(2).toLowerCase().padStart(64, "0");
+        const result = await window.ethereum.request({
+          method: "eth_call",
+          params: [{ to: USDC_CONTRACT, data: "0x70a08231" + paddedAddress }, "latest"]
+        });
+        walletBalanceUnits = BigInt(result);
+        testnetBalance.textContent = formatTokenUnits(walletBalanceUnits);
+      } catch {
+        walletBalanceUnits = null;
+        testnetBalance.textContent = "Unavailable";
+      }
+    }
+
+    function encodeUsdcTransfer(recipient, amountUnits) {
+      const recipientWord = recipient.slice(2).toLowerCase().padStart(64, "0");
+      const amountWord = amountUnits.toString(16).padStart(64, "0");
+      return "0xa9059cbb" + recipientWord + amountWord;
+    }
+
+    async function waitForTransactionReceipt(transactionHash) {
+      const deadline = Date.now() + 60000;
+      while (Date.now() < deadline) {
+        const receipt = await window.ethereum.request({
+          method: "eth_getTransactionReceipt",
+          params: [transactionHash]
+        });
+        if (receipt) {
+          if (receipt.status === "0x0") throw new Error("The Arc Testnet transaction failed.");
+          return receipt;
+        }
+        await new Promise(resolve => window.setTimeout(resolve, 1000));
+      }
+      throw new Error("Transaction submitted. Open Arcscan to check its final status.");
+    }
+
+    async function sendArcTestnetProofPayment() {
+      await ensureArcTestnet();
+      await refreshTestnetBalance();
+      if (walletBalanceUnits !== null && walletBalanceUnits < TEST_PAYMENT_UNITS) {
+        throw new Error("Not enough testnet USDC. Use the Circle Faucet, then try again.");
+      }
+      const transactionHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [{
+          from: walletAddress,
+          to: USDC_CONTRACT,
+          data: encodeUsdcTransfer(walletAddress, TEST_PAYMENT_UNITS)
+        }]
+      });
+      latestTransactionHash = transactionHash;
+      transactionLink.href = ARC_EXPLORER_URL + "/tx/" + transactionHash;
+      transactionLink.hidden = false;
+      setPaymentStatus("Transaction submitted. Waiting for Arc finality…", "pending");
+      await waitForTransactionReceipt(transactionHash);
+      setPaymentStatus(TEST_PAYMENT_LABEL + " finalized on Arc Testnet.", "success");
+      await refreshTestnetBalance();
+      return transactionHash;
+    }
 
     function showToast(message) {
       window.clearTimeout(toastTimer);
@@ -1004,46 +1164,50 @@
     async function connectWallet() {
       if (walletAddress) {
         walletAddress = "";
+        isInjectedWallet = false;
+        walletBalanceUnits = null;
+        latestTransactionHash = "";
         updateWalletUI();
         showToast("Wallet disconnected");
         return;
       }
       if (window.ethereum) {
         try {
-          try {
-            await window.ethereum.request({
-              method: "wallet_switchEthereumChain",
-              params: [{ chainId: "0x4cef52" }]
-            });
-          } catch (switchError) {
-            if (switchError.code !== 4902) throw switchError;
-            await window.ethereum.request({
-              method: "wallet_addEthereumChain",
-              params: [{
-                chainId: "0x4cef52",
-                chainName: "Arc Testnet",
-                nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
-                rpcUrls: ["https://rpc.testnet.arc.network"],
-                blockExplorerUrls: ["https://testnet.arcscan.app"]
-              }]
-            });
-          }
           const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-          if (accounts && accounts[0]) walletAddress = accounts[0];
-        } catch {
-          showToast("Wallet connection was cancelled");
+          if (!accounts || !accounts[0]) throw new Error("No wallet account was selected.");
+          walletAddress = accounts[0];
+          isInjectedWallet = true;
+          await ensureArcTestnet();
+          await refreshTestnetBalance();
+        } catch (error) {
+          walletAddress = "";
+          isInjectedWallet = false;
+          showToast(error.message || "Wallet connection was cancelled");
           return;
         }
       } else {
         walletAddress = "0x7A4C2b31F693A4e108d6B221cA75D31A7E8f91C2";
+        isInjectedWallet = false;
       }
       updateWalletUI();
-      showToast(window.ethereum ? "Wallet connected on Arc Testnet" : "Demo wallet connected on Arc Testnet");
+      showToast(isInjectedWallet ? "Wallet connected on Arc Testnet" : "Demo wallet connected");
     }
 
     function updateWalletUI() {
-      walletButton.textContent = walletAddress ? walletAddress.slice(0, 6) + "…" + walletAddress.slice(-4) : "Connect demo wallet";
-      checkoutWallet.textContent = walletAddress ? walletButton.textContent + " · connected" : "Not connected";
+      walletButton.textContent = walletAddress ? shortenAddress(walletAddress) : "Connect Arc wallet";
+      checkoutWallet.textContent = walletAddress
+        ? walletButton.textContent + (isInjectedWallet ? " · Arc Testnet" : " · browser demo")
+        : "Not connected";
+      if (!walletAddress) {
+        testnetBalance.textContent = "Connect wallet";
+        setPaymentStatus("Ready after an Arc Testnet wallet is connected.");
+        transactionLink.hidden = true;
+      } else if (isInjectedWallet) {
+        setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
+      } else {
+        testnetBalance.textContent = "Demo mode";
+        setPaymentStatus("No wallet extension detected. Checkout will use the browser simulation.");
+      }
     }
 
     function openCheckout() {
@@ -1055,9 +1219,13 @@
       checkoutLines.innerHTML = [...cart.values()].map(item =>
         `<div class="summary-line"><span>${item.quantity} kg · ${item.name}</span><b>${formatUSDC(item.price * item.quantity)}</b></div>`
       ).join("");
-      checkoutTotal.textContent = formatUSDC(cartSubtotal() + 0.02);
-      checkoutWallet.textContent = walletButton.textContent + " · connected";
-      confirmPayment.textContent = "Pay " + formatUSDC(cartSubtotal() + 0.02);
+      checkoutTotal.textContent = formatUSDC(cartSubtotal());
+      checkoutWallet.textContent = walletButton.textContent + (isInjectedWallet ? " · Arc Testnet" : " · browser demo");
+      confirmPayment.textContent = isInjectedWallet ? "Send 0.01 test USDC & place order" : "Run demo checkout";
+      paymentDisclosure.textContent = isInjectedWallet
+        ? "Only 0.01 testnet USDC is transferred to your own address; the displayed order total is not charged."
+        : "Browser simulation only · no funds are moved";
+      if (isInjectedWallet) refreshTestnetBalance();
       checkoutModal.hidden = false;
       document.body.style.overflow = "hidden";
       document.querySelector("#buyerName").focus();
@@ -1069,19 +1237,22 @@
       confirmPayment.disabled = false;
     }
 
-    function createPlacedOrder(lines, total) {
+    function createPlacedOrder(lines, total, transactionHash = "") {
       const primary = lines[0];
+      const transactionMarkup = transactionHash
+        ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${transactionHash}" target="_blank" rel="noreferrer">View test payment on Arcscan ↗</a>`
+        : "Arc Testnet · simulated escrow";
       const orderCard = document.createElement("article");
       orderCard.className = "order-card featured";
       orderCard.innerHTML = `
-        <div class="order-top"><span>ORDER PP-${Date.now().toString().slice(-8)}</span><span class="status-chip">IN ESCROW</span></div>
+        <div class="order-top"><span>ORDER PP-${Date.now().toString().slice(-8)}</span><span class="status-chip">${transactionHash ? "ONCHAIN DEMO" : "DEMO ESCROW"}</span></div>
         <div class="order-main">
           <div class="order-symbol" aria-hidden="true">P</div>
           <div><h3>${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) + " more" : ""}</h3><p>${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${formatUSDC(total)}</p><span class="status-chip">Awaiting acceptance</span></div>
           <button class="primary-small" type="button" data-confirm-new>Confirm delivery</button>
         </div>
         <div class="order-progress"><span class="done">Paid</span><span class="current">Accepted</span><span>Preparing</span><span>Delivered</span><span>Settled</span></div>
-        <div class="escrow-strip"><span><b>${formatUSDC(total)}</b> held safely in PorkPay escrow</span><span>Arc Testnet · sub-second settlement</span></div>
+        <div class="escrow-strip"><span><b>${transactionHash ? TEST_PAYMENT_LABEL : formatUSDC(total)}</b> ${transactionHash ? "proof payment finalized" : "shown in demo escrow"}</span><span>${transactionMarkup}</span></div>
       `;
       document.querySelector("#orderCards").prepend(orderCard);
     }
@@ -1174,19 +1345,38 @@
     document.querySelector("#modalClose").addEventListener("click", closeCheckout);
     document.querySelector("#modalBackdrop").addEventListener("click", closeCheckout);
 
-    confirmPayment.addEventListener("click", () => {
+    confirmPayment.addEventListener("click", async () => {
       if (!checkoutForm.reportValidity()) return;
       const lines = [...cart.values()];
-      const total = cartSubtotal() + 0.02;
+      const total = cartSubtotal();
       confirmPayment.disabled = true;
-      confirmPayment.textContent = "Securing payment…";
+      if (isInjectedWallet) {
+        confirmPayment.textContent = "Confirm in wallet…";
+        setPaymentStatus("Confirm the 0.01 USDC test transaction in your wallet.", "pending");
+        try {
+          const transactionHash = await sendArcTestnetProofPayment();
+          createPlacedOrder(lines, total, transactionHash);
+          cart.clear();
+          renderCart();
+          closeCheckout();
+          showView("orders");
+          showToast("Arc Testnet payment finalized");
+        } catch (error) {
+          confirmPayment.disabled = false;
+          confirmPayment.textContent = "Retry 0.01 test USDC payment";
+          setPaymentStatus(error.message || "The testnet transaction was cancelled.", "error");
+          showToast(error.message || "Testnet payment cancelled");
+        }
+        return;
+      }
+      confirmPayment.textContent = "Running browser demo…";
       window.setTimeout(() => {
         createPlacedOrder(lines, total);
         cart.clear();
         renderCart();
         closeCheckout();
         showView("orders");
-        showToast("Payment secured in PorkPay escrow");
+        showToast("Browser demo order created");
       }, 1100);
     });
 
@@ -1213,6 +1403,24 @@
     document.querySelector("#settleButton").addEventListener("click", () => showToast("1,284.20 USDC settlement initiated on Arc"));
     document.querySelector("#viewAllOrders").addEventListener("click", () => showToast("All seller orders are already shown"));
     document.querySelector("#learnSettlement").addEventListener("click", () => showToast("Arc uses USDC for gas, settlement and treasury flows"));
+    if (window.ethereum?.on) {
+      window.ethereum.on("accountsChanged", accounts => {
+        walletAddress = accounts[0] || "";
+        isInjectedWallet = Boolean(walletAddress);
+        updateWalletUI();
+        if (walletAddress) refreshTestnetBalance();
+      });
+      window.ethereum.on("chainChanged", chainId => {
+        if (walletAddress && chainId.toLowerCase() !== ARC_CHAIN_ID) {
+          walletBalanceUnits = null;
+          testnetBalance.textContent = "Wrong network";
+          setPaymentStatus("Switch back to Arc Testnet before paying.", "error");
+        } else if (walletAddress) {
+          refreshTestnetBalance();
+          setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
+        }
+      });
+    }
     document.addEventListener("keydown", event => {
       if (event.key === "Escape" && !checkoutModal.hidden) closeCheckout();
     });
