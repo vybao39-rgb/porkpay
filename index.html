@@ -382,108 +382,485 @@
       .products { grid-template-columns: 1fr; }
       footer { align-items: start; flex-direction: column; }
     }
+
+    .main-nav { display: flex; gap: 4px; }
+    .main-nav button {
+      position: relative;
+      padding: 12px 14px;
+      border: 0;
+      background: transparent;
+      color: var(--muted);
+      font-size: 12px;
+      font-weight: 800;
+      cursor: pointer;
+    }
+    .main-nav button.active { color: var(--ink); }
+    .main-nav button.active::after {
+      position: absolute;
+      right: 14px;
+      bottom: 4px;
+      left: 14px;
+      height: 2px;
+      background: var(--coral);
+      content: "";
+    }
+    .page-view[hidden], .modal-layer[hidden] { display: none; }
+    .market-shell {
+      display: grid;
+      grid-template-columns: 190px minmax(0, 1fr) 350px;
+      gap: 26px;
+      width: min(1580px, 96vw);
+      margin: 0 auto;
+      padding: 34px 0 70px;
+    }
+    .filter-panel {
+      position: sticky;
+      top: 102px;
+      align-self: start;
+      padding: 20px 14px;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: rgba(255, 253, 248, .72);
+    }
+    .filter-heading {
+      display: flex;
+      justify-content: space-between;
+      margin-bottom: 14px;
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .8px;
+      text-transform: uppercase;
+    }
+    .category-list { display: grid; gap: 4px; }
+    .category-list button {
+      display: flex;
+      justify-content: space-between;
+      width: 100%;
+      padding: 11px 12px;
+      border: 0;
+      border-radius: 9px;
+      color: var(--muted);
+      background: transparent;
+      font-size: 12px;
+      font-weight: 800;
+      text-align: left;
+      cursor: pointer;
+    }
+    .category-list button.selected {
+      color: var(--ink);
+      background: var(--panel);
+      box-shadow: inset 3px 0 var(--coral);
+    }
+    .arc-info {
+      margin-top: 24px;
+      padding: 16px;
+      border-radius: 13px;
+      color: white;
+      background: var(--ink);
+    }
+    .arc-info strong { display: block; color: var(--lime); font-size: 11px; }
+    .arc-info p { margin: 10px 0 0; color: #b9bbb2; font-size: 10px; line-height: 1.55; }
+    .market-main { min-width: 0; }
+    .search-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      gap: 20px;
+      margin: 28px 0;
+    }
+    .search-box {
+      display: flex;
+      align-items: center;
+      width: min(100%, 430px);
+      min-height: 46px;
+      padding: 0 14px;
+      border: 1px solid var(--line);
+      border-radius: 11px;
+      background: var(--panel);
+    }
+    .search-box span { color: var(--coral); font-size: 22px; }
+    .search-box input { width: 100%; padding: 0 10px; border: 0; outline: 0; color: var(--ink); background: transparent; }
+    .products { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .product-art { height: 184px; }
+    .save {
+      position: absolute;
+      top: 12px;
+      right: 12px;
+      display: grid;
+      place-items: center;
+      width: 35px;
+      height: 35px;
+      border: 0;
+      border-radius: 50%;
+      background: rgba(255, 253, 248, .9);
+      font-size: 19px;
+      cursor: pointer;
+    }
+    .empty-products {
+      grid-column: 1 / -1;
+      padding: 70px 20px;
+      border: 1px dashed #c9c5ba;
+      border-radius: 16px;
+      color: var(--muted);
+      text-align: center;
+    }
+    .empty-products strong { display: block; margin-bottom: 7px; color: var(--ink); font-family: Georgia, serif; font-size: 24px; font-weight: 400; }
+    .cart-line { grid-template-columns: minmax(0, 1fr) auto; }
+    .line-actions { display: flex; align-items: center; gap: 7px; }
+    .line-actions button {
+      display: grid;
+      place-items: center;
+      width: 23px;
+      height: 23px;
+      border: 1px solid var(--line);
+      border-radius: 6px;
+      color: var(--ink);
+      background: white;
+      font-size: 11px;
+      text-decoration: none;
+    }
+    .line-actions button[data-remove] { width: auto; border: 0; color: var(--coral-dark); background: transparent; text-decoration: underline; }
+
+    .dashboard {
+      width: min(1200px, 92vw);
+      min-height: calc(100vh - 150px);
+      margin: 0 auto;
+      padding: 64px 0 90px;
+    }
+    .dashboard-hero {
+      display: flex;
+      justify-content: space-between;
+      align-items: end;
+      gap: 28px;
+      margin-bottom: 34px;
+    }
+    .dashboard-hero h1 { margin: 6px 0 0; font-size: clamp(48px, 7vw, 78px); }
+    .dashboard-hero p { margin: 10px 0 0; color: var(--muted); font-size: 13px; }
+    .outline-button {
+      padding: 11px 14px;
+      border: 1px solid var(--ink);
+      border-radius: 9px;
+      background: transparent;
+      font-size: 10px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .order-cards { display: grid; gap: 18px; }
+    .order-card {
+      overflow: hidden;
+      border: 1px solid var(--line);
+      border-radius: 17px;
+      background: var(--panel);
+    }
+    .order-card.featured { box-shadow: var(--shadow); }
+    .order-top {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 13px 18px;
+      border-bottom: 1px solid var(--line);
+      color: var(--muted);
+      font-size: 9px;
+      font-weight: 900;
+      letter-spacing: .7px;
+    }
+    .status-chip {
+      display: inline-flex;
+      width: fit-content;
+      padding: 6px 8px;
+      border-radius: 999px;
+      color: #755b16;
+      background: #f5e6b5;
+      font-size: 8px;
+      font-weight: 900;
+      text-transform: uppercase;
+    }
+    .status-chip.complete { color: #245f48; background: #d7eee2; }
+    .order-main {
+      display: grid;
+      grid-template-columns: 80px minmax(0, 1fr) auto;
+      gap: 18px;
+      align-items: center;
+      padding: 24px;
+    }
+    .order-symbol {
+      display: grid;
+      place-items: center;
+      width: 80px;
+      height: 80px;
+      border-radius: 22px;
+      color: white;
+      background: linear-gradient(145deg, #eea698, #c76658);
+      font-family: Georgia, serif;
+      font-size: 31px;
+    }
+    .order-main h3 { margin: 0; font-family: Georgia, serif; font-size: 24px; font-weight: 400; }
+    .order-main p { margin: 5px 0 10px; color: var(--muted); font-size: 11px; }
+    .primary-small {
+      padding: 11px 13px;
+      border: 0;
+      border-radius: 9px;
+      color: white;
+      background: var(--coral);
+      font-size: 9px;
+      font-weight: 900;
+      cursor: pointer;
+    }
+    .order-progress {
+      position: relative;
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      margin: 0 24px;
+      padding: 22px 0;
+      border-top: 1px solid var(--line);
+    }
+    .order-progress::before { position: absolute; top: 15px; right: 9%; left: 9%; height: 2px; background: var(--line); content: ""; }
+    .order-progress span { position: relative; display: grid; justify-items: center; gap: 9px; color: #a0a198; font-size: 8px; font-weight: 800; text-transform: uppercase; }
+    .order-progress span::before { z-index: 1; width: 10px; height: 10px; border: 2px solid var(--panel); border-radius: 50%; background: #b3b4ac; box-shadow: 0 0 0 1px #b3b4ac; content: ""; }
+    .order-progress span.done::before { background: var(--green); box-shadow: 0 0 0 1px var(--green); }
+    .order-progress span.current { color: var(--ink); }
+    .order-progress span.current::before { background: var(--coral); box-shadow: 0 0 0 4px rgba(233, 87, 63, .15); }
+    .escrow-strip { display: flex; justify-content: space-between; gap: 14px; padding: 14px 24px; color: white; background: #242521; font-size: 9px; }
+    .escrow-strip b { color: var(--lime); }
+
+    .seller-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 14px; margin-bottom: 18px; }
+    .stat-card { display: grid; gap: 9px; padding: 20px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .stat-card span { color: var(--muted); font-size: 8px; font-weight: 900; letter-spacing: .6px; }
+    .stat-card strong { font-family: Georgia, serif; font-size: 25px; font-weight: 400; }
+    .stat-card small { color: var(--muted); font-family: Inter, sans-serif; font-size: 9px; }
+    .seller-grid { display: grid; grid-template-columns: minmax(0, 1.5fr) minmax(290px, .7fr); gap: 18px; }
+    .seller-table { overflow: hidden; border: 1px solid var(--line); border-radius: 15px; background: var(--panel); }
+    .card-heading { display: flex; justify-content: space-between; align-items: end; padding: 21px; border-bottom: 1px solid var(--line); }
+    .card-heading h2 { margin: 5px 0 0; font-family: Georgia, serif; font-size: 28px; font-weight: 400; }
+    .seller-row { display: grid; grid-template-columns: minmax(170px, 1fr) 110px 125px 110px; gap: 12px; align-items: center; padding: 17px 20px; border-bottom: 1px solid #ece8df; }
+    .seller-row:last-child { border-bottom: 0; }
+    .seller-row div { display: grid; gap: 3px; }
+    .seller-row span, .seller-row small { color: var(--muted); font-size: 8px; }
+    .seller-row strong { font-size: 11px; }
+    .settlement-card { padding: 28px; border-radius: 15px; color: white; background: var(--coral); }
+    .settlement-card h2 { margin: 8px 0; font-family: Georgia, serif; font-size: 34px; font-weight: 400; }
+    .settlement-card p { color: #ffd7d0; font-size: 11px; line-height: 1.6; }
+    .settlement-flow { display: flex; justify-content: space-between; align-items: center; margin: 34px 0; }
+    .settlement-flow span { display: grid; place-items: center; width: 65px; height: 65px; border: 1px solid rgba(255,255,255,.48); border-radius: 50%; font-size: 9px; font-weight: 900; }
+
+    .modal-layer { position: fixed; z-index: 60; inset: 0; display: grid; place-items: center; padding: 18px; }
+    .modal-backdrop { position: absolute; inset: 0; border: 0; background: rgba(22, 23, 19, .68); backdrop-filter: blur(5px); }
+    .checkout-modal { position: relative; z-index: 1; width: min(880px, 100%); max-height: 92vh; overflow: auto; border-radius: 18px; background: var(--panel); box-shadow: 0 30px 90px rgba(0,0,0,.30); }
+    .modal-heading { display: flex; justify-content: space-between; align-items: start; padding: 24px 26px; border-bottom: 1px solid var(--line); }
+    .modal-heading h2 { margin: 5px 0 0; font-family: Georgia, serif; font-size: 31px; font-weight: 400; }
+    .modal-close { border: 0; background: transparent; font-size: 28px; cursor: pointer; }
+    .checkout-grid { display: grid; grid-template-columns: 1.05fr .95fr; }
+    .checkout-form, .checkout-summary { display: grid; align-content: start; gap: 16px; padding: 26px; }
+    .checkout-form { border-right: 1px solid var(--line); }
+    .checkout-form label { display: grid; gap: 7px; color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .5px; text-transform: uppercase; }
+    .checkout-form input, .checkout-form textarea { width: 100%; padding: 12px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font-size: 11px; text-transform: none; }
+    .checkout-form textarea { min-height: 82px; resize: vertical; }
+    .wallet-payment { display: flex; align-items: center; gap: 11px; padding: 14px; border: 2px solid var(--green); border-radius: 10px; background: #f0f6ec; }
+    .wallet-payment b { display: block; font-size: 10px; }
+    .wallet-payment span { color: var(--muted); font-size: 8px; }
+    .summary-line { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 10px; }
+    .summary-line b { color: var(--ink); }
+    .summary-line.grand { align-items: end; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink); }
+    .summary-line.grand b { font-family: Georgia, serif; font-size: 24px; font-weight: 400; }
+
+    @media (max-width: 1280px) {
+      .market-shell { grid-template-columns: 175px minmax(0, 1fr); }
+      .market-shell .cart { grid-column: 1 / -1; position: static; }
+    }
+    @media (max-width: 920px) {
+      .topbar { padding-bottom: 0; }
+      .main-nav { position: fixed; z-index: 50; right: 0; bottom: 0; left: 0; justify-content: space-around; border-top: 1px solid var(--line); background: var(--panel); }
+      .main-nav button { flex: 1; }
+      .market-shell { grid-template-columns: 1fr; width: min(94vw, 720px); }
+      .filter-panel { position: static; }
+      .category-list { display: flex; overflow-x: auto; }
+      .category-list button { width: auto; white-space: nowrap; }
+      .arc-info { display: none; }
+      .seller-stats { grid-template-columns: 1fr 1fr; }
+      .seller-grid { grid-template-columns: 1fr; }
+      footer { padding-bottom: 82px; }
+    }
+    @media (max-width: 680px) {
+      .products { grid-template-columns: 1fr; }
+      .search-row, .dashboard-hero { align-items: stretch; flex-direction: column; }
+      .search-row { display: flex; }
+      .order-main { grid-template-columns: 68px 1fr; }
+      .order-symbol { width: 68px; height: 68px; }
+      .order-main .primary-small { grid-column: 1 / -1; }
+      .seller-row { grid-template-columns: 1fr auto; }
+      .seller-row .status-chip { grid-column: 1; }
+      .checkout-grid { grid-template-columns: 1fr; }
+      .checkout-form { border-right: 0; border-bottom: 1px solid var(--line); }
+    }
   </style>
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#market" aria-label="PorkPay marketplace">
+    <a class="brand" href="#market" aria-label="PorkPay marketplace" data-view-link="market">
       <span class="brand-mark">P</span>
       <span>PorkPay</span>
     </a>
+    <nav class="main-nav" aria-label="Main navigation">
+      <button class="active" type="button" data-view="market">Marketplace</button>
+      <button type="button" data-view="orders">My orders</button>
+      <button type="button" data-view="seller">Seller hub</button>
+    </nav>
     <div class="top-actions">
       <span class="network">Arc Testnet</span>
       <button class="wallet" id="walletButton" type="button">Connect demo wallet</button>
     </div>
   </header>
 
-  <main class="shell" id="market">
-    <div>
-      <section class="hero">
-        <div>
-          <span class="tag">Public GitHub Pages demo</span>
-          <div class="eyebrow">FRESH TRADE · FAST SETTLEMENT</div>
-          <h1>Source better.<br><em>Pay smarter.</em></h1>
-          <p class="hero-copy">
-            A simple pork marketplace where buyers order from verified suppliers
-            and settle securely in USDC on Arc.
-          </p>
-        </div>
-        <aside class="settlement" aria-label="Today's settlement">
-          <small>TODAY'S SETTLEMENT</small>
-          <strong>24,860.40</strong>
-          <span>USDC protected by escrow</span>
-          <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+  <main>
+    <section class="page-view" id="marketView">
+      <div class="market-shell">
+        <aside class="filter-panel" aria-label="Product categories">
+          <div class="filter-heading"><span>Browse</span><span id="productCount">6 products</span></div>
+          <div class="category-list" id="categoryList">
+            <button class="selected" type="button" data-category="All cuts">All cuts <span>↗</span></button>
+            <button type="button" data-category="Belly">Belly <span>↗</span></button>
+            <button type="button" data-category="Ribs">Ribs <span>↗</span></button>
+            <button type="button" data-category="Lean cuts">Lean cuts <span>↗</span></button>
+            <button type="button" data-category="Ground">Ground <span>↗</span></button>
+          </div>
+          <div class="arc-info">
+            <strong>Built on Arc</strong>
+            <p>Sub-second USDC settlement with predictable dollar-denominated fees.</p>
+          </div>
         </aside>
-      </section>
 
-      <section aria-labelledby="available-title">
-        <div class="market-header">
-          <div>
-            <div class="eyebrow">MARKETPLACE</div>
-            <h2 id="available-title">Available today</h2>
+        <div class="market-main">
+          <section class="hero">
+            <div>
+              <span class="tag">Public GitHub Pages demo</span>
+              <div class="eyebrow">FRESH TRADE · FAST SETTLEMENT</div>
+              <h1>Source better.<br><em>Pay smarter.</em></h1>
+              <p class="hero-copy">
+                A trusted pork marketplace where buyers order from verified suppliers
+                and settle securely in USDC on Arc.
+              </p>
+            </div>
+            <aside class="settlement" aria-label="Today's settlement">
+              <small>TODAY'S SETTLEMENT</small>
+              <strong>24,860.40</strong>
+              <span>USDC protected by escrow</span>
+              <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
+            </aside>
+          </section>
+
+          <div class="search-row">
+            <label class="search-box">
+              <span aria-hidden="true">⌕</span>
+              <input id="searchInput" type="search" placeholder="Search cuts or suppliers" aria-label="Search cuts or suppliers">
+            </label>
+            <div class="market-stats"><span><b>18</b> verified sellers</span><span><b>4.9</b> average rating</span></div>
           </div>
-          <div class="market-stats">
-            <span><b>18</b> verified sellers</span>
-            <span><b>4.9</b> average rating</span>
-          </div>
+
+          <section aria-labelledby="available-title">
+            <div class="market-header">
+              <div><div class="eyebrow">MARKETPLACE</div><h2 id="available-title">Available today</h2></div>
+              <button class="outline-button" id="resetFilters" type="button">Reset filters</button>
+            </div>
+            <div class="products" id="productGrid"></div>
+          </section>
         </div>
 
-        <div class="products">
-          <article class="product">
-            <div class="product-art" aria-hidden="true"><span class="cut-shape"></span><span class="verified">✓ VERIFIED</span></div>
-            <div class="product-body">
-              <div class="product-meta"><span>Skin-on · Fresh</span><span>12 km</span></div>
-              <h3>Premium Pork Belly</h3>
-              <p class="seller"><span>Green Valley Farm</span><b>★ 4.9</b></p>
-              <div class="product-footer">
-                <div class="price"><strong>6.80</strong><span> USDC / kg</span><small>Minimum 2 kg</small></div>
-                <button class="add" type="button" data-name="Premium Pork Belly" data-price="6.8" data-minimum="2">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <article class="product">
-            <div class="product-art" aria-hidden="true"><span class="cut-shape"></span><span class="verified">✓ VERIFIED</span></div>
-            <div class="product-body">
-              <div class="product-meta"><span>Spare ribs · Fresh</span><span>18 km</span></div>
-              <h3>Meaty Pork Ribs</h3>
-              <p class="seller"><span>An Hoa Foods</span><b>★ 4.9</b></p>
-              <div class="product-footer">
-                <div class="price"><strong>7.20</strong><span> USDC / kg</span><small>Minimum 3 kg</small></div>
-                <button class="add" type="button" data-name="Meaty Pork Ribs" data-price="7.2" data-minimum="3">Add +</button>
-              </div>
-            </div>
-          </article>
-
-          <article class="product">
-            <div class="product-art" aria-hidden="true"><span class="cut-shape"></span><span class="verified">✓ VERIFIED</span></div>
-            <div class="product-body">
-              <div class="product-meta"><span>Boneless · Chilled</span><span>7 km</span></div>
-              <h3>Lean Pork Shoulder</h3>
-              <p class="seller"><span>Minh Phat Butchery</span><b>★ 4.8</b></p>
-              <div class="product-footer">
-                <div class="price"><strong>5.90</strong><span> USDC / kg</span><small>Minimum 2 kg</small></div>
-                <button class="add" type="button" data-name="Lean Pork Shoulder" data-price="5.9" data-minimum="2">Add +</button>
-              </div>
-            </div>
-          </article>
-        </div>
-      </section>
-    </div>
-
-    <aside class="cart" aria-labelledby="cart-title">
-      <div class="cart-label">YOUR ORDER</div>
-      <h2 id="cart-title">Shopping bag</h2>
-      <div id="cartContent"></div>
-      <div class="escrow"><span>●</span><span><b>USDC escrow protection</b><br>Funds release to the seller after delivery confirmation.</span></div>
-      <div class="totals">
-        <div><span>Network fee</span><span>0.02 USDC</span></div>
-        <div class="total"><span>Total</span><strong id="cartTotal">0.00 USDC</strong></div>
+        <aside class="cart" aria-labelledby="cart-title">
+          <div class="cart-label">YOUR ORDER</div>
+          <h2 id="cart-title">Shopping bag</h2>
+          <div id="cartContent"></div>
+          <div class="escrow"><span>●</span><span><b>USDC escrow protection</b><br>Funds release to the seller after delivery confirmation.</span></div>
+          <div class="totals">
+            <div><span>Network fee</span><span>0.02 USDC</span></div>
+            <div class="total"><span>Total</span><strong id="cartTotal">0.00 USDC</strong></div>
+          </div>
+          <button class="checkout" id="checkoutButton" type="button" disabled>Continue to checkout</button>
+          <p class="powered">Demo transaction · no real funds are moved</p>
+        </aside>
       </div>
-      <button class="checkout" id="checkoutButton" type="button" disabled>Pay with USDC</button>
-      <p class="powered">Demo transaction · no real funds are moved</p>
-    </aside>
+    </section>
+
+    <section class="page-view dashboard" id="ordersView" hidden>
+      <div class="dashboard-hero">
+        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Track delivery and control when your USDC is released.</p></div>
+        <button class="outline-button" type="button" data-view="market">Continue shopping</button>
+      </div>
+      <div class="order-cards" id="orderCards">
+        <article class="order-card featured" id="activeOrderCard">
+          <div class="order-top"><span>ORDER PP-240719-08</span><span class="status-chip">IN ESCROW</span></div>
+          <div class="order-main">
+            <div class="order-symbol" aria-hidden="true">P</div>
+            <div><h3>Premium Pork Belly</h3><p>8 kg · Green Valley Farm · 54.40 USDC</p><span class="status-chip">Preparing</span></div>
+            <button class="primary-small" id="confirmDelivery" type="button">Confirm delivery</button>
+          </div>
+          <div class="order-progress" id="activeProgress"><span class="done">Paid</span><span class="done">Accepted</span><span class="current">Preparing</span><span>Delivered</span><span>Settled</span></div>
+          <div class="escrow-strip"><span><b>54.40 USDC</b> held safely in PorkPay escrow</span><span>Arc Testnet · sub-second settlement</span></div>
+        </article>
+        <article class="order-card">
+          <div class="order-top"><span>ORDER PP-240716-22</span><span class="status-chip complete">COMPLETED</span></div>
+          <div class="order-main">
+            <div class="order-symbol" aria-hidden="true">P</div>
+            <div><h3>Meaty Pork Ribs</h3><p>5 kg · An Hoa Foods · 36.00 USDC</p><span class="status-chip complete">Settled</span></div>
+            <button class="outline-button" type="button" data-reorder="3">Order again</button>
+          </div>
+        </article>
+      </div>
+    </section>
+
+    <section class="page-view dashboard" id="sellerView" hidden>
+      <div class="dashboard-hero">
+        <div><div class="eyebrow">SELLER HUB</div><h1>Good morning.</h1><p>Green Valley Farm · Manage orders and USDC settlement.</p></div>
+        <button class="outline-button" id="settleButton" type="button">Settle available balance</button>
+      </div>
+      <div class="seller-stats">
+        <article class="stat-card"><span>TODAY'S SALES</span><strong>428.60 <small>USDC</small></strong><small>↑ 18% from yesterday</small></article>
+        <article class="stat-card"><span>IN ESCROW</span><strong>168.70 <small>USDC</small></strong><small>Across 3 active orders</small></article>
+        <article class="stat-card"><span>AVAILABLE</span><strong>1,284.20 <small>USDC</small></strong><small>Ready to settle</small></article>
+        <article class="stat-card"><span>FULFILMENT</span><strong>98.4%</strong><small>Last 30 days</small></article>
+      </div>
+      <div class="seller-grid">
+        <article class="seller-table">
+          <div class="card-heading"><div><div class="eyebrow">LIVE ORDERS</div><h2>Needs your attention</h2></div><button class="outline-button" id="viewAllOrders" type="button">View all</button></div>
+          <div id="sellerOrders"></div>
+        </article>
+        <aside class="settlement-card">
+          <div class="eyebrow" style="color:#ffd5ce">INSTANT SETTLEMENT</div>
+          <h2>From delivery to dollars in seconds.</h2>
+          <p>Arc settles USDC natively, giving suppliers predictable fees and immediate liquidity.</p>
+          <div class="settlement-flow"><span>Buyer</span><b>→</b><span>Arc</span><b>→</b><span>Seller</span></div>
+          <button class="checkout" id="learnSettlement" type="button" style="background:white;color:#a52e22">View settlement details</button>
+        </aside>
+      </div>
+    </section>
   </main>
+
+  <div class="modal-layer" id="checkoutModal" hidden>
+    <button class="modal-backdrop" id="modalBackdrop" type="button" aria-label="Close checkout"></button>
+    <section class="checkout-modal" role="dialog" aria-modal="true" aria-labelledby="checkout-title">
+      <div class="modal-heading">
+        <div><div class="eyebrow">SECURE CHECKOUT</div><h2 id="checkout-title">Confirm your order</h2></div>
+        <button class="modal-close" id="modalClose" type="button" aria-label="Close checkout">×</button>
+      </div>
+      <div class="checkout-grid">
+        <form class="checkout-form" id="checkoutForm">
+          <label>Buyer or business name<input id="buyerName" name="buyerName" required value="Lotus Kitchen"></label>
+          <label>Delivery address<input id="deliveryAddress" name="deliveryAddress" required value="24 Nguyen Hue, District 1, Ho Chi Minh City"></label>
+          <label>Delivery notes<textarea id="deliveryNotes" name="deliveryNotes" placeholder="Preferred delivery time or handling notes"></textarea></label>
+          <div class="wallet-payment"><span class="brand-mark" style="width:34px;height:34px;font-size:11px">A</span><div><b>Arc Testnet wallet</b><span id="checkoutWallet">Not connected</span></div></div>
+        </form>
+        <div class="checkout-summary">
+          <div class="eyebrow">ORDER SUMMARY</div>
+          <div id="checkoutLines"></div>
+          <div class="summary-line"><span>Network fee</span><b>0.02 USDC</b></div>
+          <div class="summary-line grand"><span>Total</span><b id="checkoutTotal">0.00 USDC</b></div>
+          <button class="checkout" id="confirmPayment" type="button">Pay with USDC</button>
+          <p class="powered">Escrow demo only · no real funds are moved</p>
+        </div>
+      </div>
+    </section>
+  </div>
 
   <footer>
     <span>PorkPay · Stablecoin commerce for real-world supply</span>
@@ -492,81 +869,360 @@
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script>
+    const products = [
+      { id: 1, name: "Premium Pork Belly", cut: "Skin-on · Fresh", seller: "Green Valley Farm", location: "12 km", price: 6.8, stock: 84, minimum: 2, category: "Belly" },
+      { id: 2, name: "Bone-in Pork Chops", cut: "Center cut · Chilled", seller: "Minh Phat Butchery", location: "7 km", price: 5.4, stock: 42, minimum: 2, category: "Lean cuts" },
+      { id: 3, name: "Meaty Pork Ribs", cut: "Spare ribs · Fresh", seller: "An Hoa Foods", location: "18 km", price: 7.2, stock: 31, minimum: 3, category: "Ribs" },
+      { id: 4, name: "Lean Pork Shoulder", cut: "Boneless · Chilled", seller: "Green Valley Farm", location: "12 km", price: 5.9, stock: 68, minimum: 2, category: "Lean cuts" },
+      { id: 5, name: "Pork Tenderloin", cut: "Trimmed · Premium", seller: "Dalat Fresh Foods", location: "24 km", price: 8.6, stock: 26, minimum: 1, category: "Lean cuts" },
+      { id: 6, name: "Ground Pork", cut: "80/20 · Made today", seller: "Minh Phat Butchery", location: "7 km", price: 4.7, stock: 55, minimum: 2, category: "Ground" }
+    ];
+    let sellerOrders = [
+      { id: "PP-240719-03", buyer: "Lotus Kitchen", detail: "12 kg · Premium Pork Belly", total: 81.6, status: "Awaiting acceptance" },
+      { id: "PP-240719-02", buyer: "Bếp Nhà Restaurant", detail: "8 kg · Meaty Pork Ribs", total: 57.6, status: "Preparing" },
+      { id: "PP-240718-14", buyer: "0x34F...8C10", detail: "5 kg · Lean Pork Shoulder", total: 29.5, status: "Delivered" }
+    ];
+
     const cart = new Map();
-    let walletConnected = false;
+    let walletAddress = "";
+    let activeCategory = "All cuts";
+    let activeSearch = "";
+    let toastTimer;
+
+    const productGrid = document.querySelector("#productGrid");
+    const productCount = document.querySelector("#productCount");
+    const categoryList = document.querySelector("#categoryList");
+    const searchInput = document.querySelector("#searchInput");
+    const availableTitle = document.querySelector("#available-title");
     const cartContent = document.querySelector("#cartContent");
     const cartTotal = document.querySelector("#cartTotal");
     const checkoutButton = document.querySelector("#checkoutButton");
     const walletButton = document.querySelector("#walletButton");
+    const checkoutModal = document.querySelector("#checkoutModal");
+    const checkoutLines = document.querySelector("#checkoutLines");
+    const checkoutTotal = document.querySelector("#checkoutTotal");
+    const checkoutWallet = document.querySelector("#checkoutWallet");
+    const checkoutForm = document.querySelector("#checkoutForm");
+    const confirmPayment = document.querySelector("#confirmPayment");
+    const sellerOrdersContainer = document.querySelector("#sellerOrders");
     const toast = document.querySelector("#toast");
 
+    const formatUSDC = value => value.toFixed(2) + " USDC";
+    const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
+
     function showToast(message) {
+      window.clearTimeout(toastTimer);
       toast.textContent = message;
       toast.classList.add("show");
-      window.setTimeout(() => toast.classList.remove("show"), 2400);
+      toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2500);
+    }
+
+    function showView(view) {
+      ["market", "orders", "seller"].forEach(name => {
+        document.querySelector("#" + name + "View").hidden = name !== view;
+      });
+      document.querySelectorAll("[data-view]").forEach(button => {
+        button.classList.toggle("active", button.dataset.view === view);
+      });
+      history.replaceState(null, "", "#" + view);
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    }
+
+    function renderProducts() {
+      const query = activeSearch.trim().toLowerCase();
+      const visible = products.filter(product => {
+        const matchesText = !query ||
+          product.name.toLowerCase().includes(query) ||
+          product.seller.toLowerCase().includes(query) ||
+          product.cut.toLowerCase().includes(query);
+        const matchesCategory = activeCategory === "All cuts" || product.category === activeCategory;
+        return matchesText && matchesCategory;
+      });
+      productCount.textContent = visible.length + (visible.length === 1 ? " product" : " products");
+      availableTitle.textContent = activeCategory === "All cuts" ? "Available today" : activeCategory;
+      if (!visible.length) {
+        productGrid.innerHTML = '<div class="empty-products"><strong>No products found</strong>Try another search or reset your filters.</div>';
+        return;
+      }
+      productGrid.innerHTML = visible.map(product => `
+        <article class="product product-${product.id}">
+          <div class="product-art" aria-hidden="true">
+            <span class="cut-shape"></span><span class="verified">✓ VERIFIED</span>
+            <button class="save" type="button" data-save="${product.id}" aria-label="Save ${product.name}">♡</button>
+          </div>
+          <div class="product-body">
+            <div class="product-meta"><span>${product.cut}</span><span>${product.location}</span></div>
+            <h3>${product.name}</h3>
+            <p class="seller"><span>${product.seller}</span><b>★ 4.9</b></p>
+            <div class="product-footer">
+              <div class="price"><strong>${product.price.toFixed(2)}</strong><span> USDC / kg</span><small>Min. ${product.minimum} kg · ${product.stock} kg available</small></div>
+              <button class="add" type="button" data-add="${product.id}">Add +</button>
+            </div>
+          </div>
+        </article>
+      `).join("");
+    }
+
+    function addToCart(productId) {
+      const product = products.find(item => item.id === Number(productId));
+      const current = cart.get(product.id);
+      cart.set(product.id, { ...product, quantity: current ? current.quantity + 1 : product.minimum });
+      renderCart();
+      showToast(product.name + " added to your order");
+    }
+
+    function changeQuantity(productId, amount) {
+      const item = cart.get(Number(productId));
+      if (!item) return;
+      item.quantity = Math.max(item.minimum, item.quantity + amount);
+      cart.set(item.id, item);
+      renderCart();
     }
 
     function renderCart() {
       const lines = [...cart.values()];
       if (!lines.length) {
-        cartContent.innerHTML = '<div class="cart-empty"><span class="bag-icon">P</span>Add a product from a verified supplier to begin an order.</div>';
+        cartContent.innerHTML = '<div class="cart-empty"><span class="bag-icon">P</span>Add fresh products from verified suppliers to begin an order.</div>';
       } else {
-        cartContent.innerHTML = '<div class="cart-lines">' + lines.map(item =>
-          '<div class="cart-line"><strong>' + item.name + '</strong><b>' + (item.price * item.quantity).toFixed(2) + ' USDC</b>' +
-          '<span>' + item.quantity + ' kg × ' + item.price.toFixed(2) + '</span>' +
-          '<button type="button" data-remove="' + item.name + '">Remove</button></div>'
-        ).join("") + '</div>';
+        cartContent.innerHTML = '<div class="cart-lines">' + lines.map(item => `
+          <div class="cart-line">
+            <strong>${item.name}</strong><b>${formatUSDC(item.price * item.quantity)}</b>
+            <span>${item.seller}</span><small>${item.quantity} kg × ${item.price.toFixed(2)}</small>
+            <div class="line-actions">
+              <button type="button" data-minus="${item.id}" aria-label="Decrease ${item.name}">−</button>
+              <b>${item.quantity} kg</b>
+              <button type="button" data-plus="${item.id}" aria-label="Increase ${item.name}">+</button>
+              <button type="button" data-remove="${item.id}">Remove</button>
+            </div>
+          </div>
+        `).join("") + '</div>';
       }
-      const total = lines.reduce((sum, item) => sum + item.price * item.quantity, 0);
-      cartTotal.textContent = total.toFixed(2) + " USDC";
+      cartTotal.textContent = formatUSDC(cartSubtotal());
       checkoutButton.disabled = !lines.length;
-      document.querySelectorAll("[data-remove]").forEach(button => {
-        button.addEventListener("click", () => {
-          cart.delete(button.dataset.remove);
-          renderCart();
-          showToast("Item removed");
-        });
-      });
     }
 
-    document.querySelectorAll(".add").forEach(button => {
-      button.addEventListener("click", () => {
-        const name = button.dataset.name;
-        const current = cart.get(name);
-        cart.set(name, {
-          name,
-          price: Number(button.dataset.price),
-          quantity: current ? current.quantity + 1 : Number(button.dataset.minimum)
-        });
-        renderCart();
-        showToast(name + " added to your order");
-      });
-    });
-
-    walletButton.addEventListener("click", () => {
-      walletConnected = !walletConnected;
-      walletButton.textContent = walletConnected ? "0x7A4C…91C2" : "Connect demo wallet";
-      showToast(walletConnected ? "Demo wallet connected on Arc Testnet" : "Wallet disconnected");
-    });
-
-    checkoutButton.addEventListener("click", () => {
-      if (!walletConnected) {
-        walletConnected = true;
-        walletButton.textContent = "0x7A4C…91C2";
-        showToast("Demo wallet connected — click Pay again");
+    async function connectWallet() {
+      if (walletAddress) {
+        walletAddress = "";
+        updateWalletUI();
+        showToast("Wallet disconnected");
         return;
       }
-      checkoutButton.disabled = true;
-      checkoutButton.textContent = "Settling on Arc…";
-      window.setTimeout(() => {
-        cart.clear();
-        checkoutButton.textContent = "Pay with USDC";
+      if (window.ethereum) {
+        try {
+          try {
+            await window.ethereum.request({
+              method: "wallet_switchEthereumChain",
+              params: [{ chainId: "0x4cef52" }]
+            });
+          } catch (switchError) {
+            if (switchError.code !== 4902) throw switchError;
+            await window.ethereum.request({
+              method: "wallet_addEthereumChain",
+              params: [{
+                chainId: "0x4cef52",
+                chainName: "Arc Testnet",
+                nativeCurrency: { name: "USDC", symbol: "USDC", decimals: 18 },
+                rpcUrls: ["https://rpc.testnet.arc.network"],
+                blockExplorerUrls: ["https://testnet.arcscan.app"]
+              }]
+            });
+          }
+          const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+          if (accounts && accounts[0]) walletAddress = accounts[0];
+        } catch {
+          showToast("Wallet connection was cancelled");
+          return;
+        }
+      } else {
+        walletAddress = "0x7A4C2b31F693A4e108d6B221cA75D31A7E8f91C2";
+      }
+      updateWalletUI();
+      showToast(window.ethereum ? "Wallet connected on Arc Testnet" : "Demo wallet connected on Arc Testnet");
+    }
+
+    function updateWalletUI() {
+      walletButton.textContent = walletAddress ? walletAddress.slice(0, 6) + "…" + walletAddress.slice(-4) : "Connect demo wallet";
+      checkoutWallet.textContent = walletAddress ? walletButton.textContent + " · connected" : "Not connected";
+    }
+
+    function openCheckout() {
+      if (!cart.size) return;
+      if (!walletAddress) {
+        showToast("Connect your wallet before checkout");
+        return;
+      }
+      checkoutLines.innerHTML = [...cart.values()].map(item =>
+        `<div class="summary-line"><span>${item.quantity} kg · ${item.name}</span><b>${formatUSDC(item.price * item.quantity)}</b></div>`
+      ).join("");
+      checkoutTotal.textContent = formatUSDC(cartSubtotal() + 0.02);
+      checkoutWallet.textContent = walletButton.textContent + " · connected";
+      confirmPayment.textContent = "Pay " + formatUSDC(cartSubtotal() + 0.02);
+      checkoutModal.hidden = false;
+      document.body.style.overflow = "hidden";
+      document.querySelector("#buyerName").focus();
+    }
+
+    function closeCheckout() {
+      checkoutModal.hidden = true;
+      document.body.style.overflow = "";
+      confirmPayment.disabled = false;
+    }
+
+    function createPlacedOrder(lines, total) {
+      const primary = lines[0];
+      const orderCard = document.createElement("article");
+      orderCard.className = "order-card featured";
+      orderCard.innerHTML = `
+        <div class="order-top"><span>ORDER PP-${Date.now().toString().slice(-8)}</span><span class="status-chip">IN ESCROW</span></div>
+        <div class="order-main">
+          <div class="order-symbol" aria-hidden="true">P</div>
+          <div><h3>${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) + " more" : ""}</h3><p>${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${formatUSDC(total)}</p><span class="status-chip">Awaiting acceptance</span></div>
+          <button class="primary-small" type="button" data-confirm-new>Confirm delivery</button>
+        </div>
+        <div class="order-progress"><span class="done">Paid</span><span class="current">Accepted</span><span>Preparing</span><span>Delivered</span><span>Settled</span></div>
+        <div class="escrow-strip"><span><b>${formatUSDC(total)}</b> held safely in PorkPay escrow</span><span>Arc Testnet · sub-second settlement</span></div>
+      `;
+      document.querySelector("#orderCards").prepend(orderCard);
+    }
+
+    function renderSellerOrders() {
+      sellerOrdersContainer.innerHTML = sellerOrders.map(order => {
+        const action = order.status === "Awaiting acceptance"
+          ? `<button class="primary-small" type="button" data-seller-action="${order.id}" data-next="Preparing">Accept</button>`
+          : order.status === "Preparing"
+            ? `<button class="primary-small" type="button" data-seller-action="${order.id}" data-next="Delivered">Mark delivered</button>`
+            : `<button class="outline-button" type="button" data-seller-action="${order.id}" data-next="Delivered">View</button>`;
+        return `
+          <div class="seller-row">
+            <div><span>${order.id}</span><strong>${order.buyer}</strong><small>${order.detail}</small></div>
+            <strong>${formatUSDC(order.total)}</strong>
+            <span class="status-chip ${order.status === "Delivered" ? "complete" : ""}">${order.status}</span>
+            ${action}
+          </div>
+        `;
+      }).join("");
+    }
+
+    productGrid.addEventListener("click", event => {
+      const addButton = event.target.closest("[data-add]");
+      const saveButton = event.target.closest("[data-save]");
+      if (addButton) addToCart(addButton.dataset.add);
+      if (saveButton) {
+        const product = products.find(item => item.id === Number(saveButton.dataset.save));
+        saveButton.textContent = saveButton.textContent === "♥" ? "♡" : "♥";
+        showToast(product.name + (saveButton.textContent === "♥" ? " saved" : " removed from saved items"));
+      }
+    });
+
+    cartContent.addEventListener("click", event => {
+      const plus = event.target.closest("[data-plus]");
+      const minus = event.target.closest("[data-minus]");
+      const remove = event.target.closest("[data-remove]");
+      if (plus) changeQuantity(plus.dataset.plus, 1);
+      if (minus) changeQuantity(minus.dataset.minus, -1);
+      if (remove) {
+        cart.delete(Number(remove.dataset.remove));
         renderCart();
-        showToast("Demo payment settled in USDC");
+        showToast("Item removed");
+      }
+    });
+
+    categoryList.addEventListener("click", event => {
+      const button = event.target.closest("[data-category]");
+      if (!button) return;
+      activeCategory = button.dataset.category;
+      categoryList.querySelectorAll("button").forEach(item => item.classList.toggle("selected", item === button));
+      renderProducts();
+    });
+
+    searchInput.addEventListener("input", () => {
+      activeSearch = searchInput.value;
+      renderProducts();
+    });
+
+    document.querySelector("#resetFilters").addEventListener("click", () => {
+      activeCategory = "All cuts";
+      activeSearch = "";
+      searchInput.value = "";
+      categoryList.querySelectorAll("button").forEach(item => item.classList.toggle("selected", item.dataset.category === "All cuts"));
+      renderProducts();
+    });
+
+    document.addEventListener("click", event => {
+      const viewButton = event.target.closest("[data-view]");
+      if (viewButton) showView(viewButton.dataset.view);
+      const viewLink = event.target.closest("[data-view-link]");
+      if (viewLink) {
+        event.preventDefault();
+        showView(viewLink.dataset.viewLink);
+      }
+      const reorder = event.target.closest("[data-reorder]");
+      if (reorder) {
+        addToCart(reorder.dataset.reorder);
+        showView("market");
+      }
+      if (event.target.closest("[data-confirm-new]")) {
+        showToast("Delivery confirmed — USDC released to seller");
+        event.target.textContent = "USDC released";
+        event.target.disabled = true;
+      }
+    });
+
+    walletButton.addEventListener("click", connectWallet);
+    checkoutButton.addEventListener("click", openCheckout);
+    document.querySelector("#modalClose").addEventListener("click", closeCheckout);
+    document.querySelector("#modalBackdrop").addEventListener("click", closeCheckout);
+
+    confirmPayment.addEventListener("click", () => {
+      if (!checkoutForm.reportValidity()) return;
+      const lines = [...cart.values()];
+      const total = cartSubtotal() + 0.02;
+      confirmPayment.disabled = true;
+      confirmPayment.textContent = "Securing payment…";
+      window.setTimeout(() => {
+        createPlacedOrder(lines, total);
+        cart.clear();
+        renderCart();
+        closeCheckout();
+        showView("orders");
+        showToast("Payment secured in PorkPay escrow");
       }, 1100);
     });
 
+    document.querySelector("#confirmDelivery").addEventListener("click", event => {
+      document.querySelector("#activeProgress").innerHTML = '<span class="done">Paid</span><span class="done">Accepted</span><span class="done">Preparing</span><span class="done">Delivered</span><span class="current">Settled</span>';
+      event.target.textContent = "USDC released";
+      event.target.disabled = true;
+      showToast("Delivery confirmed — USDC released to seller");
+    });
+
+    sellerOrdersContainer.addEventListener("click", event => {
+      const button = event.target.closest("[data-seller-action]");
+      if (!button) return;
+      const order = sellerOrders.find(item => item.id === button.dataset.sellerAction);
+      if (order && order.status !== "Delivered") {
+        order.status = button.dataset.next;
+        renderSellerOrders();
+        showToast("Order " + order.id + " updated to " + order.status);
+      } else {
+        showToast("Order " + button.dataset.sellerAction + " is complete");
+      }
+    });
+
+    document.querySelector("#settleButton").addEventListener("click", () => showToast("1,284.20 USDC settlement initiated on Arc"));
+    document.querySelector("#viewAllOrders").addEventListener("click", () => showToast("All seller orders are already shown"));
+    document.querySelector("#learnSettlement").addEventListener("click", () => showToast("Arc uses USDC for gas, settlement and treasury flows"));
+    document.addEventListener("keydown", event => {
+      if (event.key === "Escape" && !checkoutModal.hidden) closeCheckout();
+    });
+
+    const initialView = ["market", "orders", "seller"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "market";
+    renderProducts();
     renderCart();
+    renderSellerOrders();
+    updateWalletUI();
+    showView(initialView);
   </script>
 </body>
 </html>
