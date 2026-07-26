@@ -2,7 +2,7 @@
 
 **A USDC-native pork marketplace for fast, transparent buyer-to-supplier payments on Arc.**
 
-[Live Demo](https://vybao39-rgb.github.io/porkpay/) · [Repository](https://github.com/vybao39-rgb/porkpay)
+[Live Demo](https://vybao39-rgb.github.io/porkpay/) · [Checkpoint 2 Presentation](https://vybao39-rgb.github.io/porkpay/presentation.html) · [Repository](https://github.com/vybao39-rgb/porkpay)
 
 > **Hackathon status:** Functional frontend MVP. Wallet connection and Arc Testnet setup are available. Real USDC transfers and onchain escrow are the next milestone. Testnet/demo only — do not use real funds.
 
