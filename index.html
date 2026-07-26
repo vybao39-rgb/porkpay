@@ -195,10 +195,17 @@
       position: relative;
       display: grid;
       place-items: center;
-      height: 170px;
+      height: 184px;
       overflow: hidden;
       background: linear-gradient(145deg, #f1c6bb, #d88e81);
     }
+    .product-art img {
+      width: 100%;
+      height: 100%;
+      object-fit: cover;
+      transition: transform .35s ease;
+    }
+    .product:hover .product-art img { transform: scale(1.035); }
     .product:nth-child(2) .product-art { background: linear-gradient(145deg, #eab3a6, #bf6f64); }
     .product:nth-child(3) .product-art { background: linear-gradient(145deg, #f2d0c6, #d49b8e); }
     .cut-shape {
@@ -223,6 +230,20 @@
       font-size: 8px;
       font-weight: 900;
       letter-spacing: .7px;
+    }
+    .ai-image-badge {
+      position: absolute;
+      right: 12px;
+      bottom: 12px;
+      padding: 6px 8px;
+      border: 1px solid rgba(255, 255, 255, .7);
+      border-radius: 6px;
+      color: var(--ink);
+      background: rgba(255, 253, 248, .88);
+      font-size: 7px;
+      font-weight: 900;
+      letter-spacing: .6px;
+      backdrop-filter: blur(8px);
     }
     .product-body { padding: 18px; }
     .product-meta { display: flex; justify-content: space-between; color: #8c8e85; font-size: 9px; font-weight: 800; text-transform: uppercase; }
@@ -916,12 +937,12 @@
 
   <script>
     const products = [
-      { id: 1, name: "Premium Pork Belly", cut: "Skin-on · Fresh", seller: "Green Valley Farm", location: "12 km", price: 6.8, stock: 84, minimum: 2, category: "Belly" },
-      { id: 2, name: "Bone-in Pork Chops", cut: "Center cut · Chilled", seller: "Minh Phat Butchery", location: "7 km", price: 5.4, stock: 42, minimum: 2, category: "Lean cuts" },
-      { id: 3, name: "Meaty Pork Ribs", cut: "Spare ribs · Fresh", seller: "An Hoa Foods", location: "18 km", price: 7.2, stock: 31, minimum: 3, category: "Ribs" },
-      { id: 4, name: "Lean Pork Shoulder", cut: "Boneless · Chilled", seller: "Green Valley Farm", location: "12 km", price: 5.9, stock: 68, minimum: 2, category: "Lean cuts" },
-      { id: 5, name: "Pork Tenderloin", cut: "Trimmed · Premium", seller: "Dalat Fresh Foods", location: "24 km", price: 8.6, stock: 26, minimum: 1, category: "Lean cuts" },
-      { id: 6, name: "Ground Pork", cut: "80/20 · Made today", seller: "Minh Phat Butchery", location: "7 km", price: 4.7, stock: 55, minimum: 2, category: "Ground" }
+      { id: 1, name: "Premium Pork Belly", cut: "Skin-on · Fresh", seller: "Green Valley Farm", location: "12 km", price: 6.8, stock: 84, minimum: 2, category: "Belly", image: "assets/pork-belly-ai.jpg" },
+      { id: 2, name: "Bone-in Pork Chops", cut: "Center cut · Chilled", seller: "Minh Phat Butchery", location: "7 km", price: 5.4, stock: 42, minimum: 2, category: "Lean cuts", image: "assets/pork-chops-ai.jpg" },
+      { id: 3, name: "Meaty Pork Ribs", cut: "Spare ribs · Fresh", seller: "An Hoa Foods", location: "18 km", price: 7.2, stock: 31, minimum: 3, category: "Ribs", image: "assets/pork-ribs-ai.jpg" },
+      { id: 4, name: "Lean Pork Shoulder", cut: "Boneless · Chilled", seller: "Green Valley Farm", location: "12 km", price: 5.9, stock: 68, minimum: 2, category: "Lean cuts", image: "assets/pork-shoulder-ai.jpg" },
+      { id: 5, name: "Pork Tenderloin", cut: "Trimmed · Premium", seller: "Dalat Fresh Foods", location: "24 km", price: 8.6, stock: 26, minimum: 1, category: "Lean cuts", image: "assets/pork-tenderloin-ai.jpg" },
+      { id: 6, name: "Ground Pork", cut: "80/20 · Made today", seller: "Minh Phat Butchery", location: "7 km", price: 4.7, stock: 55, minimum: 2, category: "Ground", image: "assets/ground-pork-ai.jpg" }
     ];
     let sellerOrders = [
       { id: "PP-240719-03", buyer: "Lotus Kitchen", detail: "12 kg · Premium Pork Belly", total: 81.6, status: "Awaiting acceptance" },
@@ -1106,8 +1127,10 @@
       }
       productGrid.innerHTML = visible.map(product => `
         <article class="product product-${product.id}">
-          <div class="product-art" aria-hidden="true">
-            <span class="cut-shape"></span><span class="verified">✓ VERIFIED</span>
+          <div class="product-art">
+            <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async">
+            <span class="verified">✓ VERIFIED</span>
+            <span class="ai-image-badge">AI IMAGE</span>
             <button class="save" type="button" data-save="${product.id}" aria-label="Save ${product.name}">♡</button>
           </div>
           <div class="product-body">
