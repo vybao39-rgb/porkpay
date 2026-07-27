@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="VPorkPay is a public USDC pork marketplace demo built for the Build on Arc hackathon.">
   <meta name="theme-color" content="#f4f0e7">
+  <link rel="icon" type="image/png" href="assets/vporkpay-logo.png">
   <title>VPorkPay — Pork trading settled in USDC</title>
   <style>
     :root {
@@ -59,6 +60,12 @@
       font-weight: 900;
       letter-spacing: -.6px;
       text-decoration: none;
+    }
+    .brand-logo {
+      display: block;
+      width: 42px;
+      height: 42px;
+      object-fit: contain;
     }
     .brand-mark {
       display: grid;
@@ -756,7 +763,7 @@
 <body>
   <header class="topbar">
     <a class="brand" href="#market" aria-label="VPorkPay marketplace" data-view-link="market">
-      <span class="brand-mark">P</span>
+      <img class="brand-logo" src="assets/vporkpay-logo.png" alt="">
       <span>VPorkPay</span>
     </a>
     <nav class="main-nav" aria-label="Main navigation">
