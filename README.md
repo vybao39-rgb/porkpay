@@ -4,7 +4,7 @@
 
 [Live Demo](https://vybao39-rgb.github.io/porkpay/) · [Checkpoint 2 Presentation](https://vybao39-rgb.github.io/porkpay/presentation.html) · [Repository](https://github.com/vybao39-rgb/porkpay)
 
-> **Hackathon status:** Functional frontend MVP with an Arc Testnet USDC proof-payment flow and a browser-based Earn / supplier-finance lab. The lending pool and escrow are simulations until audited contracts are deployed. Testnet/demo only — do not use real funds.
+> **Hackathon status:** Functional frontend MVP with Arc Testnet proof payments and a simple browser-based store-credit flow. The debt record and interest calculation are simulations until a contract and legal credit process are implemented. Testnet/demo only — do not use real funds.
 
 ## The problem
 
@@ -12,7 +12,7 @@ Small pork buyers and suppliers often coordinate orders through fragmented messa
 
 ## The solution
 
-VPorkPay combines a simple marketplace with USDC settlement on Arc. Buyers discover products, build an order, connect a wallet, and pay in USDC. Suppliers review incoming orders, track fulfillment, and can model working-capital financing backed by verified receivables. Liquidity providers can preview how an Earn pool receives borrower interest.
+VPorkPay combines a simple marketplace with USDC settlement on Arc. Buyers discover products, build an order, connect a wallet, and pay in USDC. If the available balance is not enough, the demo can record the missing amount as debt owed to the shop owner, with an annual rate linked to the pork-price trend.
 
 The product is intentionally narrow: **buy pork, pay with USDC, and track the order from purchase to delivery.**
 
@@ -31,18 +31,14 @@ VPorkPay uses stablecoin payments as practical commerce infrastructure, focusing
 - Connect an EVM wallet
 - Add or switch to Arc Testnet
 - Read the connected wallet's Arc Testnet USDC balance
-- Create a 0.01 testnet USDC self-transfer as an onchain proof payment
-- Wait for transaction finality and link the receipt to Arcscan
+- Offer store credit when the available balance is below the order total
+- Calculate one-year interest using the demo pork-price trend
+- Show and repay the customer's demo debt in My orders
 - Complete a guided demo checkout
 - Enter delivery information
 - Review buyer orders and fulfillment progress
 - Confirm delivery
 - View seller metrics and incoming order status
-- Add and withdraw simulated USDC Earn liquidity
-- Open a simulated supplier credit line at a 70% receivable advance rate
-- Preview variable APY, borrow APR, fees and term interest
-- Repay monthly interest or the full simulated supplier loan
-- Distribute simulated borrower interest proportionally to the user's Earn position
 - Persist demo state locally in the browser
 - Responsive layout for desktop and mobile
 
@@ -52,32 +48,29 @@ VPorkPay uses stablecoin payments as practical commerce infrastructure, focusing
 
 - Arc Testnet wallet network setup
 - USDC-denominated product pricing and order totals
-- Official Arc Testnet USDC balance lookup
-- 0.01 testnet USDC proof transaction with receipt polling and Arcscan link
+- Arc Testnet USDC balance lookup and 0.01 USDC proof payment
+- Simple store-credit shortfall and annual-interest calculation
 - Buyer and supplier flow designed around stablecoin settlement
-- Browser-based Earn and order-backed supplier-finance accounting
 
 ### Next integration milestone
 
-- Deploy and audit a minimal USDC liquidity-pool contract
-- Replace browser-based Earn deposits, loans and repayments with contract calls
-- Add supplier allowlisting and verified receivable attestations
-- Add utilization-based rate parameters and pool accounting tests
+- Send testnet USDC using Circle App Kit Send
+- Save transaction hashes and link orders to Arcscan
 - Deploy a minimal escrow contract on Arc Testnet
 - Release funds after buyer delivery confirmation
 - Add refund handling for cancelled orders
 
-## Earn and supplier finance lab
+## Simple store credit
 
-The `Earn & loans` view models a two-sided DeFi flow for real-world pork trade:
+When a connected wallet cannot cover the order total, checkout offers a simple browser-based credit option:
 
-1. A liquidity provider connects an Arc wallet and adds a simulated USDC Earn position.
-2. A verified supplier uses completed order receivables to request up to a 70% advance.
-3. The demo calculates a variable pool APY, borrow APR, opening fee and term interest.
-4. The supplier repays monthly interest or principal plus interest.
-5. A proportional share of simulated borrower income is credited to the user's Earn position.
+1. Available balance is applied to the order calculation.
+2. The missing amount becomes debt owed to the primary shop owner.
+3. Annual interest uses a transparent demo formula: an 8% base rate plus 50% of the annual pork-price change, capped between 6% and 18%.
+4. My orders shows principal, APR, estimated one-year interest and total repayment.
+5. The customer can clear the demo debt with one repayment action.
 
-This module intentionally does not transfer or custody funds. It is a transparent product prototype for the contract-backed version, not a live lending or investment product.
+No real credit decision, fund transfer or legally binding debt is created in this version.
 
 Arc is a strong fit because USDC is its native gas token and Circle App Kit provides a direct path to Send, Bridge, Swap, and Unified Balance capabilities.
 
