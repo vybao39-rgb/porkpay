@@ -759,6 +759,25 @@
     .credit-term { padding: 10px; border-radius: 8px; background: white; }
     .credit-term span { display: block; color: var(--muted); font-size: 7px; font-weight: 900; text-transform: uppercase; }
     .credit-term b { display: block; margin-top: 5px; font-size: 10px; }
+    .onchain-card {
+      display: grid;
+      gap: 16px;
+      margin-top: 22px;
+      padding: 24px;
+      border: 1px solid var(--line);
+      border-radius: 16px;
+      background: var(--panel);
+    }
+    .onchain-heading { display: flex; align-items: start; justify-content: space-between; gap: 16px; }
+    .onchain-heading h2 { margin: 4px 0 0; font-family: Georgia, serif; font-size: 26px; font-weight: 400; }
+    .onchain-heading p, .onchain-note { margin: 6px 0 0; color: var(--muted); font-size: 9px; line-height: 1.55; }
+    .onchain-controls { display: grid; grid-template-columns: minmax(260px, 1fr) 150px auto; gap: 10px; align-items: end; }
+    .onchain-controls label { display: grid; gap: 6px; color: var(--muted); font-size: 8px; font-weight: 900; text-transform: uppercase; }
+    .onchain-controls input { width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font: inherit; text-transform: none; }
+    .onchain-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .onchain-status { padding: 11px 12px; border-radius: 8px; color: #815b0b; background: #fff6d9; font-size: 8px; line-height: 1.5; }
+    .onchain-status.success { color: var(--green); background: #e5f4e9; }
+    .onchain-status.error { color: #a52e22; background: #ffe7e3; }
     .summary-line { display: flex; justify-content: space-between; gap: 16px; color: var(--muted); font-size: 10px; }
     .summary-line b { color: var(--ink); }
     .summary-line.grand { align-items: end; padding-top: 14px; border-top: 1px solid var(--line); color: var(--ink); }
@@ -793,6 +812,7 @@
       .checkout-grid { grid-template-columns: 1fr; }
       .checkout-form { border-right: 0; border-bottom: 1px solid var(--line); }
       .debt-grid, .credit-terms { grid-template-columns: 1fr 1fr; }
+      .onchain-controls { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -889,17 +909,18 @@
       </div>
       <article class="debt-card" id="debtCard" hidden>
         <div class="debt-heading">
-          <div><div class="eyebrow" style="color:var(--lime)">STORE CREDIT</div><h2>You owe the shop owner</h2></div>
-          <span class="status-chip">DEBT ACTIVE</span>
+          <div><div class="eyebrow" style="color:var(--lime)">ONCHAIN STORE CREDIT</div><h2>You owe the shop owner</h2></div>
+          <span class="status-chip" id="debtStatus">PENDING</span>
         </div>
         <div class="debt-grid">
           <div class="debt-metric"><span>Principal owed</span><strong id="debtPrincipal">0.00 USDC</strong></div>
           <div class="debt-metric"><span>Annual interest rate</span><strong id="debtApr">0.00%</strong></div>
-          <div class="debt-metric"><span>Interest after 1 year</span><strong id="debtYearInterest">0.00 USDC</strong></div>
-          <div class="debt-metric"><span>Total after 1 year</span><strong id="debtYearTotal">0.00 USDC</strong></div>
+          <div class="debt-metric"><span>Interest accrued now</span><strong id="debtYearInterest">0.00 USDC</strong></div>
+          <div class="debt-metric"><span>Amount due now</span><strong id="debtYearTotal">0.00 USDC</strong></div>
         </div>
-        <p class="debt-note" id="debtNote">The annual rate follows the demo pork-price index. This is browser bookkeeping only; no funds are transferred.</p>
-        <button class="primary-small" id="repayDebt" type="button" style="width:fit-content;background:white;color:var(--green)">Repay demo debt</button>
+        <p class="debt-note" id="debtNote">Waiting for the shop owner to approve this credit request on Arc Testnet.</p>
+        <a class="transaction-link" id="debtTransactionLink" target="_blank" rel="noreferrer" hidden>View on Arcscan ↗</a>
+        <button class="primary-small" id="repayDebt" type="button" style="width:fit-content;background:white;color:var(--green)">Approve USDC & repay onchain</button>
       </article>
       <div class="order-cards" id="orderCards">
         <article class="order-card featured" id="activeOrderCard">
@@ -947,6 +968,24 @@
           <button class="checkout" id="learnSettlement" type="button" style="background:white;color:#a52e22">View settlement details</button>
         </aside>
       </div>
+      <article class="onchain-card" id="onchainCard">
+        <div class="onchain-heading">
+          <div><div class="eyebrow">REAL ONCHAIN CREDIT</div><h2>Arc Testnet contract</h2><p>Deploy once from the shop-owner wallet. Credit approval and USDC repayment are then recorded onchain.</p></div>
+          <span class="live-badge" id="contractBadge" style="background:var(--coral)">NOT CONFIGURED</span>
+        </div>
+        <div class="onchain-controls">
+          <label>Contract address<input id="contractAddressInput" inputmode="text" autocomplete="off" placeholder="0x…"></label>
+          <label>Pork price change (%)<input id="porkPriceInput" type="number" min="-40" max="40" step="0.1" value="6.4"></label>
+          <button class="outline-button" id="saveContract" type="button">Save address</button>
+        </div>
+        <div class="onchain-actions">
+          <button class="primary-small" id="deployContract" type="button">Deploy as shop owner</button>
+          <button class="outline-button" id="updatePorkPrice" type="button">Update price index onchain</button>
+          <a class="outline-button" href="contracts/VPorkPayStoreCredit.sol" target="_blank" rel="noreferrer" style="text-decoration:none">View contract source ↗</a>
+        </div>
+        <div class="onchain-status" id="contractStatus">Connect an Arc Testnet wallet, then deploy the contract or paste an existing address.</div>
+        <p class="onchain-note">Testnet prototype only. Test USDC has no monetary value. The smart contract is open source and has not been independently audited.</p>
+      </article>
     </section>
   </main>
 
@@ -982,8 +1021,8 @@
           </div>
           <div class="credit-option" id="creditOption" hidden>
             <div class="testnet-heading"><strong>Not enough USDC?</strong><span class="live-badge" style="background:var(--coral)">STORE CREDIT</span></div>
-            <p>Your available balance does not cover this order. You can record the missing amount as debt owed directly to the shop owner.</p>
-            <label class="credit-switch"><input id="useStoreCredit" type="checkbox">Buy now and owe the missing amount</label>
+            <p>Your available balance does not cover this order. Request the missing amount as credit from the shop owner.</p>
+            <label class="credit-switch"><input id="useStoreCredit" type="checkbox">Request onchain store credit</label>
             <div class="credit-terms" id="creditTerms" hidden>
               <div class="credit-term"><span>Available now</span><b id="creditAvailable">0.00 USDC</b></div>
               <div class="credit-term"><span>Amount owed</span><b id="creditPrincipal">0.00 USDC</b></div>
@@ -992,7 +1031,7 @@
               <div class="credit-term"><span>Interest after 1 year</span><b id="creditYearInterest">0.00 USDC</b></div>
               <div class="credit-term"><span>Total debt after 1 year</span><b id="creditYearTotal">0.00 USDC</b></div>
             </div>
-            <p>Demo formula: 8% base rate + 50% of positive annual pork-price change, capped between 6% and 18%.</p>
+            <p>Contract formula: 8% base rate + 50% of annual pork-price change, capped between 6% and 18%. The rate is fixed when the merchant approves the debt.</p>
           </div>
           <button class="checkout" id="confirmPayment" type="button">Pay with USDC</button>
           <p class="powered" id="paymentDisclosure">Onchain demo only · never use real funds</p>
@@ -1030,6 +1069,8 @@
     const TEST_PAYMENT_UNITS = 10000n;
     const TEST_PAYMENT_LABEL = "0.01 USDC";
     const STORE_DEBT_KEY = "vporkpay-store-debt-v1";
+    const CREDIT_CONTRACT_KEY = "vporkpay-credit-contract-v1";
+    const CREDIT_ARTIFACT_URL = "assets/vporkpay-store-credit.json";
     const DEMO_WALLET_BALANCE = 8;
     const PORK_PRICE_CHANGE_YEAR = 6.4;
     const BASE_CREDIT_APR = 8;
@@ -1041,6 +1082,9 @@
     let activeSearch = "";
     let toastTimer;
     let customerDebt = loadCustomerDebt();
+    let creditContractAddress = loadCreditContractAddress();
+    let creditArtifact = null;
+    let currentPorkPriceChange = PORK_PRICE_CHANGE_YEAR;
 
     const productGrid = document.querySelector("#productGrid");
     const productCount = document.querySelector("#productCount");
@@ -1078,6 +1122,14 @@
     const debtYearInterest = document.querySelector("#debtYearInterest");
     const debtYearTotal = document.querySelector("#debtYearTotal");
     const debtNote = document.querySelector("#debtNote");
+    const debtStatus = document.querySelector("#debtStatus");
+    const debtTransactionLink = document.querySelector("#debtTransactionLink");
+    const repayDebtButton = document.querySelector("#repayDebt");
+    const contractAddressInput = document.querySelector("#contractAddressInput");
+    const contractBadge = document.querySelector("#contractBadge");
+    const contractStatus = document.querySelector("#contractStatus");
+    const porkPriceInput = document.querySelector("#porkPriceInput");
+    const deployContractButton = document.querySelector("#deployContract");
 
     const formatUSDC = value => value.toFixed(2) + " USDC";
     const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -1087,6 +1139,61 @@
       const fraction = (units % 1000000n).toString().padStart(6, "0").replace(/0+$/, "");
       return whole.toString() + (fraction ? "." + fraction : "") + " USDC";
     };
+    const isAddress = value => /^0x[0-9a-fA-F]{40}$/.test(value || "");
+    const encodeUintWord = value => BigInt(value).toString(16).padStart(64, "0");
+    const encodeAddressWord = value => value.slice(2).toLowerCase().padStart(64, "0");
+    const encodeSignedWord = value => {
+      const number = BigInt(value);
+      const encoded = number < 0 ? (1n << 256n) + number : number;
+      return encoded.toString(16).padStart(64, "0");
+    };
+    const creditOrderId = () => {
+      const bytes = new Uint8Array(32);
+      window.crypto.getRandomValues(bytes);
+      return "0x" + [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
+    };
+
+    function loadCreditContractAddress() {
+      try {
+        const saved = window.localStorage.getItem(CREDIT_CONTRACT_KEY) || "";
+        return /^0x[0-9a-fA-F]{40}$/.test(saved) ? saved : "";
+      } catch {
+        return "";
+      }
+    }
+
+    function saveCreditContractAddress(address) {
+      creditContractAddress = address;
+      contractAddressInput.value = address;
+      try {
+        window.localStorage.setItem(CREDIT_CONTRACT_KEY, address);
+      } catch {
+        // The live GitHub Pages origin supports storage; file previews may not.
+      }
+      renderContractStatus();
+    }
+
+    async function loadCreditArtifact() {
+      if (creditArtifact) return creditArtifact;
+      const response = await window.fetch(CREDIT_ARTIFACT_URL);
+      if (!response.ok) throw new Error("Could not load the VPorkPay contract artifact.");
+      creditArtifact = await response.json();
+      return creditArtifact;
+    }
+
+    function setContractStatus(message, state = "") {
+      contractStatus.textContent = message;
+      contractStatus.className = "onchain-status" + (state ? " " + state : "");
+    }
+
+    function renderContractStatus() {
+      contractAddressInput.value = creditContractAddress;
+      contractBadge.textContent = creditContractAddress ? "CONFIGURED" : "NOT CONFIGURED";
+      contractBadge.style.background = creditContractAddress ? "var(--green)" : "var(--coral)";
+      setContractStatus(creditContractAddress
+        ? "Contract " + shortenAddress(creditContractAddress) + " is ready. Connect the deploying merchant wallet to approve credit requests."
+        : "Connect an Arc Testnet wallet, then deploy the contract or paste an existing address.", creditContractAddress ? "success" : "");
+    }
 
     function loadCustomerDebt() {
       try {
@@ -1107,7 +1214,7 @@
     }
 
     const roundMoney = value => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
-    const calculateCreditApr = () => Math.min(18, Math.max(6, BASE_CREDIT_APR + PORK_PRICE_CHANGE_YEAR * 0.5));
+    const calculateCreditApr = () => Math.min(18, Math.max(6, BASE_CREDIT_APR + currentPorkPriceChange * 0.5));
     const availableForOrder = () => {
       if (!isInjectedWallet) return DEMO_WALLET_BALANCE;
       return walletBalanceUnits === null ? 0 : Number(walletBalanceUnits) / 1000000;
@@ -1129,14 +1236,18 @@
       creditTerms.hidden = !needsCredit || !useStoreCredit.checked;
       creditAvailable.textContent = formatUSDC(quote.available);
       creditPrincipal.textContent = formatUSDC(quote.principal);
-      porkPriceChange.textContent = "+" + PORK_PRICE_CHANGE_YEAR.toFixed(2) + "% / year";
+      porkPriceChange.textContent = (currentPorkPriceChange >= 0 ? "+" : "") + currentPorkPriceChange.toFixed(2) + "% / year";
       creditApr.textContent = quote.apr.toFixed(2) + "% APR";
       creditYearInterest.textContent = formatUSDC(quote.yearInterest);
       creditYearTotal.textContent = formatUSDC(quote.yearTotal);
       if (useStoreCredit.checked && needsCredit) {
-        confirmPayment.textContent = "Place order with store credit";
-        paymentDisclosure.textContent = "Browser debt record only · no funds are transferred";
-        setPaymentStatus("Store credit selected. The missing amount will be recorded as debt to the shop owner.", "pending");
+        confirmPayment.textContent = "Send credit request to shop owner";
+        paymentDisclosure.textContent = creditContractAddress && isInjectedWallet
+          ? "The merchant must approve this request in an Arc Testnet transaction."
+          : "Configure the onchain contract in Seller Hub to activate real credit.";
+        setPaymentStatus(creditContractAddress && isInjectedWallet
+          ? "The request will wait for the shop owner to open the debt onchain."
+          : "Onchain contract or injected wallet not available; this request will remain a clearly marked demo.", "pending");
         transactionLink.hidden = true;
       } else {
         confirmPayment.textContent = isInjectedWallet ? "Send 0.01 test USDC & place order" : "Run demo checkout";
@@ -1150,31 +1261,62 @@
       return quote;
     }
 
-    function renderCustomerDebt() {
+    async function renderCustomerDebt() {
       debtCard.hidden = !customerDebt;
       if (!customerDebt) return;
-      const interest = roundMoney(customerDebt.principal * customerDebt.apr / 100);
+      const status = customerDebt.onchainStatus || "demo";
+      let dueUnits = BigInt(Math.round(customerDebt.principal * 1000000));
+      if (status === "active" && customerDebt.orderId && customerDebt.contractAddress) {
+        try {
+          dueUnits = await readOnchainAmountDue(customerDebt.orderId, customerDebt.contractAddress);
+        } catch {
+          // Keep the principal visible if the wallet RPC is temporarily unavailable.
+        }
+      }
+      if (status === "repaid") dueUnits = 0n;
+      const due = Number(dueUnits) / 1000000;
+      const interest = roundMoney(Math.max(0, due - customerDebt.principal));
       debtPrincipal.textContent = formatUSDC(customerDebt.principal);
       debtApr.textContent = customerDebt.apr.toFixed(2) + "%";
       debtYearInterest.textContent = formatUSDC(interest);
-      debtYearTotal.textContent = formatUSDC(customerDebt.principal + interest);
-      debtNote.textContent = "Owed to " + customerDebt.seller + ". Rate uses the demo pork-price change of +" + customerDebt.porkPriceChange.toFixed(2) + "% per year. Browser bookkeeping only.";
+      debtYearTotal.textContent = formatUSDC(due);
+      debtStatus.textContent = status === "active" ? "ONCHAIN ACTIVE" : status === "repaid" ? "REPAID" : status === "pending" ? "AWAITING MERCHANT" : "DEMO ONLY";
+      debtStatus.classList.toggle("complete", status === "repaid");
+      repayDebtButton.hidden = status === "repaid";
+      repayDebtButton.disabled = status !== "active";
+      repayDebtButton.textContent = status === "active" ? "Approve USDC & repay onchain" : "Waiting for merchant approval";
+      debtNote.textContent = status === "active"
+        ? "Active on Arc Testnet. Interest accrues by block time at the fixed " + customerDebt.apr.toFixed(2) + "% annual rate. Repayment transfers test USDC directly to the shop-owner wallet."
+        : status === "repaid"
+          ? "This Arc Testnet debt has been fully repaid to the shop owner."
+          : status === "pending"
+            ? "Waiting for the shop owner to approve order " + customerDebt.displayId + " on Arc Testnet. No debt exists until that transaction succeeds."
+            : "Browser demo only. Deploy and configure the contract in Seller Hub to create real onchain credit.";
+      const proofHash = customerDebt.repayTxHash || customerDebt.openTxHash;
+      debtTransactionLink.hidden = !proofHash;
+      if (proofHash) debtTransactionLink.href = ARC_EXPLORER_URL + "/tx/" + proofHash;
     }
 
     function createCustomerDebt(lines, total) {
       const quote = creditQuote(total);
       const primary = lines[0];
-      const existing = customerDebt?.principal || 0;
+      const displayId = "PP-" + Date.now().toString().slice(-8);
+      const canUseOnchain = Boolean(isInjectedWallet && creditContractAddress && isAddress(walletAddress));
       customerDebt = {
-        principal: roundMoney(existing + quote.principal),
+        principal: quote.principal,
         apr: quote.apr,
-        porkPriceChange: PORK_PRICE_CHANGE_YEAR,
+        porkPriceChange: currentPorkPriceChange,
         seller: primary.seller,
-        createdAt: Date.now()
+        createdAt: Date.now(),
+        displayId,
+        orderId: creditOrderId(),
+        buyer: walletAddress,
+        contractAddress: canUseOnchain ? creditContractAddress : "",
+        onchainStatus: canUseOnchain ? "pending" : "demo"
       };
       saveCustomerDebt();
       renderCustomerDebt();
-      return quote;
+      return { ...quote, ...customerDebt };
     }
 
     function setPaymentStatus(message, state = "") {
@@ -1248,6 +1390,146 @@
         await new Promise(resolve => window.setTimeout(resolve, 1000));
       }
       throw new Error("Transaction submitted. Open Arcscan to check its final status.");
+    }
+
+    async function contractSelector(signature) {
+      const artifact = await loadCreditArtifact();
+      const selector = artifact.selectors?.[signature];
+      if (!selector) throw new Error("Contract function is missing from the published artifact.");
+      return selector;
+    }
+
+    async function readContractMerchant(address = creditContractAddress) {
+      if (!window.ethereum || !isAddress(address)) throw new Error("Connect a wallet and configure the contract first.");
+      const data = await contractSelector("merchant()");
+      const result = await window.ethereum.request({ method: "eth_call", params: [{ to: address, data }, "latest"] });
+      return "0x" + result.slice(-40);
+    }
+
+    async function refreshCreditContractTerms(address = creditContractAddress) {
+      if (!window.ethereum || !isAddress(address)) return;
+      const selector = await contractSelector("porkPriceChangeBps()");
+      const result = await window.ethereum.request({ method: "eth_call", params: [{ to: address, data: selector }, "latest"] });
+      const raw = BigInt(result);
+      const signed = raw >= (1n << 255n) ? raw - (1n << 256n) : raw;
+      currentPorkPriceChange = Number(signed) / 100;
+      porkPriceInput.value = currentPorkPriceChange.toString();
+      if (!checkoutModal.hidden) updateCreditOption();
+    }
+
+    async function readOnchainAmountDue(orderId, address = creditContractAddress) {
+      if (!window.ethereum || !isAddress(address)) throw new Error("The onchain credit contract is not configured.");
+      const selector = await contractSelector("amountDue(bytes32)");
+      const result = await window.ethereum.request({
+        method: "eth_call",
+        params: [{ to: address, data: selector + orderId.slice(2) }, "latest"]
+      });
+      return BigInt(result);
+    }
+
+    async function deployCreditContract() {
+      if (!isInjectedWallet || !walletAddress) throw new Error("Connect the shop-owner wallet first.");
+      await ensureArcTestnet();
+      const artifact = await loadCreditArtifact();
+      const priceBps = Math.round(Number(porkPriceInput.value) * 100);
+      if (!Number.isInteger(priceBps) || priceBps < -4000 || priceBps > 4000) {
+        throw new Error("Pork price change must be between -40% and 40%.");
+      }
+      const constructorData = encodeAddressWord(USDC_CONTRACT) + encodeSignedWord(priceBps);
+      setContractStatus("Confirm contract deployment in the shop-owner wallet…");
+      const transactionHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [{ from: walletAddress, data: artifact.bytecode + constructorData }]
+      });
+      setContractStatus("Deployment submitted. Waiting for Arc finality…");
+      const receipt = await waitForTransactionReceipt(transactionHash);
+      if (!isAddress(receipt.contractAddress)) throw new Error("Arc did not return a deployed contract address.");
+      saveCreditContractAddress(receipt.contractAddress);
+      currentPorkPriceChange = priceBps / 100;
+      contractStatus.innerHTML = `Contract deployed by ${shortenAddress(walletAddress)}. <a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${transactionHash}" target="_blank" rel="noreferrer">View deployment on Arcscan ↗</a>`;
+      contractStatus.className = "onchain-status success";
+      return receipt.contractAddress;
+    }
+
+    async function updatePorkPriceOnchain() {
+      if (!isInjectedWallet || !walletAddress || !creditContractAddress) throw new Error("Connect the shop-owner wallet and configure the contract first.");
+      await ensureArcTestnet();
+      const merchant = await readContractMerchant();
+      if (merchant.toLowerCase() !== walletAddress.toLowerCase()) throw new Error("Only the wallet that deployed this contract can update the price index.");
+      const priceBps = Math.round(Number(porkPriceInput.value) * 100);
+      if (!Number.isInteger(priceBps) || priceBps < -4000 || priceBps > 4000) throw new Error("Pork price change must be between -40% and 40%.");
+      const selector = await contractSelector("setPorkPriceChangeBps(int16)");
+      const transactionHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [{ from: walletAddress, to: creditContractAddress, data: selector + encodeSignedWord(priceBps) }]
+      });
+      setContractStatus("Price-index update submitted. Waiting for Arc finality…");
+      await waitForTransactionReceipt(transactionHash);
+      currentPorkPriceChange = priceBps / 100;
+      setContractStatus("Pork-price change updated to " + (priceBps / 100).toFixed(2) + "% onchain.", "success");
+      return transactionHash;
+    }
+
+    async function approveCreditOnchain(order) {
+      if (!order?.credit || !customerDebt || order.orderId !== customerDebt.orderId) throw new Error("Credit request data is unavailable.");
+      if (!isInjectedWallet || !walletAddress || !creditContractAddress) throw new Error("Connect the shop-owner wallet and configure the contract first.");
+      await ensureArcTestnet();
+      const merchant = await readContractMerchant();
+      if (merchant.toLowerCase() !== walletAddress.toLowerCase()) throw new Error("Switch to the shop-owner wallet that deployed this contract.");
+      const selector = await contractSelector("openDebt(bytes32,address,uint128)");
+      const principalUnits = BigInt(Math.round(order.principal * 1000000));
+      const data = selector + order.orderId.slice(2) + encodeAddressWord(order.buyer) + encodeUintWord(principalUnits);
+      const transactionHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [{ from: walletAddress, to: creditContractAddress, data }]
+      });
+      setContractStatus("Credit approval submitted. Waiting for Arc finality…");
+      await waitForTransactionReceipt(transactionHash);
+      order.status = "Credit active";
+      order.onchainStatus = "active";
+      customerDebt.onchainStatus = "active";
+      customerDebt.openTxHash = transactionHash;
+      saveCustomerDebt();
+      renderSellerOrders();
+      renderCustomerDebt();
+      const card = document.querySelector(`[data-order-card="${order.orderId}"]`);
+      if (card) {
+        const chip = card.querySelector(".order-top .status-chip");
+        if (chip) chip.textContent = "ONCHAIN CREDIT";
+      }
+      setContractStatus("Credit is active on Arc Testnet for order " + order.id + ".", "success");
+      return transactionHash;
+    }
+
+    async function repayCreditOnchain() {
+      if (!customerDebt || customerDebt.onchainStatus !== "active") throw new Error("No active onchain debt to repay.");
+      if (!isInjectedWallet || !walletAddress) throw new Error("Connect the buyer wallet first.");
+      if (walletAddress.toLowerCase() !== customerDebt.buyer.toLowerCase()) throw new Error("Switch to the buyer wallet that owns this debt.");
+      await ensureArcTestnet();
+      const address = customerDebt.contractAddress;
+      const due = await readOnchainAmountDue(customerDebt.orderId, address);
+      if (due === 0n) throw new Error("This debt is already closed.");
+      const approveData = "0x095ea7b3" + encodeAddressWord(address) + encodeUintWord(due);
+      repayDebtButton.disabled = true;
+      repayDebtButton.textContent = "Approve USDC in wallet…";
+      const approveHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [{ from: walletAddress, to: USDC_CONTRACT, data: approveData }]
+      });
+      await waitForTransactionReceipt(approveHash);
+      repayDebtButton.textContent = "Confirm repayment in wallet…";
+      const selector = await contractSelector("repayInFull(bytes32)");
+      const repayHash = await window.ethereum.request({
+        method: "eth_sendTransaction",
+        params: [{ from: walletAddress, to: address, data: selector + customerDebt.orderId.slice(2) }]
+      });
+      await waitForTransactionReceipt(repayHash);
+      customerDebt.onchainStatus = "repaid";
+      customerDebt.repayTxHash = repayHash;
+      saveCustomerDebt();
+      await refreshTestnetBalance();
+      renderCustomerDebt();
+      return repayHash;
     }
 
     async function sendArcTestnetProofPayment() {
@@ -1429,7 +1711,10 @@
       checkoutWallet.textContent = walletButton.textContent + (isInjectedWallet ? " · Arc Testnet" : " · browser demo");
       useStoreCredit.checked = false;
       updateCreditOption(cartSubtotal());
-      if (isInjectedWallet) refreshTestnetBalance();
+      if (isInjectedWallet) {
+        refreshTestnetBalance();
+        if (creditContractAddress) refreshCreditContractTerms().catch(() => {});
+      }
       checkoutModal.hidden = false;
       document.body.style.overflow = "hidden";
       document.querySelector("#buyerName").focus();
@@ -1446,15 +1731,19 @@
     function createPlacedOrder(lines, total, transactionHash = "", storeCredit = null) {
       const primary = lines[0];
       const transactionMarkup = storeCredit
-        ? `${formatUSDC(storeCredit.principal)} debt to ${primary.seller} · ${storeCredit.apr.toFixed(2)}% APR`
+        ? storeCredit.onchainStatus === "pending"
+          ? `${formatUSDC(storeCredit.principal)} requested · merchant approval required on Arc`
+          : `${formatUSDC(storeCredit.principal)} demo debt · contract not configured`
         : transactionHash
         ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${transactionHash}" target="_blank" rel="noreferrer">View test payment on Arcscan ↗</a>`
         : "Arc Testnet · simulated escrow";
-      const orderStatus = storeCredit ? "STORE CREDIT" : transactionHash ? "ONCHAIN DEMO" : "DEMO ESCROW";
+      const orderStatus = storeCredit ? storeCredit.onchainStatus === "pending" ? "CREDIT REQUESTED" : "DEMO CREDIT" : transactionHash ? "ONCHAIN DEMO" : "DEMO ESCROW";
+      const displayId = storeCredit?.displayId || "PP-" + Date.now().toString().slice(-8);
       const orderCard = document.createElement("article");
       orderCard.className = "order-card featured";
+      if (storeCredit?.orderId) orderCard.dataset.orderCard = storeCredit.orderId;
       orderCard.innerHTML = `
-        <div class="order-top"><span>ORDER PP-${Date.now().toString().slice(-8)}</span><span class="status-chip">${orderStatus}</span></div>
+        <div class="order-top"><span>ORDER ${displayId}</span><span class="status-chip">${orderStatus}</span></div>
         <div class="order-main">
           <div class="order-symbol" aria-hidden="true">P</div>
           <div><h3>${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) + " more" : ""}</h3><p>${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${formatUSDC(total)}</p><span class="status-chip">Awaiting acceptance</span></div>
@@ -1464,11 +1753,29 @@
         <div class="escrow-strip"><span><b>${storeCredit ? formatUSDC(storeCredit.principal) : transactionHash ? TEST_PAYMENT_LABEL : formatUSDC(total)}</b> ${storeCredit ? "owed to shop owner" : transactionHash ? "proof payment finalized" : "shown in demo escrow"}</span><span>${transactionMarkup}</span></div>
       `;
       document.querySelector("#orderCards").prepend(orderCard);
+      if (storeCredit) {
+        sellerOrders.unshift({
+          id: displayId,
+          buyer: storeCredit.buyer,
+          detail: `${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) : ""}`,
+          total,
+          status: storeCredit.onchainStatus === "pending" ? "Credit requested" : "Demo credit",
+          credit: true,
+          orderId: storeCredit.orderId,
+          principal: storeCredit.principal,
+          onchainStatus: storeCredit.onchainStatus
+        });
+        renderSellerOrders();
+      }
     }
 
     function renderSellerOrders() {
       sellerOrdersContainer.innerHTML = sellerOrders.map(order => {
-        const action = order.status === "Awaiting acceptance"
+        const action = order.credit && order.status === "Credit requested"
+          ? `<button class="primary-small" type="button" data-credit-approve="${order.id}">Approve onchain</button>`
+          : order.credit && order.status === "Credit active"
+            ? `<a class="outline-button" href="${ARC_EXPLORER_URL}/address/${creditContractAddress}" target="_blank" rel="noreferrer" style="text-decoration:none">View contract</a>`
+          : order.status === "Awaiting acceptance"
           ? `<button class="primary-small" type="button" data-seller-action="${order.id}" data-next="Preparing">Accept</button>`
           : order.status === "Preparing"
             ? `<button class="primary-small" type="button" data-seller-action="${order.id}" data-next="Delivered">Mark delivered</button>`
@@ -1477,7 +1784,7 @@
           <div class="seller-row">
             <div><span>${order.id}</span><strong>${order.buyer}</strong><small>${order.detail}</small></div>
             <strong>${formatUSDC(order.total)}</strong>
-            <span class="status-chip ${order.status === "Delivered" ? "complete" : ""}">${order.status}</span>
+            <span class="status-chip ${order.status === "Delivered" || order.status === "Credit active" ? "complete" : ""}">${order.status}</span>
             ${action}
           </div>
         `;
@@ -1563,14 +1870,16 @@
       confirmPayment.disabled = true;
       if (useStoreCredit.checked) {
         const storeCredit = createCustomerDebt(lines, total);
-        confirmPayment.textContent = "Recording store debt…";
+        confirmPayment.textContent = "Creating credit request…";
         window.setTimeout(() => {
           createPlacedOrder(lines, total, "", storeCredit);
           cart.clear();
           renderCart();
           closeCheckout();
           showView("orders");
-          showToast(formatUSDC(storeCredit.principal) + " recorded as debt to the shop owner");
+          showToast(storeCredit.onchainStatus === "pending"
+            ? formatUSDC(storeCredit.principal) + " sent for merchant onchain approval"
+            : formatUSDC(storeCredit.principal) + " saved as a demo request");
         }, 650);
         return;
       }
@@ -1611,7 +1920,23 @@
       showToast("Delivery confirmed — USDC released to seller");
     });
 
-    sellerOrdersContainer.addEventListener("click", event => {
+    sellerOrdersContainer.addEventListener("click", async event => {
+      const creditButton = event.target.closest("[data-credit-approve]");
+      if (creditButton) {
+        const order = sellerOrders.find(item => item.id === creditButton.dataset.creditApprove);
+        creditButton.disabled = true;
+        creditButton.textContent = "Confirm in wallet…";
+        try {
+          const transactionHash = await approveCreditOnchain(order);
+          showToast("Credit opened on Arc: " + shortenAddress(transactionHash));
+        } catch (error) {
+          creditButton.disabled = false;
+          creditButton.textContent = "Approve onchain";
+          setContractStatus(error.message || "Credit approval failed.", "error");
+          showToast(error.message || "Credit approval cancelled");
+        }
+        return;
+      }
       const button = event.target.closest("[data-seller-action]");
       if (!button) return;
       const order = sellerOrders.find(item => item.id === button.dataset.sellerAction);
@@ -1627,12 +1952,61 @@
     document.querySelector("#settleButton").addEventListener("click", () => showToast("1,284.20 USDC settlement initiated on Arc"));
     document.querySelector("#viewAllOrders").addEventListener("click", () => showToast("All seller orders are already shown"));
     document.querySelector("#learnSettlement").addEventListener("click", () => showToast("Arc uses USDC for gas, settlement and treasury flows"));
-    document.querySelector("#repayDebt").addEventListener("click", () => {
-      if (!customerDebt) return;
-      customerDebt = null;
-      saveCustomerDebt();
-      renderCustomerDebt();
-      showToast("Demo store debt repaid");
+    document.querySelector("#saveContract").addEventListener("click", async () => {
+      const address = contractAddressInput.value.trim();
+      if (!isAddress(address)) {
+        setContractStatus("Enter a valid 0x contract address.", "error");
+        return;
+      }
+      try {
+        if (window.ethereum && isInjectedWallet) {
+          await ensureArcTestnet();
+          const code = await window.ethereum.request({ method: "eth_getCode", params: [address, "latest"] });
+          if (!code || code === "0x") throw new Error("No contract code exists at this Arc Testnet address.");
+          await readContractMerchant(address);
+        }
+        saveCreditContractAddress(address);
+        if (window.ethereum) await refreshCreditContractTerms(address);
+        showToast("Onchain credit contract saved");
+      } catch (error) {
+        setContractStatus(error.message || "Could not verify this contract.", "error");
+      }
+    });
+    deployContractButton.addEventListener("click", async () => {
+      deployContractButton.disabled = true;
+      deployContractButton.textContent = "Confirm in wallet…";
+      try {
+        const address = await deployCreditContract();
+        showToast("Contract deployed at " + shortenAddress(address));
+      } catch (error) {
+        setContractStatus(error.message || "Contract deployment was cancelled.", "error");
+        showToast(error.message || "Deployment cancelled");
+      } finally {
+        deployContractButton.disabled = false;
+        deployContractButton.textContent = "Deploy as shop owner";
+      }
+    });
+    document.querySelector("#updatePorkPrice").addEventListener("click", async event => {
+      event.currentTarget.disabled = true;
+      try {
+        await updatePorkPriceOnchain();
+        showToast("Pork-price index updated onchain");
+      } catch (error) {
+        setContractStatus(error.message || "Price update was cancelled.", "error");
+        showToast(error.message || "Price update cancelled");
+      } finally {
+        event.currentTarget.disabled = false;
+      }
+    });
+    document.querySelector("#repayDebt").addEventListener("click", async () => {
+      try {
+        const transactionHash = await repayCreditOnchain();
+        showToast("Debt repaid on Arc: " + shortenAddress(transactionHash));
+      } catch (error) {
+        repayDebtButton.disabled = customerDebt?.onchainStatus !== "active";
+        repayDebtButton.textContent = customerDebt?.onchainStatus === "active" ? "Approve USDC & repay onchain" : "Waiting for merchant approval";
+        showToast(error.message || "Repayment cancelled");
+      }
     });
     if (window.ethereum?.on) {
       window.ethereum.on("accountsChanged", accounts => {
@@ -1640,6 +2014,7 @@
         isInjectedWallet = Boolean(walletAddress);
         updateWalletUI();
         if (walletAddress) refreshTestnetBalance();
+        renderCustomerDebt();
       });
       window.ethereum.on("chainChanged", chainId => {
         if (walletAddress && chainId.toLowerCase() !== ARC_CHAIN_ID) {
@@ -1661,6 +2036,7 @@
     renderCart();
     renderSellerOrders();
     renderCustomerDebt();
+    renderContractStatus();
     updateWalletUI();
     showView(initialView);
   </script>

@@ -1,0 +1,449 @@
+{
+  "contractName": "VPorkPayStoreCredit",
+  "compiler": "0.8.24+commit.e11b9ed9.Emscripten.clang",
+  "network": {
+    "name": "Arc Testnet",
+    "chainId": 5042002,
+    "usdc": "0x3600000000000000000000000000000000000000"
+  },
+  "abi": [
+    {
+      "inputs": [
+        {
+          "internalType": "address",
+          "name": "usdcAddress",
+          "type": "address"
+        },
+        {
+          "internalType": "int16",
+          "name": "initialPorkPriceChangeBps",
+          "type": "int16"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "constructor"
+    },
+    {
+      "inputs": [],
+      "name": "DebtAlreadyExists",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "DebtNotActive",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidAddress",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidPriceChange",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "InvalidPrincipal",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OnlyBuyer",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "OnlyMerchant",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "ReentrantCall",
+      "type": "error"
+    },
+    {
+      "inputs": [],
+      "name": "TransferFailed",
+      "type": "error"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "DebtCancelled",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "principal",
+          "type": "uint256"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint16",
+          "name": "aprBps",
+          "type": "uint16"
+        }
+      ],
+      "name": "DebtOpened",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": true,
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "indexed": true,
+          "internalType": "address",
+          "name": "merchant",
+          "type": "address"
+        },
+        {
+          "indexed": false,
+          "internalType": "uint256",
+          "name": "amount",
+          "type": "uint256"
+        }
+      ],
+      "name": "DebtRepaid",
+      "type": "event"
+    },
+    {
+      "anonymous": false,
+      "inputs": [
+        {
+          "indexed": false,
+          "internalType": "int16",
+          "name": "previousBps",
+          "type": "int16"
+        },
+        {
+          "indexed": false,
+          "internalType": "int16",
+          "name": "newBps",
+          "type": "int16"
+        }
+      ],
+      "name": "PorkPriceChangeUpdated",
+      "type": "event"
+    },
+    {
+      "inputs": [],
+      "name": "BASE_APR_BPS",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_APR_BPS",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MAX_PRINCIPAL",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "MIN_APR_BPS",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "YEAR",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "amountDue",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int16",
+          "name": "priceChangeBps",
+          "type": "int16"
+        }
+      ],
+      "name": "aprForPriceChange",
+      "outputs": [
+        {
+          "internalType": "uint16",
+          "name": "",
+          "type": "uint16"
+        }
+      ],
+      "stateMutability": "pure",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "cancelDebt",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "debts",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "internalType": "uint128",
+          "name": "principal",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint128",
+          "name": "repaid",
+          "type": "uint128"
+        },
+        {
+          "internalType": "uint64",
+          "name": "openedAt",
+          "type": "uint64"
+        },
+        {
+          "internalType": "uint16",
+          "name": "aprBps",
+          "type": "uint16"
+        },
+        {
+          "internalType": "bool",
+          "name": "closed",
+          "type": "bool"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "interestAccrued",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "merchant",
+      "outputs": [
+        {
+          "internalType": "address",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        },
+        {
+          "internalType": "address",
+          "name": "buyer",
+          "type": "address"
+        },
+        {
+          "internalType": "uint128",
+          "name": "principal",
+          "type": "uint128"
+        }
+      ],
+      "name": "openDebt",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "porkPriceChangeBps",
+      "outputs": [
+        {
+          "internalType": "int16",
+          "name": "",
+          "type": "int16"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "bytes32",
+          "name": "orderId",
+          "type": "bytes32"
+        }
+      ],
+      "name": "repayInFull",
+      "outputs": [
+        {
+          "internalType": "uint256",
+          "name": "paid",
+          "type": "uint256"
+        }
+      ],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [
+        {
+          "internalType": "int16",
+          "name": "newPriceChangeBps",
+          "type": "int16"
+        }
+      ],
+      "name": "setPorkPriceChangeBps",
+      "outputs": [],
+      "stateMutability": "nonpayable",
+      "type": "function"
+    },
+    {
+      "inputs": [],
+      "name": "usdc",
+      "outputs": [
+        {
+          "internalType": "contract IERC20",
+          "name": "",
+          "type": "address"
+        }
+      ],
+      "stateMutability": "view",
+      "type": "function"
+    }
+  ],
+  "bytecode": "0x60c060405260018055348015610013575f80fd5b50604051610f70380380610f70833981016040819052610032916100bb565b6001600160a01b0382166100595760405163e6c4247b60e01b815260040160405180910390fd5b610f9f198160010b12806100715750610fa08160010b135b1561008f576040516348cd6b8b60e11b815260040160405180910390fd5b6001600160a01b03919091166080523360a0525f805461ffff191661ffff909216919091179055610104565b5f80604083850312156100cc575f80fd5b82516001600160a01b03811681146100e2575f80fd5b8092505060208301518060010b81146100f9575f80fd5b809150509250929050565b60805160a051610e1a6101565f395f818161020801528181610332015281816104e8015281816105390152818161092601528181610b190152610bd101525f81816101440152610b480152610e1a5ff3fe608060405234801561000f575f80fd5b50600436106100fb575f3560e01c8063741c04e611610093578063a866d16b11610063578063a866d16b1461022a578063a9caa4111461023d578063cd3dc6ae14610301578063f0eca07714610314575f80fd5b8063741c04e6146101dc5780637df33c20146101e557806383914540146101f8578063a5ff765114610203575f80fd5b80635638b4ec116100ce5780635638b4ec146101985780635eee8932146101a1578063652a81e3146101b657806373fff200146101c9575f80fd5b806316d3834e146100ff5780633945c080146101235780633e413bee1461013f57806352e22f3f1461017e575b5f80fd5b5f5461010b9060010b81565b60405160019190910b81526020015b60405180910390f35b61012c61070881565b60405161ffff909116815260200161011a565b6101667f000000000000000000000000000000000000000000000000000000000000000081565b6040516001600160a01b03909116815260200161011a565b61018a64e8d4a5100081565b60405190815260200161011a565b61012c61025881565b6101b46101af366004610c47565b610327565b005b61018a6101c4366004610c47565b610400565b6101b46101d7366004610c5e565b6104dd565b61012c61032081565b61018a6101f3366004610c47565b6107d4565b61018a6301e1338081565b6101667f000000000000000000000000000000000000000000000000000000000000000081565b61012c610238366004610cb3565b6108ce565b6102ad61024b366004610c47565b600260208190525f91825260409091208054600182015491909201546001600160a01b03909216916001600160801b0380831692600160801b9004169067ffffffffffffffff811690600160401b810461ffff1690600160501b900460ff1686565b604080516001600160a01b039790971687526001600160801b039586166020880152939094169285019290925267ffffffffffffffff16606084015261ffff166080830152151560a082015260c00161011a565b6101b461030f366004610cb3565b61091b565b61018a610322366004610c47565b6109f0565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461037057604051630719b5a360e41b815260040160405180910390fd5b5f81815260026020526040902080546001600160a01b0316158061039f57506002810154600160501b900460ff165b156103bd57604051636bcc68b760e01b815260040160405180910390fd5b60028101805460ff60501b1916600160501b17905560405182907f129567abbf9f312eeea0371f34efbd00798a8e6c9f6194fa07e73ee2946c65af905f90a25050565b5f818152600260208181526040808420815160c08101835281546001600160a01b031680825260018301546001600160801b0380821696840196909652600160801b9004909416928101929092529092015467ffffffffffffffff81166060840152600160401b810461ffff166080840152600160501b900460ff16151560a0830152158061049057508060a001515b1561049d57505f92915050565b80604001516001600160801b03166104b4846107d4565b82602001516001600160801b03166104cc9190610ce7565b6104d69190610cfa565b9392505050565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461052657604051630719b5a360e41b815260040160405180910390fd5b6001600160a01b038216158061056d57507f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316826001600160a01b0316145b1561058b5760405163e6c4247b60e01b815260040160405180910390fd5b6001600160801b03811615806105ae575064e8d4a51000816001600160801b0316115b156105cc5760405163dfee2c0b60e01b815260040160405180910390fd5b5f838152600260205260409020546001600160a01b031615610601576040516313dcfcf760e21b815260040160405180910390fd5b5f80546106109060010b6108ce565b90506040518060c00160405280846001600160a01b03168152602001836001600160801b031681526020015f6001600160801b031681526020014267ffffffffffffffff1681526020018261ffff1681526020015f151581525060025f8681526020019081526020015f205f820151815f015f6101000a8154816001600160a01b0302191690836001600160a01b031602179055506020820151816001015f6101000a8154816001600160801b0302191690836001600160801b0316021790555060408201518160010160106101000a8154816001600160801b0302191690836001600160801b031602179055506060820151816002015f6101000a81548167ffffffffffffffff021916908367ffffffffffffffff16021790555060808201518160020160086101000a81548161ffff021916908361ffff16021790555060a082015181600201600a6101000a81548160ff021916908315150217905550905050826001600160a01b0316847fad505d493d6d8809fd2ed2047004c87e07237849c60e7555cb0c360e52c0dd5784846040516107c69291906001600160801b0392909216825261ffff16602082015260400190565b60405180910390a350505050565b5f818152600260208181526040808420815160c08101835281546001600160a01b031680825260018301546001600160801b0380821696840196909652600160801b9004909416928101929092529092015467ffffffffffffffff81166060840152600160401b810461ffff166080840152600160501b900460ff16151560a083015261086357505f92915050565b5f816060015167ffffffffffffffff164261087e9190610cfa565b90506108906301e13380612710610d0d565b81836080015161ffff1684602001516001600160801b03166108b29190610d0d565b6108bc9190610d0d565b6108c69190610d38565b949350505050565b5f806108df6002600185900b610d4b565b6108eb90610320610d77565b9050610258811215610901575061025892915050565b610708811315610915575061070892915050565b92915050565b336001600160a01b037f0000000000000000000000000000000000000000000000000000000000000000161461096457604051630719b5a360e41b815260040160405180910390fd5b610f9f198160010b128061097c5750610fa08160010b135b1561099a576040516348cd6b8b60e11b815260040160405180910390fd5b5f805461ffff19811661ffff84161790915560408051600192830b8082529284900b60208201527f97a02a280b5c172c3454ff6aa96fb45b02c0dfc10cf263f5c20e1941fff35379910160405180910390a15050565b5f600154600114610a14576040516306fda65d60e31b815260040160405180910390fd5b600260018190555f8381526020919091526040902080546001600160a01b03161580610a4b57506002810154600160501b900460ff165b15610a6957604051636bcc68b760e01b815260040160405180910390fd5b80546001600160a01b03163314610a93576040516386efbb5560e01b815260040160405180910390fd5b610a9c83610400565b9150818160010160108282829054906101000a90046001600160801b0316610ac49190610d9e565b82546001600160801b039182166101009390930a92830291909202199091161790555060028101805460ff60501b1916600160501b1790556040516323b872dd60e01b81523360048201526001600160a01b037f000000000000000000000000000000000000000000000000000000000000000081166024830152604482018490527f000000000000000000000000000000000000000000000000000000000000000016906323b872dd906064016020604051808303815f875af1158015610b8e573d5f803e3d5ffd5b505050506040513d601f19601f82011682018060405250810190610bb29190610dc5565b610bcf576040516312171d8360e31b815260040160405180910390fd5b7f00000000000000000000000000000000000000000000000000000000000000006001600160a01b0316336001600160a01b0316847fa7e3334dcefe7cac00fb627e53fe0a03f0027ac7d3b075d02c55435ca548f39185604051610c3591815260200190565b60405180910390a45060018055919050565b5f60208284031215610c57575f80fd5b5035919050565b5f805f60608486031215610c70575f80fd5b8335925060208401356001600160a01b0381168114610c8d575f80fd5b915060408401356001600160801b0381168114610ca8575f80fd5b809150509250925092565b5f60208284031215610cc3575f80fd5b81358060010b81146104d6575f80fd5b634e487b7160e01b5f52601160045260245ffd5b8082018082111561091557610915610cd3565b8181038181111561091557610915610cd3565b808202811582820484141761091557610915610cd3565b634e487b7160e01b5f52601260045260245ffd5b5f82610d4657610d46610d24565b500490565b5f82610d5957610d59610d24565b600160ff1b82145f1984141615610d7257610d72610cd3565b500590565b8082018281125f831280158216821582161715610d9657610d96610cd3565b505092915050565b6001600160801b03818116838216019080821115610dbe57610dbe610cd3565b5092915050565b5f60208284031215610dd5575f80fd5b815180151581146104d6575f80fdfea264697066735822122096d8e8dbf15504f5e070f728cd51f9e3605497fccc9af1c3a7c5ae01f3d94b2664736f6c63430008180033",
+  "selectors": {
+    "merchant()": "0xa5ff7651",
+    "porkPriceChangeBps()": "0x16d3834e",
+    "setPorkPriceChangeBps(int16)": "0xcd3dc6ae",
+    "openDebt(bytes32,address,uint128)": "0x73fff200",
+    "amountDue(bytes32)": "0x652a81e3",
+    "repayInFull(bytes32)": "0xf0eca077",
+    "debts(bytes32)": "0xa9caa411"
+  }
+}
