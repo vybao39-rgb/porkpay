@@ -1,2 +1,3 @@
 node_modules/
 .tmp-slides/
+*.pptx.inspect.ndjson

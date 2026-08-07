@@ -1,116 +1,104 @@
 # VPorkPay
 
-**A USDC-native pork marketplace for fast, transparent buyer-to-supplier payments on Arc.**
+**A USDC-native pork marketplace with merchant-approved onchain store credit on Arc.**
 
-[Live Demo](https://vybao39-rgb.github.io/porkpay/) · [Checkpoint 2 Presentation](https://vybao39-rgb.github.io/porkpay/presentation.html) · [Repository](https://github.com/vybao39-rgb/porkpay)
+[Live MVP](https://vybao39-rgb.github.io/porkpay/) · [Final presentation](https://vybao39-rgb.github.io/porkpay/presentation.html) · [Public repository](https://github.com/vybao39-rgb/porkpay)
 
-> **Hackathon status:** Functional frontend MVP with Arc Testnet proof payments and a tested store-credit smart contract. The shop owner can deploy the contract from Seller Hub, approve buyer debt onchain, and receive test USDC repayment. Testnet only — do not use real funds. The contract has not been independently audited and does not create a legally binding credit agreement.
+> **Safety:** Arc Testnet only. Do not use real funds. `VPorkPayStoreCredit` is an unaudited hackathon prototype and does not create a legally binding credit agreement.
 
-## The problem
+## Problem
 
-Small pork buyers and suppliers often coordinate orders through fragmented messages, spreadsheets, cash, or slow bank transfers. This makes price comparison, order tracking, payment confirmation, and settlement harder than necessary.
+Small pork buyers and suppliers often coordinate prices, orders and payment evidence through disconnected messages, spreadsheets, cash or bank transfers. A buyer can also be short of working capital at checkout, while the shop owner has no transparent shared record for approving and collecting that credit.
 
-## The solution
+## Solution
 
-VPorkPay combines a simple marketplace with USDC settlement on Arc. Buyers discover products, build an order, connect a wallet, and pay in USDC. If the available balance is not enough, the buyer can request the shortfall as store credit. The shop owner approves the debt onchain, its annual rate is fixed from the pork-price trend, and the buyer repays test USDC directly to the merchant wallet.
+VPorkPay combines a simple pork marketplace with a narrow DeFi primitive: merchant-approved store credit denominated and repaid in test USDC.
 
-The product is intentionally narrow: **buy pork, pay with USDC, and track the order from purchase to delivery.**
+Buyers compare products, prepare an order and connect an injected EVM wallet. If their displayed Arc Testnet USDC balance is below the order total, they can send the shortfall to the shop owner as a credit request. No debt exists until the merchant opens it in the verified contract. The contract fixes an annual rate from the pork-price index, accrues simple interest using Arc block time and transfers repayment directly from the buyer to the immutable merchant address.
 
-## Hackathon track
+## Why this is DeFi
 
-**Primary track: DeFi**
+- Principal, buyer, merchant, opening time, APR and repayment state are recorded onchain.
+- The contract—not the webpage—calculates the live amount due.
+- Only the deploying merchant can open or cancel debt; only the recorded buyer can repay it.
+- Repayment uses Arc Testnet USDC `transferFrom` and goes directly to the merchant wallet.
+- Every successful transaction can be inspected independently on Arcscan.
+- VPorkPay never receives or stores a private key and never takes custody of user funds.
 
-VPorkPay uses stablecoin payments as practical commerce infrastructure, focusing on USDC checkout, escrow-style settlement, supplier payouts, and transparent transaction records.
+## Functional MVP
 
-## Current MVP
+### Marketplace and orders
 
-- Browse six pork products with prices in USDC
-- Search products and filter by category
-- Save favorite products
-- Add items to cart and change quantities
-- Connect an EVM wallet
-- Add or switch to Arc Testnet
-- Read the connected wallet's Arc Testnet USDC balance
-- Offer store credit when the available balance is below the order total
-- Deploy the `VPorkPayStoreCredit` contract from the shop-owner wallet
-- Verify the contract identifier, immutable merchant and official Arc Testnet USDC address in the browser
-- Approve buyer credit onchain from Seller Hub
-- Accrue simple interest using Arc block time and a pork-price-linked fixed APR
-- Approve and repay Arc Testnet USDC directly to the merchant wallet
-- Show transaction proofs on Arcscan
-- Preserve credit requests and transaction evidence across browser reloads
-- Complete a guided demo checkout
-- Enter delivery information
-- Review buyer orders and fulfillment progress
-- Confirm delivery
-- View seller metrics and incoming order status
-- Persist contract and order UI state locally while keeping the debt and repayment source of truth onchain
-- Responsive layout for desktop and mobile
+- Browse, search and filter six pork products priced in USDC.
+- Add products to a cart, adjust quantity and capture delivery details.
+- Review buyer orders and seller fulfilment status.
+- Distinguish sample operations data from signed onchain evidence.
 
-## Meaningful use of Arc and Circle
+### Arc Testnet wallet and payment proof
 
-### Implemented
+- Require an injected EVM wallet; there is no fake wallet or browser-payment fallback.
+- Add or switch the wallet to Arc Testnet (chain ID `5042002`).
+- Read the official Arc Testnet USDC balance.
+- Submit an explicitly labelled `0.01` test-USDC self-transfer as a wallet/payment proof.
+- Wait for the receipt and link the finalized transaction to Arcscan.
 
-- Arc Testnet wallet network setup
-- USDC-denominated product pricing and order totals
-- Arc Testnet USDC balance lookup and 0.01 USDC proof payment
-- Merchant-controlled store-credit smart contract
-- Per-order onchain principal, buyer, opening time, APR and closed status
-- Block-time interest accrual and test USDC `transferFrom` repayment
-- Buyer and supplier flow designed around stablecoin settlement
+### Onchain store credit
 
-### Next integration milestone
+- Build and publish the Solidity deployment artifact reproducibly.
+- Deploy `VPorkPayStoreCredit` from the shop-owner wallet in Seller Hub.
+- Verify the contract identifier, immutable merchant and official Arc Testnet USDC address before trusting an entered address.
+- Calculate the shortfall and persist a buyer credit request across reloads.
+- Let the merchant open that exact order debt onchain.
+- Fix APR when the debt opens: `8% + 50% × annual pork-price change`, capped to `6–18%`.
+- Read the live block-time amount due from the contract.
+- Approve a narrowly capped USDC allowance and repay the debt in full.
+- Reject a repayment when live accrued interest exceeds the buyer-approved maximum.
+- Persist deployment and transaction evidence while keeping debt state onchain as the source of truth.
 
-- Send testnet USDC using Circle App Kit Send
-- Save transaction hashes and link orders to Arcscan
-- Deploy a minimal escrow contract on Arc Testnet
-- Release funds after buyer delivery confirmation
-- Add refund handling for cancelled orders
+## Onchain lifecycle
 
-## Onchain store credit
+1. Buyer connects an Arc Testnet wallet and builds an order.
+2. Checkout compares the test-USDC balance with the order total.
+3. Buyer submits the shortfall as a pending request; this step alone creates no debt.
+4. The deploying merchant wallet calls `openDebt(orderId, buyer, principal)`.
+5. The contract records the fixed APR and starts interest accrual from Arc block time.
+6. Buyer approves a capped test-USDC allowance and calls `repayInFull(orderId, maxAmount)`.
+7. The contract transfers only the live amount due to the merchant and permanently closes the debt.
 
-When a connected wallet cannot cover the order total, checkout offers a simple onchain credit request:
+## Contract safeguards
 
-1. Available balance is applied to the order calculation.
-2. The missing amount becomes a pending request; no debt exists yet.
-3. The deploying merchant wallet calls `openDebt` for that order on Arc Testnet.
-4. Annual interest uses a transparent contract formula: an 8% base rate plus 50% of the annual pork-price change, capped between 6% and 18%. The APR is fixed when the debt opens.
-5. My orders reads the live amount due from the contract.
-6. The buyer approves a narrowly capped test-USDC amount, then calls `repayInFull`; the contract rejects a charge above that cap and transfers only the live amount due to the immutable merchant address.
+- Immutable merchant and USDC addresses.
+- Versioned `CONTRACT_ID` verification in the browser.
+- Merchant-only debt opening, cancellation and pork-price updates.
+- Buyer-only repayment.
+- One debt per order ID; closed IDs cannot be reused.
+- Checks-effects-interactions ordering and reentrancy protection.
+- Maximum repayment quote to protect the buyer from interest drift between approval and execution.
+- Explicit pork-price and APR bounds.
 
-Only the merchant can open or cancel a debt, only its recorded buyer can repay it, order IDs cannot be reused, and repayment is protected against reentrancy and stale quotes. The browser verifies `CONTRACT_ID`, merchant and USDC before trusting a configured address. Source is in [`contracts/VPorkPayStoreCredit.sol`](contracts/VPorkPayStoreCredit.sol). This is an unaudited testnet prototype, not a production lending product or legal credit process.
+The source is [`contracts/VPorkPayStoreCredit.sol`](contracts/VPorkPayStoreCredit.sol). The browser artifact is [`assets/vporkpay-store-credit.json`](assets/vporkpay-store-credit.json). Arc Testnet USDC is fixed to Circle's published address `0x3600000000000000000000000000000000000000`.
 
-Arc is a strong fit because USDC is its native gas token and Circle App Kit provides a direct path to Send, Bridge, Swap, and Unified Balance capabilities.
-
-## User flow
-
-1. A buyer browses pork products and adds items to the cart.
-2. The buyer connects a wallet and switches to Arc Testnet.
-3. VPorkPay calculates the total in USDC.
-4. The buyer submits delivery details and approves payment.
-5. Funds are held for the order in the planned escrow flow.
-6. The supplier fulfills the order.
-7. The buyer confirms delivery and funds are released.
-
-## Technical architecture
+## Architecture
 
 ```text
-Buyer / Supplier
+Buyer / Merchant
        |
-VPorkPay Web App
+Injected EVM wallet
        |
-EVM Wallet
+VPorkPay static web app
        |
 Arc Testnet
        |
-VPorkPayStoreCredit Contract
+VPorkPayStoreCredit v1.1
        |
-Arc Testnet USDC → Merchant Wallet
+Official test USDC -> immutable merchant wallet
+       |
+Arcscan transaction evidence
 ```
 
-The frontend is a dependency-free static web application built with HTML, CSS, and JavaScript and hosted on GitHub Pages. The Solidity contract is compiled into the browser deployment artifact at [`assets/vporkpay-store-credit.json`](assets/vporkpay-store-credit.json). Arc Testnet USDC is fixed to Circle's published address `0x3600000000000000000000000000000000000000`.
+The frontend is a dependency-free HTML/CSS/JavaScript application hosted on GitHub Pages. All state-changing calls are signed by the user's injected wallet. Browser storage keeps only interface continuity and evidence links; the contract remains authoritative for active debt and repayment.
 
-### Reproducible verification
+## Reproduce and verify
 
 ```bash
 pnpm install
@@ -119,45 +107,11 @@ pnpm test:contract
 pnpm test:ui
 ```
 
-These checks compile Solidity 0.8.24, exercise the complete debt lifecycle on a local EVM chain, and simulate deploy → request → merchant approval → capped USDC approval → repayment in the browser.
-
-## Roadmap
-
-### Checkpoint 1 — Idea and prototype
-
-- Define the buyer/supplier problem
-- Publish the marketplace UI
-- Add wallet connection and Arc Testnet setup
-- Document the Arc and USDC integration plan
-
-### Checkpoint 2 — Onchain payment
-
-- Integrate testnet USDC payment
-- Display pending, confirmed, and failed payment states
-- Store and display transaction hashes
-- Publish progress and architecture notes
-
-### Final submission — Escrow MVP
-
-- Deploy and verify the escrow contract on Arc Testnet
-- Connect checkout, delivery confirmation, payout, and refund flows
-- Add contract tests and end-to-end scenarios
-- Record a three-minute demo
-- Publish the final pitch deck and submission links
+The contract test compiles Solidity `0.8.24` and exercises merchant controls, buyer authorization, price-linked APR, interest accrual, repayment caps and full repayment on a local EVM. The UI test simulates verified deployment, a persistent request, merchant approval, bounded USDC approval and repayment.
 
 ## Run locally
 
-No build step is required. Clone or download the repository and open `index.html`, or serve the directory with any static file server. Use a browser wallet such as MetaMask for the Arc Testnet connection flow.
-
-## Checkpoint 1 submission summary
-
-**Project name:** VPorkPay
-
-**Track:** DeFi
-
-**One-line pitch:** VPorkPay is a USDC-native marketplace that helps pork buyers and verified suppliers place orders, secure payments, and settle quickly on Arc.
-
-**Description:** VPorkPay simplifies pork commerce for small buyers and suppliers. Buyers can compare products, place an order, connect an EVM wallet, and pay a USDC-denominated total. Suppliers can manage incoming orders and follow fulfillment and settlement from a single dashboard. The current public MVP demonstrates the complete marketplace and order-management experience, including Arc Testnet wallet setup. The next milestone is real testnet USDC payment through Circle App Kit Send, followed by a minimal Arc escrow contract that releases funds after delivery confirmation.
+Serve the repository with any static file server and open `index.html`. An injected wallet such as MetaMask is required for Arc Testnet transactions. The public GitHub Pages deployment is the canonical MVP.
 
 ## License
 

@@ -3,9 +3,9 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="VPorkPay Checkpoint 2 presentation for the Build on Arc 2026 DeFi Track.">
+  <meta name="description" content="VPorkPay final submission presentation for the Build on Arc 2026 DeFi Track.">
   <link rel="icon" type="image/png" href="assets/vporkpay-logo.png">
-  <title>VPorkPay · Checkpoint 2 Presentation</title>
+  <title>VPorkPay · Final Submission</title>
   <style>
     :root {
       --cream: #f4f0e7;
@@ -263,11 +263,11 @@
     <section class="slide cream active" id="slide-1" aria-label="Slide 1 of 8">
       <div class="title-grid">
         <div class="title-copy">
-          <p class="eyebrow">Build on Arc 2026 · Checkpoint 2</p>
+          <p class="eyebrow">Build on Arc 2026 · Final submission</p>
           <h1>VPorkPay</h1>
           <h1 class="tagline">Source better.<br>Pay smarter.</h1>
-          <p class="sub">A USDC-native pork marketplace for buyer-to-supplier settlement on Arc.</p>
-          <span class="tag">DEFI TRACK · TESTNET MVP</span>
+          <p class="sub">A USDC-native pork marketplace with merchant-approved onchain store credit on Arc.</p>
+          <span class="tag">DEFI TRACK · FUNCTIONAL TESTNET MVP</span>
         </div>
         <div class="title-art">
           <img src="assets/pork-belly-ai.jpg" alt="Premium pork belly">
@@ -293,37 +293,37 @@
           <div class="callout">One USDC-denominated commerce record.</div>
         </div>
       </div>
-      <div class="footer"><span>VPORKPAY · CHECKPOINT 2 · DEFI TRACK</span><span>02</span></div>
+      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>02</span></div>
     </section>
 
     <section class="slide cream" id="slide-3" aria-label="Slide 3 of 8">
       <p class="eyebrow">The product</p>
-      <h2>One flow connects discovery, ordering and USDC settlement.</h2>
+      <h2>One flow connects discovery, ordering and working capital.</h2>
       <div class="solution-grid">
         <div>
           <div class="step"><span class="step-num">01</span><div><h3>Discover</h3><p>Compare verified suppliers, cuts and USDC prices.</p></div></div>
           <div class="step"><span class="step-num">02</span><div><h3>Order</h3><p>Build a cart and capture delivery details.</p></div></div>
-          <div class="step"><span class="step-num">03</span><div><h3>Settle</h3><p>Connect an EVM wallet and confirm the payment path.</p></div></div>
+          <div class="step"><span class="step-num">03</span><div><h3>Finance</h3><p>Pay with test USDC or request the shortfall as merchant-approved onchain credit.</p></div></div>
         </div>
         <img class="screen" src="assets/presentation-products.png" alt="VPorkPay marketplace">
       </div>
-      <div class="footer"><span>VPORKPAY · CHECKPOINT 2 · DEFI TRACK</span><span>03</span></div>
+      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>03</span></div>
     </section>
 
     <section class="slide dark" id="slide-4" aria-label="Slide 4 of 8">
-      <p class="eyebrow">Checkpoint 2 shipped</p>
-      <h2>The demo now creates an Arc Testnet proof payment.</h2>
+      <p class="eyebrow">Functional MVP</p>
+      <h2>The browser verifies and operates the credit contract.</h2>
       <div class="proof-grid">
         <img class="proof-screen" src="assets/presentation-checkout.png" alt="VPorkPay Arc Testnet checkout">
         <div>
-          <div class="check"><h3>Connect and switch</h3><p>Request an EVM account and move the wallet to Arc Testnet.</p></div>
-          <div class="check"><h3>Read USDC balance</h3><p>Query the official Arc Testnet USDC ERC-20 contract.</p></div>
-          <div class="check"><h3>Send a 0.01 proof</h3><p>Submit a self-transfer so the displayed order total is never charged.</p></div>
-          <div class="check"><h3>Verify finality</h3><p>Poll the receipt and expose the Arcscan transaction link.</p></div>
+          <div class="check"><h3>Verify before trust</h3><p>Check the versioned contract ID, merchant and official Arc Testnet USDC address.</p></div>
+          <div class="check"><h3>Merchant-approved debt</h3><p>A buyer request creates no debt until the shop owner signs <code>openDebt</code>.</p></div>
+          <div class="check"><h3>Price-linked interest</h3><p>APR is fixed at opening and the amount due accrues from Arc block time.</p></div>
+          <div class="check"><h3>Direct repayment</h3><p>The buyer sets a capped allowance; test USDC moves directly to the merchant.</p></div>
           <div class="warning">TESTNET ONLY · NEVER USE REAL FUNDS</div>
         </div>
       </div>
-      <div class="footer"><span>VPORKPAY · CHECKPOINT 2 · DEFI TRACK</span><span>04</span></div>
+      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>04</span></div>
     </section>
 
     <section class="slide" id="slide-5" aria-label="Slide 5 of 8">
@@ -341,52 +341,52 @@
           <div class="claim"><span class="claim-num">03</span><div><h3>EVM compatibility</h3><p>Existing Solidity contracts and standard Ethereum tooling remain usable.</p></div></div>
         </div>
       </div>
-      <div class="footer"><span>VPORKPAY · CHECKPOINT 2 · DEFI TRACK</span><span>05</span></div>
+      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>05</span></div>
     </section>
 
     <section class="slide cream" id="slide-6" aria-label="Slide 6 of 8">
       <p class="eyebrow">Current architecture</p>
-      <h2>The MVP keeps the payment path simple and inspectable.</h2>
+      <h2>The MVP keeps every trust boundary visible.</h2>
       <div class="flow">
         <div class="node"><b>BUYER</b><span>Browses and orders</span></div><span class="arrow">→</span>
         <div class="node"><b>VPORKPAY WEB</b><span>Calculates USDC total</span></div><span class="arrow">→</span>
-        <div class="node"><b>EVM WALLET</b><span>Signs the transaction</span></div><span class="arrow">→</span>
-        <div class="node arc"><b>ARC TESTNET</b><span>Executes USDC transfer</span></div><span class="arrow">→</span>
-        <div class="node"><b>ARCSCAN</b><span>Shows proof and status</span></div>
+        <div class="node"><b>EVM WALLET</b><span>Buyer or merchant signs</span></div><span class="arrow">→</span>
+        <div class="node arc"><b>CREDIT CONTRACT</b><span>Records debt and interest</span></div><span class="arrow">→</span>
+        <div class="node"><b>USDC + ARCSCAN</b><span>Repays and proves finality</span></div>
       </div>
       <div class="constraints">
         <div><h3>No custodial keys</h3><p>The wallet signs from the user's browser.</p></div>
-        <div><h3>No real funds</h3><p>The proof flow is restricted to Arc Testnet.</p></div>
-        <div><h3>Escrow is next</h3><p>Checkpoint 3 adds the minimal settlement contract.</p></div>
+        <div><h3>No real funds</h3><p>Every money path is restricted to Arc Testnet.</p></div>
+        <div><h3>Contract is authoritative</h3><p>Local storage preserves UI continuity, never the live amount due.</p></div>
       </div>
-      <div class="footer"><span>VPORKPAY · CHECKPOINT 2 · DEFI TRACK</span><span>06</span></div>
+      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>06</span></div>
     </section>
 
     <section class="slide dark" id="slide-7" aria-label="Slide 7 of 8">
-      <p class="eyebrow">Next milestone</p>
-      <h2>Checkpoint 3 turns the proof into supplier settlement.</h2>
+      <p class="eyebrow">End-to-end credit lifecycle</p>
+      <h2>Four serious steps, each with an explicit owner.</h2>
       <div class="timeline">
-        <div class="milestone"><span>01</span><h3>Supplier payment</h3><p>Send testnet USDC to the selected supplier.</p></div>
-        <div class="milestone"><span>02</span><h3>Minimal escrow</h3><p>Lock the order amount in a verified contract.</p></div>
-        <div class="milestone"><span>03</span><h3>Delivery release</h3><p>Buyer confirmation releases funds onchain.</p></div>
-        <div class="milestone"><span>04</span><h3>Refund path</h3><p>Cancelled orders return funds with a clear record.</p></div>
+        <div class="milestone"><span>01</span><h3>Buyer requests</h3><p>The shortfall is saved as pending; no debt exists yet.</p></div>
+        <div class="milestone"><span>02</span><h3>Merchant approves</h3><p>The shop-owner wallet opens the exact principal onchain.</p></div>
+        <div class="milestone"><span>03</span><h3>Interest accrues</h3><p>Arc block time advances a transparent fixed APR.</p></div>
+        <div class="milestone"><span>04</span><h3>Buyer repays</h3><p>Capped test USDC transfers directly to the merchant.</p></div>
       </div>
-      <div class="complete"><strong>Checkpoint 2 complete</strong><br>Wallet → USDC proof → receipt → Arcscan</div>
-      <div class="footer"><span>VPORKPAY · CHECKPOINT 2 · DEFI TRACK</span><span>07</span></div>
+      <div class="complete"><strong>Tested lifecycle</strong><br>Deploy → request → approve → accrue → repay</div>
+      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>07</span></div>
     </section>
 
     <section class="slide coral" id="slide-8" aria-label="Slide 8 of 8">
       <div class="submission">
         <div class="submission-copy">
-          <p class="eyebrow" style="color:white">Submission ready</p>
-          <h2>Ready for<br>DeFi Track review.</h2>
-          <h3>Buy pork. Pay in USDC. Settle on Arc.</h3>
+          <p class="eyebrow" style="color:white">Final submission</p>
+          <h2>Pork trade,<br>financed on Arc.</h2>
+          <h3>Buy pork. Request credit. Repay in USDC.</h3>
           <div class="links">
             <div class="link-row"><b>CODE</b><a href="https://github.com/vybao39-rgb/porkpay">GitHub repository</a></div>
             <div class="link-row"><b>DEMO</b><a href="https://vybao39-rgb.github.io/porkpay/">Live GitHub Pages demo</a></div>
-            <div class="link-row"><b>DECK</b><a href="presentation.html">Web presentation</a></div>
+            <div class="link-row"><b>DECK</b><a href="presentation.html">Interactive final presentation</a></div>
           </div>
-          <span class="tag" style="background:var(--ink)">CHECKPOINT 2 · DEFI</span>
+          <span class="tag" style="background:var(--ink)">FINAL SUBMISSION · DEFI</span>
         </div>
         <div class="submission-art"><img src="assets/pork-ribs-ai.jpg" alt="Meaty pork ribs"></div>
       </div>
@@ -397,7 +397,7 @@
     <button id="previous" type="button" aria-label="Previous slide">←</button>
     <span class="counter" id="counter">1 / 8</span>
     <button id="next" type="button" aria-label="Next slide">→</button>
-    <a class="download" href="VPorkPay-Checkpoint-2-Deck.pptx" download>Download PPTX</a>
+    <a class="download" href="VPorkPay-Final-Submission-Deck.pptx" download>Download PPTX</a>
   </nav>
   <div class="progress" aria-hidden="true"><span id="progress"></span></div>
 
@@ -414,7 +414,7 @@
       counter.textContent = `${current + 1} / ${slides.length}`;
       progress.style.width = `${((current + 1) / slides.length) * 100}%`;
       history.replaceState(null, "", `#slide-${current + 1}`);
-      document.title = `VPorkPay · Checkpoint 2 · ${current + 1}/${slides.length}`;
+      document.title = `VPorkPay · Final Submission · ${current + 1}/${slides.length}`;
     }
 
     document.querySelector("#previous").addEventListener("click", () => show(current - 1));

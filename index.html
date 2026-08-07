@@ -877,9 +877,9 @@
               </p>
             </div>
             <aside class="settlement" aria-label="Today's settlement">
-              <small>TODAY'S SETTLEMENT</small>
-              <strong>24,860.40</strong>
-              <span>USDC protected by escrow</span>
+              <small>ONCHAIN CREDIT TERMS</small>
+              <strong>11.20%</strong>
+              <span>APR at a +6.4% pork-price index</span>
               <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
             </aside>
           </section>
@@ -905,13 +905,13 @@
           <div class="cart-label">YOUR ORDER</div>
           <h2 id="cart-title">Shopping bag</h2>
           <div id="cartContent"></div>
-          <div class="escrow"><span>●</span><span><b>USDC escrow protection</b><br>Funds release to the seller after delivery confirmation.</span></div>
+          <div class="escrow"><span>●</span><span><b>Arc Testnet settlement</b><br>Use test USDC or request merchant-approved onchain credit.</span></div>
           <div class="totals">
             <div><span>Network fee</span><span>Estimated at wallet</span></div>
             <div class="total"><span>Total</span><strong id="cartTotal">0.00 USDC</strong></div>
           </div>
           <button class="checkout" id="checkoutButton" type="button" disabled>Continue to checkout</button>
-          <p class="powered">Live Arc Testnet payment demo available with an EVM wallet</p>
+          <p class="powered">An injected EVM wallet is required for every onchain action</p>
         </aside>
       </div>
     </section>
@@ -938,14 +938,14 @@
       </article>
       <div class="order-cards" id="orderCards">
         <article class="order-card featured" id="activeOrderCard">
-          <div class="order-top"><span>ORDER PP-240719-08</span><span class="status-chip">IN ESCROW</span></div>
+          <div class="order-top"><span>SAMPLE ORDER PP-240719-08</span><span class="status-chip">FULFILMENT</span></div>
           <div class="order-main">
             <div class="order-symbol" aria-hidden="true">P</div>
             <div><h3>Premium Pork Belly</h3><p>8 kg · Green Valley Farm · 54.40 USDC</p><span class="status-chip">Preparing</span></div>
-            <button class="primary-small" id="confirmDelivery" type="button">Confirm delivery</button>
+            <button class="primary-small" id="confirmDelivery" type="button">Confirm sample delivery</button>
           </div>
           <div class="order-progress" id="activeProgress"><span class="done">Paid</span><span class="done">Accepted</span><span class="current">Preparing</span><span>Delivered</span><span>Settled</span></div>
-          <div class="escrow-strip"><span><b>54.40 USDC</b> held safely in VPorkPay escrow</span><span>Arc Testnet · sub-second settlement</span></div>
+          <div class="escrow-strip"><span><b>Sample operations data</b> · no funds are held for this order</span><span>Onchain evidence appears only after a signed transaction</span></div>
         </article>
         <article class="order-card">
           <div class="order-top"><span>ORDER PP-240716-22</span><span class="status-chip complete">COMPLETED</span></div>
@@ -961,13 +961,13 @@
     <section class="page-view dashboard" id="sellerView" hidden>
       <div class="dashboard-hero">
         <div><div class="eyebrow">SELLER HUB</div><h1>Good morning.</h1><p>Green Valley Farm · Manage orders and USDC settlement.</p></div>
-        <button class="outline-button" id="settleButton" type="button">Settle available balance</button>
+        <a class="outline-button" href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer" style="text-decoration:none">Open Arcscan ↗</a>
       </div>
       <div class="seller-stats">
-        <article class="stat-card"><span>TODAY'S SALES</span><strong>428.60 <small>USDC</small></strong><small>↑ 18% from yesterday</small></article>
-        <article class="stat-card"><span>IN ESCROW</span><strong>168.70 <small>USDC</small></strong><small>Across 3 active orders</small></article>
-        <article class="stat-card"><span>AVAILABLE</span><strong>1,284.20 <small>USDC</small></strong><small>Ready to settle</small></article>
-        <article class="stat-card"><span>FULFILMENT</span><strong>98.4%</strong><small>Last 30 days</small></article>
+        <article class="stat-card"><span>SAMPLE ORDERS</span><strong>3</strong><small>Clearly marked operational examples</small></article>
+        <article class="stat-card"><span>CREDIT REQUESTS</span><strong id="creditRequestCount">0</strong><small>Persisted in this browser</small></article>
+        <article class="stat-card"><span>CONTRACT</span><strong>v1.1</strong><small>Verified identifier and capped repayment</small></article>
+        <article class="stat-card"><span>NETWORK</span><strong>ARC</strong><small>Testnet · Chain ID 5042002</small></article>
       </div>
       <div class="seller-grid">
         <article class="seller-table">
@@ -1100,7 +1100,6 @@
     const DEPLOYMENT_EVIDENCE_KEY = "vporkpay-deployment-evidence-v1";
     const DEFAULT_CREDIT_CONTRACT = "";
     const CREDIT_ARTIFACT_URL = "assets/vporkpay-store-credit.json";
-    const DEMO_WALLET_BALANCE = 8;
     const PORK_PRICE_CHANGE_YEAR = 6.4;
     const BASE_CREDIT_APR = 8;
     let walletAddress = "";
@@ -1170,6 +1169,7 @@
     const onchainStepDeploy = document.querySelector("#onchainStepDeploy");
     const onchainStepApprove = document.querySelector("#onchainStepApprove");
     const onchainStepRepay = document.querySelector("#onchainStepRepay");
+    const creditRequestCount = document.querySelector("#creditRequestCount");
 
     const formatUSDC = value => value.toFixed(2) + " USDC";
     const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -1287,7 +1287,9 @@
     function loadCustomerDebt() {
       try {
         const saved = JSON.parse(window.localStorage.getItem(STORE_DEBT_KEY));
-        return saved && Number(saved.principal) > 0 ? saved : null;
+        const validState = saved && ["pending", "active", "repaid"].includes(saved.onchainStatus);
+        const validContract = /^0x[0-9a-fA-F]{40}$/.test(saved?.contractAddress || "");
+        return validState && Number(saved.principal) > 0 && validContract ? saved : null;
       } catch {
         return null;
       }
@@ -1305,7 +1307,7 @@
     const roundMoney = value => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
     const calculateCreditApr = () => Math.min(18, Math.max(6, BASE_CREDIT_APR + currentPorkPriceChange * 0.5));
     const availableForOrder = () => {
-      if (!isInjectedWallet) return DEMO_WALLET_BALANCE;
+      if (!isInjectedWallet) return 0;
       return walletBalanceUnits === null ? 0 : Number(walletBalanceUnits) / 1000000;
     };
 
@@ -1333,19 +1335,17 @@
         confirmPayment.textContent = "Send credit request to shop owner";
         paymentDisclosure.textContent = creditContractAddress && isInjectedWallet
           ? "The merchant must approve this request in an Arc Testnet transaction."
-          : "Configure the onchain contract in Seller Hub to activate real credit.";
+          : "A verified contract and injected wallet are required for onchain credit.";
         setPaymentStatus(creditContractAddress && isInjectedWallet
           ? "The request will wait for the shop owner to open the debt onchain."
-          : "Onchain contract or injected wallet not available; this request will remain a clearly marked demo.", "pending");
+          : "Connect an injected wallet and configure the verified v1.1 contract before requesting credit.", "pending");
         transactionLink.hidden = true;
       } else {
-        confirmPayment.textContent = isInjectedWallet ? "Send 0.01 test USDC & place order" : "Run demo checkout";
-        paymentDisclosure.textContent = isInjectedWallet
-          ? "Only 0.01 testnet USDC is transferred to your own address; the displayed order total is not charged."
-          : "Browser simulation only · no funds are moved";
+        confirmPayment.textContent = "Send 0.01 test USDC & place order";
+        paymentDisclosure.textContent = "Only 0.01 testnet USDC is transferred to your own address; the displayed order total is not charged.";
         setPaymentStatus(isInjectedWallet
           ? "Ready to create a 0.01 USDC proof transaction."
-          : "No wallet extension detected. Checkout will use the browser simulation.");
+          : "Connect an injected EVM wallet to continue.");
       }
       return quote;
     }
@@ -1353,7 +1353,7 @@
     async function renderCustomerDebt() {
       debtCard.hidden = !customerDebt;
       if (!customerDebt) return;
-      const status = customerDebt.onchainStatus || "demo";
+      const status = customerDebt.onchainStatus;
       let dueUnits = BigInt(Math.round(customerDebt.principal * 1000000));
       if (status === "active" && customerDebt.orderId && customerDebt.contractAddress) {
         try {
@@ -1369,7 +1369,7 @@
       debtApr.textContent = customerDebt.apr.toFixed(2) + "%";
       debtYearInterest.textContent = formatUSDC(interest);
       debtYearTotal.textContent = formatUSDC(due);
-      debtStatus.textContent = status === "active" ? "ONCHAIN ACTIVE" : status === "repaid" ? "REPAID" : status === "pending" ? "AWAITING MERCHANT" : "DEMO ONLY";
+      debtStatus.textContent = status === "active" ? "ONCHAIN ACTIVE" : status === "repaid" ? "REPAID" : "AWAITING MERCHANT";
       debtStatus.classList.toggle("complete", status === "repaid");
       repayDebtButton.hidden = status === "repaid";
       repayDebtButton.disabled = status !== "active";
@@ -1378,9 +1378,7 @@
         ? "Active on Arc Testnet. Interest accrues by block time at the fixed " + customerDebt.apr.toFixed(2) + "% annual rate. Repayment transfers test USDC directly to the shop-owner wallet."
         : status === "repaid"
           ? "This Arc Testnet debt has been fully repaid to the shop owner."
-          : status === "pending"
-            ? "Waiting for the shop owner to approve order " + customerDebt.displayId + " on Arc Testnet. No debt exists until that transaction succeeds."
-            : "Browser demo only. Deploy and configure the contract in Seller Hub to create real onchain credit.";
+          : "Waiting for the shop owner to approve order " + customerDebt.displayId + " on Arc Testnet. No debt exists until that transaction succeeds.";
       const proofHash = customerDebt.repayTxHash || customerDebt.openTxHash;
       debtTransactionLink.hidden = !proofHash;
       if (proofHash) debtTransactionLink.href = ARC_EXPLORER_URL + "/tx/" + proofHash;
@@ -1391,7 +1389,9 @@
       const quote = creditQuote(total);
       const primary = lines[0];
       const displayId = "PP-" + Date.now().toString().slice(-8);
-      const canUseOnchain = Boolean(isInjectedWallet && creditContractAddress && isAddress(walletAddress));
+      if (!isInjectedWallet || !creditContractAddress || !isAddress(walletAddress)) {
+        throw new Error("Connect an injected wallet and configure the verified v1.1 contract before requesting credit.");
+      }
       customerDebt = {
         principal: quote.principal,
         apr: quote.apr,
@@ -1401,8 +1401,8 @@
         displayId,
         orderId: creditOrderId(),
         buyer: walletAddress,
-        contractAddress: canUseOnchain ? creditContractAddress : "",
-        onchainStatus: canUseOnchain ? "pending" : "demo"
+        contractAddress: creditContractAddress,
+        onchainStatus: "pending"
       };
       saveCustomerDebt();
       renderCustomerDebt();
@@ -1441,7 +1441,7 @@
     async function refreshTestnetBalance() {
       if (!window.ethereum || !isInjectedWallet || !walletAddress) {
         walletBalanceUnits = null;
-        testnetBalance.textContent = isInjectedWallet ? "Unavailable" : "Demo mode";
+        testnetBalance.textContent = isInjectedWallet ? "Unavailable" : "Wallet required";
         return;
       }
       try {
@@ -1829,41 +1829,39 @@
           return;
         }
       } else {
-        walletAddress = "0x7A4C2b31F693A4e108d6B221cA75D31A7E8f91C2";
-        isInjectedWallet = false;
+        showToast("Install or open an injected EVM wallet to continue");
+        setPaymentStatus("An injected EVM wallet is required for Arc Testnet transactions.", "error");
+        return;
       }
       updateWalletUI();
-      showToast(isInjectedWallet ? "Wallet connected on Arc Testnet" : "Demo wallet connected");
+      showToast("Wallet connected on Arc Testnet");
     }
 
     function updateWalletUI() {
       walletButton.textContent = walletAddress ? shortenAddress(walletAddress) : "Connect Arc wallet";
       checkoutWallet.textContent = walletAddress
-        ? walletButton.textContent + (isInjectedWallet ? " · Arc Testnet" : " · browser demo")
+        ? walletButton.textContent + " · Arc Testnet"
         : "Not connected";
       if (!walletAddress) {
         testnetBalance.textContent = "Connect wallet";
         setPaymentStatus("Ready after an Arc Testnet wallet is connected.");
         transactionLink.hidden = true;
-      } else if (isInjectedWallet) {
-        setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
       } else {
-        testnetBalance.textContent = "Demo mode";
-        setPaymentStatus("No wallet extension detected. Checkout will use the browser simulation.");
+        setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
       }
     }
 
     function openCheckout() {
       if (!cart.size) return;
-      if (!walletAddress) {
-        showToast("Connect your wallet before checkout");
+      if (!walletAddress || !isInjectedWallet) {
+        showToast("Connect an injected Arc Testnet wallet before checkout");
         return;
       }
       checkoutLines.innerHTML = [...cart.values()].map(item =>
         `<div class="summary-line"><span>${item.quantity} kg · ${item.name}</span><b>${formatUSDC(item.price * item.quantity)}</b></div>`
       ).join("");
       checkoutTotal.textContent = formatUSDC(cartSubtotal());
-      checkoutWallet.textContent = walletButton.textContent + (isInjectedWallet ? " · Arc Testnet" : " · browser demo");
+      checkoutWallet.textContent = walletButton.textContent + " · Arc Testnet";
       useStoreCredit.checked = false;
       updateCreditOption(cartSubtotal());
       if (isInjectedWallet) {
@@ -1886,13 +1884,11 @@
     function createPlacedOrder(lines, total, transactionHash = "", storeCredit = null) {
       const primary = lines[0];
       const transactionMarkup = storeCredit
-        ? storeCredit.onchainStatus === "pending"
-          ? `${formatUSDC(storeCredit.principal)} requested · merchant approval required on Arc`
-          : `${formatUSDC(storeCredit.principal)} demo debt · contract not configured`
+        ? `${formatUSDC(storeCredit.principal)} requested · merchant approval required on Arc`
         : transactionHash
         ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${transactionHash}" target="_blank" rel="noreferrer">View test payment on Arcscan ↗</a>`
-        : "Arc Testnet · simulated escrow";
-      const orderStatus = storeCredit ? storeCredit.onchainStatus === "pending" ? "CREDIT REQUESTED" : "DEMO CREDIT" : transactionHash ? "ONCHAIN DEMO" : "DEMO ESCROW";
+        : "No onchain transaction submitted";
+      const orderStatus = storeCredit ? "CREDIT REQUESTED" : transactionHash ? "ONCHAIN TEST PAYMENT" : "NOT SUBMITTED";
       const displayId = storeCredit?.displayId || "PP-" + Date.now().toString().slice(-8);
       const orderCard = document.createElement("article");
       orderCard.className = "order-card featured";
@@ -1905,7 +1901,7 @@
           <button class="primary-small" type="button" data-confirm-new ${storeCredit ? "data-credit-order" : ""}>Confirm delivery</button>
         </div>
         <div class="order-progress"><span class="done">${storeCredit ? "Credit" : "Paid"}</span><span class="current">Accepted</span><span>Preparing</span><span>Delivered</span><span>Settled</span></div>
-        <div class="escrow-strip"><span><b>${storeCredit ? formatUSDC(storeCredit.principal) : transactionHash ? TEST_PAYMENT_LABEL : formatUSDC(total)}</b> ${storeCredit ? "owed to shop owner" : transactionHash ? "proof payment finalized" : "shown in demo escrow"}</span><span>${transactionMarkup}</span></div>
+        <div class="escrow-strip"><span><b>${storeCredit ? formatUSDC(storeCredit.principal) : transactionHash ? TEST_PAYMENT_LABEL : "0.00 USDC"}</b> ${storeCredit ? "awaiting merchant approval" : transactionHash ? "test payment finalized" : "no funds moved"}</span><span>${transactionMarkup}</span></div>
       `;
       document.querySelector("#orderCards").prepend(orderCard);
       if (storeCredit) {
@@ -1914,7 +1910,7 @@
           buyer: storeCredit.buyer,
           detail: `${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) : ""}`,
           total,
-          status: storeCredit.onchainStatus === "pending" ? "Credit requested" : "Demo credit",
+          status: "Credit requested",
           credit: true,
           orderId: storeCredit.orderId,
           principal: storeCredit.principal,
@@ -1927,6 +1923,7 @@
     }
 
     function renderSellerOrders() {
+      creditRequestCount.textContent = sellerOrders.filter(order => order.credit && order.status === "Credit requested").length;
       sellerOrdersContainer.innerHTML = sellerOrders.map(order => {
         const action = order.credit && order.status === "Credit requested"
           ? `<button class="primary-small" type="button" data-credit-approve="${order.id}">Approve onchain</button>`
@@ -2010,8 +2007,8 @@
       }
       if (event.target.closest("[data-confirm-new]")) {
         const creditOrder = event.target.hasAttribute("data-credit-order");
-        showToast(creditOrder ? "Delivery confirmed — store debt remains active" : "Delivery confirmed — USDC released to seller");
-        event.target.textContent = creditOrder ? "Delivery confirmed" : "USDC released";
+        showToast(creditOrder ? "Delivery confirmed — store debt remains active" : "Delivery status updated — no funds moved");
+        event.target.textContent = "Delivery confirmed";
         event.target.disabled = true;
       }
     });
@@ -2028,18 +2025,21 @@
       const total = cartSubtotal();
       confirmPayment.disabled = true;
       if (useStoreCredit.checked) {
-        const storeCredit = createCustomerDebt(lines, total);
-        confirmPayment.textContent = "Creating credit request…";
-        window.setTimeout(() => {
+        try {
+          const storeCredit = createCustomerDebt(lines, total);
+          confirmPayment.textContent = "Creating credit request…";
           createPlacedOrder(lines, total, "", storeCredit);
           cart.clear();
           renderCart();
           closeCheckout();
           showView("orders");
-          showToast(storeCredit.onchainStatus === "pending"
-            ? formatUSDC(storeCredit.principal) + " sent for merchant onchain approval"
-            : formatUSDC(storeCredit.principal) + " saved as a demo request");
-        }, 650);
+          showToast(formatUSDC(storeCredit.principal) + " sent for merchant onchain approval");
+        } catch (error) {
+          confirmPayment.disabled = false;
+          confirmPayment.textContent = "Send credit request to shop owner";
+          setPaymentStatus(error.message, "error");
+          showToast(error.message);
+        }
         return;
       }
       if (isInjectedWallet) {
@@ -2061,22 +2061,17 @@
         }
         return;
       }
-      confirmPayment.textContent = "Running browser demo…";
-      window.setTimeout(() => {
-        createPlacedOrder(lines, total);
-        cart.clear();
-        renderCart();
-        closeCheckout();
-        showView("orders");
-        showToast("Browser demo order created");
-      }, 1100);
+      confirmPayment.disabled = false;
+      confirmPayment.textContent = "Pay with USDC";
+      setPaymentStatus("Connect an injected Arc Testnet wallet to submit a transaction.", "error");
+      showToast("A real wallet transaction is required");
     });
 
     document.querySelector("#confirmDelivery").addEventListener("click", event => {
-      document.querySelector("#activeProgress").innerHTML = '<span class="done">Paid</span><span class="done">Accepted</span><span class="done">Preparing</span><span class="done">Delivered</span><span class="current">Settled</span>';
-      event.target.textContent = "USDC released";
+      document.querySelector("#activeProgress").innerHTML = '<span class="done">Sample</span><span class="done">Accepted</span><span class="done">Preparing</span><span class="done">Delivered</span><span class="current">Complete</span>';
+      event.target.textContent = "Sample completed";
       event.target.disabled = true;
-      showToast("Delivery confirmed — USDC released to seller");
+      showToast("Sample order completed — no funds moved");
     });
 
     sellerOrdersContainer.addEventListener("click", async event => {
@@ -2108,7 +2103,6 @@
       }
     });
 
-    document.querySelector("#settleButton").addEventListener("click", () => showToast("1,284.20 USDC settlement initiated on Arc"));
     document.querySelector("#viewAllOrders").addEventListener("click", () => showToast("All seller orders are already shown"));
     document.querySelector("#learnSettlement").addEventListener("click", () => showToast("Arc uses USDC for gas, settlement and treasury flows"));
     document.querySelector("#saveContract").addEventListener("click", async () => {
