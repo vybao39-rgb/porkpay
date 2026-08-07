@@ -775,6 +775,19 @@
     .onchain-controls label { display: grid; gap: 6px; color: var(--muted); font-size: 8px; font-weight: 900; text-transform: uppercase; }
     .onchain-controls input { width: 100%; padding: 11px; border: 1px solid var(--line); border-radius: 8px; color: var(--ink); background: white; font: inherit; text-transform: none; }
     .onchain-actions { display: flex; flex-wrap: wrap; gap: 9px; }
+    .onchain-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .onchain-step { display: grid; grid-template-columns: 30px 1fr; gap: 10px; padding: 13px; border: 1px solid var(--line); border-radius: 10px; background: white; }
+    .onchain-step > b { display: grid; place-items: center; width: 30px; height: 30px; border-radius: 50%; color: white; background: var(--muted); font-size: 9px; }
+    .onchain-step.active > b { background: var(--coral); }
+    .onchain-step.complete > b { background: var(--green); }
+    .onchain-step strong { display: block; font-size: 9px; }
+    .onchain-step span { display: block; margin-top: 4px; color: var(--muted); font-size: 7px; line-height: 1.45; }
+    .contract-facts { display: grid; grid-template-columns: repeat(4, 1fr); gap: 8px; }
+    .contract-facts[hidden] { display: none; }
+    .contract-fact { min-width: 0; padding: 11px; border-radius: 8px; background: #f7f4ec; }
+    .contract-fact span { display: block; color: var(--muted); font-size: 7px; font-weight: 900; text-transform: uppercase; }
+    .contract-fact b, .contract-fact a { display: block; overflow: hidden; margin-top: 5px; color: var(--ink); font-size: 8px; font-weight: 900; text-overflow: ellipsis; white-space: nowrap; }
+    .contract-fact a { color: var(--green); }
     .onchain-status { padding: 11px 12px; border-radius: 8px; color: #815b0b; background: #fff6d9; font-size: 8px; line-height: 1.5; }
     .onchain-status.success { color: var(--green); background: #e5f4e9; }
     .onchain-status.error { color: #a52e22; background: #ffe7e3; }
@@ -813,6 +826,7 @@
       .checkout-form { border-right: 0; border-bottom: 1px solid var(--line); }
       .debt-grid, .credit-terms { grid-template-columns: 1fr 1fr; }
       .onchain-controls { grid-template-columns: 1fr; }
+      .onchain-steps, .contract-facts { grid-template-columns: 1fr; }
     }
   </style>
 </head>
@@ -973,6 +987,11 @@
           <div><div class="eyebrow">REAL ONCHAIN CREDIT</div><h2>Arc Testnet contract</h2><p>Deploy once from the shop-owner wallet. Credit approval and USDC repayment are then recorded onchain.</p></div>
           <span class="live-badge" id="contractBadge" style="background:var(--coral)">NOT CONFIGURED</span>
         </div>
+        <div class="onchain-steps" aria-label="Onchain credit progress">
+          <div class="onchain-step active" id="onchainStepDeploy"><b>1</b><div><strong>Deploy contract</strong><span>Shop owner signs once; the merchant wallet is immutable.</span></div></div>
+          <div class="onchain-step" id="onchainStepApprove"><b>2</b><div><strong>Approve credit</strong><span>Merchant opens a buyer-specific debt for one order ID.</span></div></div>
+          <div class="onchain-step" id="onchainStepRepay"><b>3</b><div><strong>Repay in USDC</strong><span>Buyer approves a capped amount and pays the merchant onchain.</span></div></div>
+        </div>
         <div class="onchain-controls">
           <label>Contract address<input id="contractAddressInput" inputmode="text" autocomplete="off" placeholder="0x…"></label>
           <label>Pork price change (%)<input id="porkPriceInput" type="number" min="-40" max="40" step="0.1" value="6.4"></label>
@@ -982,6 +1001,13 @@
           <button class="primary-small" id="deployContract" type="button">Deploy as shop owner</button>
           <button class="outline-button" id="updatePorkPrice" type="button">Update price index onchain</button>
           <a class="outline-button" href="contracts/VPorkPayStoreCredit.sol" target="_blank" rel="noreferrer" style="text-decoration:none">View contract source ↗</a>
+          <a class="outline-button" id="contractExplorer" target="_blank" rel="noreferrer" style="text-decoration:none" hidden>Open on Arcscan ↗</a>
+        </div>
+        <div class="contract-facts" id="contractFacts" hidden>
+          <div class="contract-fact"><span>Merchant wallet</span><b id="contractMerchant">—</b></div>
+          <div class="contract-fact"><span>USDC contract</span><b id="contractUsdc">—</b></div>
+          <div class="contract-fact"><span>Current terms</span><b id="contractTerms">—</b></div>
+          <div class="contract-fact"><span>Deployment proof</span><a id="deploymentProof" target="_blank" rel="noreferrer">Not recorded</a></div>
         </div>
         <div class="onchain-status" id="contractStatus">Connect an Arc Testnet wallet, then deploy the contract or paste an existing address.</div>
         <p class="onchain-note">Testnet prototype only. Test USDC has no monetary value. The smart contract is open source and has not been independently audited.</p>
@@ -1055,7 +1081,7 @@
       { id: 5, name: "Pork Tenderloin", cut: "Trimmed · Premium", seller: "Dalat Fresh Foods", location: "24 km", price: 8.6, stock: 26, minimum: 1, category: "Lean cuts", image: "assets/pork-tenderloin-ai.jpg" },
       { id: 6, name: "Ground Pork", cut: "80/20 · Made today", seller: "Minh Phat Butchery", location: "7 km", price: 4.7, stock: 55, minimum: 2, category: "Ground", image: "assets/ground-pork-ai.jpg" }
     ];
-    let sellerOrders = [
+    const defaultSellerOrders = [
       { id: "PP-240719-03", buyer: "Lotus Kitchen", detail: "12 kg · Premium Pork Belly", total: 81.6, status: "Awaiting acceptance" },
       { id: "PP-240719-02", buyer: "Bếp Nhà Restaurant", detail: "8 kg · Meaty Pork Ribs", total: 57.6, status: "Preparing" },
       { id: "PP-240718-14", buyer: "0x34F...8C10", detail: "5 kg · Lean Pork Shoulder", total: 29.5, status: "Delivered" }
@@ -1070,6 +1096,9 @@
     const TEST_PAYMENT_LABEL = "0.01 USDC";
     const STORE_DEBT_KEY = "vporkpay-store-debt-v1";
     const CREDIT_CONTRACT_KEY = "vporkpay-credit-contract-v1";
+    const CREDIT_REQUESTS_KEY = "vporkpay-credit-requests-v1";
+    const DEPLOYMENT_EVIDENCE_KEY = "vporkpay-deployment-evidence-v1";
+    const DEFAULT_CREDIT_CONTRACT = "";
     const CREDIT_ARTIFACT_URL = "assets/vporkpay-store-credit.json";
     const DEMO_WALLET_BALANCE = 8;
     const PORK_PRICE_CHANGE_YEAR = 6.4;
@@ -1081,8 +1110,10 @@
     let activeCategory = "All cuts";
     let activeSearch = "";
     let toastTimer;
+    let sellerOrders = [...loadCreditRequests(), ...defaultSellerOrders];
     let customerDebt = loadCustomerDebt();
     let creditContractAddress = loadCreditContractAddress();
+    let deploymentEvidence = loadDeploymentEvidence();
     let creditArtifact = null;
     let currentPorkPriceChange = PORK_PRICE_CHANGE_YEAR;
 
@@ -1130,6 +1161,15 @@
     const contractStatus = document.querySelector("#contractStatus");
     const porkPriceInput = document.querySelector("#porkPriceInput");
     const deployContractButton = document.querySelector("#deployContract");
+    const contractExplorer = document.querySelector("#contractExplorer");
+    const contractFacts = document.querySelector("#contractFacts");
+    const contractMerchant = document.querySelector("#contractMerchant");
+    const contractUsdc = document.querySelector("#contractUsdc");
+    const contractTerms = document.querySelector("#contractTerms");
+    const deploymentProof = document.querySelector("#deploymentProof");
+    const onchainStepDeploy = document.querySelector("#onchainStepDeploy");
+    const onchainStepApprove = document.querySelector("#onchainStepApprove");
+    const onchainStepRepay = document.querySelector("#onchainStepRepay");
 
     const formatUSDC = value => value.toFixed(2) + " USDC";
     const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -1155,10 +1195,45 @@
 
     function loadCreditContractAddress() {
       try {
-        const saved = window.localStorage.getItem(CREDIT_CONTRACT_KEY) || "";
+        const saved = window.localStorage.getItem(CREDIT_CONTRACT_KEY) || DEFAULT_CREDIT_CONTRACT;
         return /^0x[0-9a-fA-F]{40}$/.test(saved) ? saved : "";
       } catch {
         return "";
+      }
+    }
+
+    function loadCreditRequests() {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(CREDIT_REQUESTS_KEY));
+        return Array.isArray(saved) ? saved.filter(order => order?.credit && order.orderId) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveCreditRequests() {
+      try {
+        window.localStorage.setItem(CREDIT_REQUESTS_KEY, JSON.stringify(sellerOrders.filter(order => order.credit)));
+      } catch {
+        // Credit requests remain available for this session if storage is unavailable.
+      }
+    }
+
+    function loadDeploymentEvidence() {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(DEPLOYMENT_EVIDENCE_KEY));
+        return saved && /^0x[0-9a-fA-F]{40}$/.test(saved.address || "") ? saved : null;
+      } catch {
+        return null;
+      }
+    }
+
+    function saveDeploymentEvidence(evidence) {
+      deploymentEvidence = evidence;
+      try {
+        window.localStorage.setItem(DEPLOYMENT_EVIDENCE_KEY, JSON.stringify(evidence));
+      } catch {
+        // Evidence is still linked on Arcscan even if local storage is unavailable.
       }
     }
 
@@ -1187,11 +1262,25 @@
     }
 
     function renderContractStatus() {
+      const matchingEvidence = deploymentEvidence?.address?.toLowerCase() === creditContractAddress?.toLowerCase() ? deploymentEvidence : null;
       contractAddressInput.value = creditContractAddress;
       contractBadge.textContent = creditContractAddress ? "CONFIGURED" : "NOT CONFIGURED";
       contractBadge.style.background = creditContractAddress ? "var(--green)" : "var(--coral)";
+      contractExplorer.hidden = !creditContractAddress;
+      contractFacts.hidden = !creditContractAddress;
+      if (creditContractAddress) contractExplorer.href = ARC_EXPLORER_URL + "/address/" + creditContractAddress;
+      contractMerchant.textContent = matchingEvidence?.merchant ? shortenAddress(matchingEvidence.merchant) : "Verify with wallet";
+      contractUsdc.textContent = shortenAddress(USDC_CONTRACT);
+      contractTerms.textContent = (currentPorkPriceChange >= 0 ? "+" : "") + currentPorkPriceChange.toFixed(2) + "% pork · " + calculateCreditApr().toFixed(2) + "% APR";
+      deploymentProof.textContent = matchingEvidence?.txHash ? "View deployment ↗" : "Not recorded";
+      deploymentProof.removeAttribute("href");
+      if (matchingEvidence?.txHash) deploymentProof.href = ARC_EXPLORER_URL + "/tx/" + matchingEvidence.txHash;
+      const debtState = customerDebt?.onchainStatus || "";
+      onchainStepDeploy.className = "onchain-step " + (creditContractAddress ? "complete" : "active");
+      onchainStepApprove.className = "onchain-step " + (debtState === "active" || debtState === "repaid" ? "complete" : creditContractAddress ? "active" : "");
+      onchainStepRepay.className = "onchain-step " + (debtState === "repaid" ? "complete" : debtState === "active" ? "active" : "");
       setContractStatus(creditContractAddress
-        ? "Contract " + shortenAddress(creditContractAddress) + " is ready. Connect the deploying merchant wallet to approve credit requests."
+        ? "Contract " + shortenAddress(creditContractAddress) + " is configured. Connect a wallet to verify its merchant, USDC token and contract identifier."
         : "Connect an Arc Testnet wallet, then deploy the contract or paste an existing address.", creditContractAddress ? "success" : "");
     }
 
@@ -1295,6 +1384,7 @@
       const proofHash = customerDebt.repayTxHash || customerDebt.openTxHash;
       debtTransactionLink.hidden = !proofHash;
       if (proofHash) debtTransactionLink.href = ARC_EXPLORER_URL + "/tx/" + proofHash;
+      renderContractStatus();
     }
 
     function createCustomerDebt(lines, total) {
@@ -1399,17 +1489,55 @@
       return selector;
     }
 
-    async function readContractMerchant(address = creditContractAddress) {
+    const decodeAddressResult = result => "0x" + result.slice(-40);
+
+    async function readContractCall(signature, address = creditContractAddress, argumentData = "") {
       if (!window.ethereum || !isAddress(address)) throw new Error("Connect a wallet and configure the contract first.");
-      const data = await contractSelector("merchant()");
-      const result = await window.ethereum.request({ method: "eth_call", params: [{ to: address, data }, "latest"] });
-      return "0x" + result.slice(-40);
+      const selector = await contractSelector(signature);
+      return window.ethereum.request({
+        method: "eth_call",
+        params: [{ to: address, data: selector + argumentData }, "latest"]
+      });
+    }
+
+    async function readContractMerchant(address = creditContractAddress) {
+      return decodeAddressResult(await readContractCall("merchant()", address));
+    }
+
+    async function verifyCreditContract(address = creditContractAddress) {
+      if (!window.ethereum || !isAddress(address)) throw new Error("Connect a wallet and enter a valid contract address.");
+      const artifact = await loadCreditArtifact();
+      const code = await window.ethereum.request({ method: "eth_getCode", params: [address, "latest"] });
+      if (!code || code === "0x") throw new Error("No contract code exists at this Arc Testnet address.");
+      const [contractId, merchantResult, usdcResult] = await Promise.all([
+        readContractCall("CONTRACT_ID()", address),
+        readContractCall("merchant()", address),
+        readContractCall("usdc()", address)
+      ]);
+      const merchant = decodeAddressResult(merchantResult);
+      const usdc = decodeAddressResult(usdcResult);
+      if (contractId.toLowerCase() !== artifact.contractId.toLowerCase()) throw new Error("This address is not a VPorkPay Store Credit v1.1 contract.");
+      if (usdc.toLowerCase() !== USDC_CONTRACT.toLowerCase()) throw new Error("This contract does not use Circle Arc Testnet USDC.");
+      if (!isAddress(merchant) || /^0x0{40}$/i.test(merchant)) throw new Error("The contract merchant address is invalid.");
+      return { merchant, usdc, contractId };
+    }
+
+    async function refreshContractDashboard(address = creditContractAddress) {
+      if (!window.ethereum || !isAddress(address)) return;
+      const verified = await verifyCreditContract(address);
+      await refreshCreditContractTerms(address);
+      contractMerchant.textContent = shortenAddress(verified.merchant);
+      contractMerchant.title = verified.merchant;
+      contractUsdc.textContent = shortenAddress(verified.usdc);
+      contractUsdc.title = verified.usdc;
+      contractTerms.textContent = (currentPorkPriceChange >= 0 ? "+" : "") + currentPorkPriceChange.toFixed(2) + "% pork · " + calculateCreditApr().toFixed(2) + "% APR";
+      setContractStatus("Verified VPorkPay v1.1 contract · merchant " + shortenAddress(verified.merchant) + " · official Arc Testnet USDC.", "success");
+      return verified;
     }
 
     async function refreshCreditContractTerms(address = creditContractAddress) {
       if (!window.ethereum || !isAddress(address)) return;
-      const selector = await contractSelector("porkPriceChangeBps()");
-      const result = await window.ethereum.request({ method: "eth_call", params: [{ to: address, data: selector }, "latest"] });
+      const result = await readContractCall("porkPriceChangeBps()", address);
       const raw = BigInt(result);
       const signed = raw >= (1n << 255n) ? raw - (1n << 256n) : raw;
       currentPorkPriceChange = Number(signed) / 100;
@@ -1444,9 +1572,18 @@
       setContractStatus("Deployment submitted. Waiting for Arc finality…");
       const receipt = await waitForTransactionReceipt(transactionHash);
       if (!isAddress(receipt.contractAddress)) throw new Error("Arc did not return a deployed contract address.");
-      saveCreditContractAddress(receipt.contractAddress);
       currentPorkPriceChange = priceBps / 100;
-      contractStatus.innerHTML = `Contract deployed by ${shortenAddress(walletAddress)}. <a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${transactionHash}" target="_blank" rel="noreferrer">View deployment on Arcscan ↗</a>`;
+      await verifyCreditContract(receipt.contractAddress);
+      saveDeploymentEvidence({
+        address: receipt.contractAddress,
+        txHash: transactionHash,
+        merchant: walletAddress,
+        chainId: Number.parseInt(ARC_CHAIN_ID, 16),
+        createdAt: Date.now()
+      });
+      saveCreditContractAddress(receipt.contractAddress);
+      await refreshContractDashboard(receipt.contractAddress);
+      contractStatus.innerHTML = `Verified deployment by ${shortenAddress(walletAddress)}. <a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${transactionHash}" target="_blank" rel="noreferrer">View deployment on Arcscan ↗</a>`;
       contractStatus.className = "onchain-status success";
       return receipt.contractAddress;
     }
@@ -1466,6 +1603,7 @@
       setContractStatus("Price-index update submitted. Waiting for Arc finality…");
       await waitForTransactionReceipt(transactionHash);
       currentPorkPriceChange = priceBps / 100;
+      renderContractStatus();
       setContractStatus("Pork-price change updated to " + (priceBps / 100).toFixed(2) + "% onchain.", "success");
       return transactionHash;
     }
@@ -1490,6 +1628,7 @@
       customerDebt.onchainStatus = "active";
       customerDebt.openTxHash = transactionHash;
       saveCustomerDebt();
+      saveCreditRequests();
       renderSellerOrders();
       renderCustomerDebt();
       const card = document.querySelector(`[data-order-card="${order.orderId}"]`);
@@ -1509,24 +1648,39 @@
       const address = customerDebt.contractAddress;
       const due = await readOnchainAmountDue(customerDebt.orderId, address);
       if (due === 0n) throw new Error("This debt is already closed.");
-      const approveData = "0x095ea7b3" + encodeAddressWord(address) + encodeUintWord(due);
+      await refreshTestnetBalance();
+      if (walletBalanceUnits !== null && walletBalanceUnits < due) throw new Error("Not enough Arc Testnet USDC to repay the current amount due.");
+      const allowanceBuffer = due / 1000n > 1000n ? due / 1000n : 1000n;
+      const maximumApproved = due + allowanceBuffer;
+      const approveData = "0x095ea7b3" + encodeAddressWord(address) + encodeUintWord(maximumApproved);
       repayDebtButton.disabled = true;
-      repayDebtButton.textContent = "Approve USDC in wallet…";
+      repayDebtButton.textContent = "Approve capped USDC amount…";
+      debtNote.textContent = "Your wallet will authorize up to " + formatTokenUnits(maximumApproved) + ". The contract transfers only the actual amount due; the small buffer prevents block-time interest from invalidating the quote.";
       const approveHash = await window.ethereum.request({
         method: "eth_sendTransaction",
         params: [{ from: walletAddress, to: USDC_CONTRACT, data: approveData }]
       });
       await waitForTransactionReceipt(approveHash);
       repayDebtButton.textContent = "Confirm repayment in wallet…";
-      const selector = await contractSelector("repayInFull(bytes32)");
+      const latestDue = await readOnchainAmountDue(customerDebt.orderId, address);
+      if (latestDue > maximumApproved) throw new Error("The repayment quote expired. Retry to authorize a fresh maximum amount.");
+      const selector = await contractSelector("repayInFull(bytes32,uint256)");
       const repayHash = await window.ethereum.request({
         method: "eth_sendTransaction",
-        params: [{ from: walletAddress, to: address, data: selector + customerDebt.orderId.slice(2) }]
+        params: [{ from: walletAddress, to: address, data: selector + customerDebt.orderId.slice(2) + encodeUintWord(maximumApproved) }]
       });
       await waitForTransactionReceipt(repayHash);
       customerDebt.onchainStatus = "repaid";
       customerDebt.repayTxHash = repayHash;
       saveCustomerDebt();
+      const sellerOrder = sellerOrders.find(order => order.orderId === customerDebt.orderId);
+      if (sellerOrder) {
+        sellerOrder.status = "Credit repaid";
+        sellerOrder.onchainStatus = "repaid";
+        sellerOrder.repayTxHash = repayHash;
+        saveCreditRequests();
+        renderSellerOrders();
+      }
       await refreshTestnetBalance();
       renderCustomerDebt();
       return repayHash;
@@ -1667,6 +1821,7 @@
           isInjectedWallet = true;
           await ensureArcTestnet();
           await refreshTestnetBalance();
+          if (creditContractAddress) await refreshContractDashboard();
         } catch (error) {
           walletAddress = "";
           isInjectedWallet = false;
@@ -1765,7 +1920,9 @@
           principal: storeCredit.principal,
           onchainStatus: storeCredit.onchainStatus
         });
+        saveCreditRequests();
         renderSellerOrders();
+        renderContractStatus();
       }
     }
 
@@ -1775,6 +1932,8 @@
           ? `<button class="primary-small" type="button" data-credit-approve="${order.id}">Approve onchain</button>`
           : order.credit && order.status === "Credit active"
             ? `<a class="outline-button" href="${ARC_EXPLORER_URL}/address/${creditContractAddress}" target="_blank" rel="noreferrer" style="text-decoration:none">View contract</a>`
+          : order.credit && order.status === "Credit repaid"
+            ? `<a class="outline-button" href="${ARC_EXPLORER_URL}/tx/${order.repayTxHash}" target="_blank" rel="noreferrer" style="text-decoration:none">View repayment</a>`
           : order.status === "Awaiting acceptance"
           ? `<button class="primary-small" type="button" data-seller-action="${order.id}" data-next="Preparing">Accept</button>`
           : order.status === "Preparing"
@@ -1784,7 +1943,7 @@
           <div class="seller-row">
             <div><span>${order.id}</span><strong>${order.buyer}</strong><small>${order.detail}</small></div>
             <strong>${formatUSDC(order.total)}</strong>
-            <span class="status-chip ${order.status === "Delivered" || order.status === "Credit active" ? "complete" : ""}">${order.status}</span>
+            <span class="status-chip ${order.status === "Delivered" || order.status === "Credit active" || order.status === "Credit repaid" ? "complete" : ""}">${order.status}</span>
             ${action}
           </div>
         `;
@@ -1961,12 +2120,10 @@
       try {
         if (window.ethereum && isInjectedWallet) {
           await ensureArcTestnet();
-          const code = await window.ethereum.request({ method: "eth_getCode", params: [address, "latest"] });
-          if (!code || code === "0x") throw new Error("No contract code exists at this Arc Testnet address.");
-          await readContractMerchant(address);
+          await verifyCreditContract(address);
         }
         saveCreditContractAddress(address);
-        if (window.ethereum) await refreshCreditContractTerms(address);
+        if (window.ethereum) await refreshContractDashboard(address);
         showToast("Onchain credit contract saved");
       } catch (error) {
         setContractStatus(error.message || "Could not verify this contract.", "error");
@@ -2013,7 +2170,10 @@
         walletAddress = accounts[0] || "";
         isInjectedWallet = Boolean(walletAddress);
         updateWalletUI();
-        if (walletAddress) refreshTestnetBalance();
+        if (walletAddress) {
+          refreshTestnetBalance();
+          if (creditContractAddress) refreshContractDashboard().catch(error => setContractStatus(error.message, "error"));
+        }
         renderCustomerDebt();
       });
       window.ethereum.on("chainChanged", chainId => {
@@ -2023,6 +2183,7 @@
           setPaymentStatus("Switch back to Arc Testnet before paying.", "error");
         } else if (walletAddress) {
           refreshTestnetBalance();
+          if (creditContractAddress) refreshContractDashboard().catch(error => setContractStatus(error.message, "error"));
           setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
         }
       });

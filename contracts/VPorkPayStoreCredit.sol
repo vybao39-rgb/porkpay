@@ -9,6 +9,7 @@ interface IERC20 {
 /// @notice Records merchant-approved trade credit and settles full repayment in USDC.
 /// @dev Arc Testnet prototype. This contract has not been independently audited.
 contract VPorkPayStoreCredit {
+    bytes32 public constant CONTRACT_ID = keccak256("VPorkPayStoreCredit:v1.1");
     uint256 public constant YEAR = 365 days;
     uint256 public constant MAX_PRINCIPAL = 1_000_000e6;
     uint16 public constant BASE_APR_BPS = 800;
@@ -39,6 +40,7 @@ contract VPorkPayStoreCredit {
     error DebtAlreadyExists();
     error DebtNotActive();
     error OnlyBuyer();
+    error AmountDueExceedsMaximum(uint256 amountDue, uint256 maximumApproved);
     error TransferFailed();
     error ReentrantCall();
 
@@ -114,12 +116,15 @@ contract VPorkPayStoreCredit {
         return uint256(debt.principal) + interestAccrued(orderId) - uint256(debt.repaid);
     }
 
-    function repayInFull(bytes32 orderId) external nonReentrant returns (uint256 paid) {
+    /// @notice Repays the current debt while protecting the buyer from an unexpectedly larger charge.
+    /// @param maxAmount The maximum USDC amount the buyer authorized for this repayment.
+    function repayInFull(bytes32 orderId, uint256 maxAmount) external nonReentrant returns (uint256 paid) {
         Debt storage debt = debts[orderId];
         if (debt.buyer == address(0) || debt.closed) revert DebtNotActive();
         if (msg.sender != debt.buyer) revert OnlyBuyer();
 
         paid = amountDue(orderId);
+        if (paid > maxAmount) revert AmountDueExceedsMaximum(paid, maxAmount);
         debt.repaid += uint128(paid);
         debt.closed = true;
 

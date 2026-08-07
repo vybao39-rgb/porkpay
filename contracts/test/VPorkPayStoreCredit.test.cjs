@@ -2,7 +2,7 @@ const fs = require("fs");
 const path = require("path");
 const solc = require("solc");
 const ganache = require("ganache");
-const { BrowserProvider, ContractFactory } = require("ethers");
+const { BrowserProvider, ContractFactory, id } = require("ethers");
 
 const contractsDir = path.resolve(__dirname, "..");
 const sources = {};
@@ -51,6 +51,7 @@ async function main() {
     .deploy(await mock.getAddress(), 640);
   await credit.waitForDeployment();
 
+  if ((await credit.CONTRACT_ID()) !== id("VPorkPayStoreCredit:v1.1")) throw new Error("Unexpected contract identifier");
   if ((await credit.aprForPriceChange(640)) !== 1120n) throw new Error("APR +6.4% should be 11.2%");
   if ((await credit.aprForPriceChange(-1000)) !== 600n) throw new Error("APR floor should be 6%");
   if ((await credit.aprForPriceChange(4000)) !== 1800n) throw new Error("APR cap should be 18%");
@@ -69,13 +70,16 @@ async function main() {
   if (due < 111_199_990n || due > 111_200_100n) throw new Error(`Unexpected one-year amount due: ${due}`);
 
   const merchantBefore = await mock.balanceOf(await merchant.getAddress());
-  await (await mock.connect(buyer).approve(await credit.getAddress(), due + 100n)).wait();
-  await (await credit.connect(buyer).repayInFull(orderId)).wait();
+  await (await mock.connect(buyer).approve(await credit.getAddress(), due + 1_000_000n)).wait();
+  await chain.request({ method: "evm_increaseTime", params: [60] });
+  await chain.request({ method: "evm_mine", params: [] });
+  await expectRevert(() => credit.connect(buyer).repayInFull(orderId, due), "amount increased beyond stale quote");
+  await (await credit.connect(buyer).repayInFull(orderId, due + 1_000_000n)).wait();
   const merchantAfter = await mock.balanceOf(await merchant.getAddress());
   if (merchantAfter - merchantBefore < due) throw new Error("Merchant did not receive USDC repayment");
   if ((await credit.amountDue(orderId)) !== 0n) throw new Error("Debt should be closed");
   if (!(await credit.debts(orderId)).closed) throw new Error("Debt closed flag was not set");
-  await expectRevert(() => credit.connect(buyer).repayInFull(orderId), "repaying a closed debt");
+  await expectRevert(() => credit.connect(buyer).repayInFull(orderId, due + 1_000_000n), "repaying a closed debt");
 
   console.log("PASS: VPorkPayStoreCredit full lifecycle");
 }

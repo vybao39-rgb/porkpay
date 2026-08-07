@@ -2,11 +2,14 @@
   "name": "vporkpay",
   "private": true,
   "scripts": {
-    "test:contract": "node contracts/test/VPorkPayStoreCredit.test.cjs"
+    "build:contract": "node contracts/build-artifact.cjs",
+    "test:contract": "node contracts/test/VPorkPayStoreCredit.test.cjs",
+    "test:ui": "node test/onchain-credit-ui.test.cjs"
   },
   "devDependencies": {
     "ethers": "6.17.0",
     "ganache": "7.9.2",
+    "jsdom": "26.1.0",
     "solc": "0.8.24"
   }
 }
