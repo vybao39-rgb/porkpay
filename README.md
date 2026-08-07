@@ -2,7 +2,7 @@
 
 **A USDC-native pork marketplace with merchant-approved onchain store credit on Arc.**
 
-[Final submission links](https://vybao39-rgb.github.io/porkpay/submission.html) · [Live MVP](https://vybao39-rgb.github.io/porkpay/) · [3-minute video](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Demo.mp4) · [Final deck](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Submission-Deck.pptx) · [Public repository](https://github.com/vybao39-rgb/porkpay)
+[Final submission links](https://vybao39-rgb.github.io/porkpay/submission.html) · [Live MVP](https://vybao39-rgb.github.io/porkpay/) · [3-minute video](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Demo.mp4) · [Final deck](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vybao39-rgb.github.io/porkpay/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
 
 > **Safety:** Arc Testnet only. Do not use real funds. `VPorkPayStoreCredit` is an unaudited hackathon prototype and does not create a legally binding credit agreement.
 
