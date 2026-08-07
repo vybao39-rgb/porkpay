@@ -74,6 +74,12 @@ const text = selector => document.querySelector(selector).textContent.trim();
 const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
 (async () => {
+  if (document.querySelector("#contractAddressInput").value.toLowerCase() !== "0xd9dab755431664ada2d13868674ddb43ffdef396") {
+    throw new Error("Canonical Arc Testnet contract should be configured by default");
+  }
+  if (!document.querySelector("#deploymentProof").href.endsWith("0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067")) {
+    throw new Error("Canonical deployment transaction should be linked by default");
+  }
   click("#walletButton");
   await wait(0);
   click("#deployContract");

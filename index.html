@@ -1098,7 +1098,14 @@
     const CREDIT_CONTRACT_KEY = "vporkpay-credit-contract-v1";
     const CREDIT_REQUESTS_KEY = "vporkpay-credit-requests-v1";
     const DEPLOYMENT_EVIDENCE_KEY = "vporkpay-deployment-evidence-v1";
-    const DEFAULT_CREDIT_CONTRACT = "";
+    const DEFAULT_CREDIT_CONTRACT = "0xd9dab755431664ada2d13868674ddb43ffdef396";
+    const DEFAULT_DEPLOYMENT_EVIDENCE = Object.freeze({
+      address: DEFAULT_CREDIT_CONTRACT,
+      txHash: "0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067",
+      merchant: "0xf2d062b3920b342f6c6c4ecfd22c39a79e1e33d0",
+      chainId: 5042002,
+      createdAt: Date.parse("2026-08-07T15:57:43.000Z")
+    });
     const CREDIT_ARTIFACT_URL = "assets/vporkpay-store-credit.json";
     const PORK_PRICE_CHANGE_YEAR = 6.4;
     const BASE_CREDIT_APR = 8;
@@ -1222,9 +1229,9 @@
     function loadDeploymentEvidence() {
       try {
         const saved = JSON.parse(window.localStorage.getItem(DEPLOYMENT_EVIDENCE_KEY));
-        return saved && /^0x[0-9a-fA-F]{40}$/.test(saved.address || "") ? saved : null;
+        return saved && /^0x[0-9a-fA-F]{40}$/.test(saved.address || "") ? saved : DEFAULT_DEPLOYMENT_EVIDENCE;
       } catch {
-        return null;
+        return DEFAULT_DEPLOYMENT_EVIDENCE;
       }
     }
 
@@ -1280,7 +1287,7 @@
       onchainStepApprove.className = "onchain-step " + (debtState === "active" || debtState === "repaid" ? "complete" : creditContractAddress ? "active" : "");
       onchainStepRepay.className = "onchain-step " + (debtState === "repaid" ? "complete" : debtState === "active" ? "active" : "");
       setContractStatus(creditContractAddress
-        ? "Contract " + shortenAddress(creditContractAddress) + " is configured. Connect a wallet to verify its merchant, USDC token and contract identifier."
+        ? "Deployed contract " + shortenAddress(creditContractAddress) + " is configured. Connect a wallet to independently verify its merchant, USDC token and contract identifier."
         : "Connect an Arc Testnet wallet, then deploy the contract or paste an existing address.", creditContractAddress ? "success" : "");
     }
 
