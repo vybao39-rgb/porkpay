@@ -80,6 +80,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (!document.querySelector("#deploymentProof").href.endsWith("0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067")) {
     throw new Error("Canonical deployment transaction should be linked by default");
   }
+  if (!document.querySelector("#createProofCreditRequest")) throw new Error("Jury-proof request action should be available");
   click("#walletButton");
   await wait(0);
   click("#deployContract");

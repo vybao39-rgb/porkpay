@@ -919,7 +919,10 @@
     <section class="page-view dashboard" id="ordersView" hidden>
       <div class="dashboard-hero">
         <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Track delivery and control when your USDC is released.</p></div>
-        <button class="outline-button" type="button" data-view="market">Continue shopping</button>
+        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
+          <button class="primary-small" id="createProofCreditRequest" type="button">Create 0.01 USDC jury-proof request</button>
+          <button class="outline-button" type="button" data-view="market">Continue shopping</button>
+        </div>
       </div>
       <article class="debt-card" id="debtCard" hidden>
         <div class="debt-heading">
@@ -1428,6 +1431,51 @@
       saveCustomerDebt();
       renderCustomerDebt();
       return { ...quote, ...customerDebt };
+    }
+
+    function createJuryProofCreditRequest() {
+      if (!isInjectedWallet || !creditContractAddress || !isAddress(walletAddress)) {
+        throw new Error("Connect the buyer wallet on Arc Testnet first.");
+      }
+      if (walletAddress.toLowerCase() === DEFAULT_DEPLOYMENT_EVIDENCE.merchant.toLowerCase()) {
+        throw new Error("Use a buyer wallet different from the shop-owner wallet.");
+      }
+      if (customerDebt && customerDebt.onchainStatus !== "repaid") {
+        throw new Error("Finish the current credit request before creating another one.");
+      }
+      const principal = 0.01;
+      const displayId = "JURY-" + Date.now().toString().slice(-8);
+      customerDebt = {
+        principal,
+        apr: calculateCreditApr(),
+        porkPriceChange: currentPorkPriceChange,
+        seller: "VPorkPay Jury Proof",
+        createdAt: Date.now(),
+        displayId,
+        orderId: creditOrderId(),
+        buyer: walletAddress,
+        contractAddress: creditContractAddress,
+        onchainStatus: "pending",
+        juryProof: true
+      };
+      sellerOrders.unshift({
+        id: displayId,
+        buyer: walletAddress,
+        detail: "0.01 USDC public jury-proof lifecycle",
+        total: principal,
+        status: "Credit requested",
+        credit: true,
+        juryProof: true,
+        orderId: customerDebt.orderId,
+        principal,
+        onchainStatus: "pending"
+      });
+      saveCustomerDebt();
+      saveCreditRequests();
+      renderCustomerDebt();
+      renderSellerOrders();
+      renderContractStatus();
+      return customerDebt;
     }
 
     function setPaymentStatus(message, state = "") {
@@ -2102,6 +2150,15 @@
       event.target.textContent = "Sample completed";
       event.target.disabled = true;
       showToast("Sample order completed — no funds moved");
+    });
+
+    document.querySelector("#createProofCreditRequest").addEventListener("click", () => {
+      try {
+        const proof = createJuryProofCreditRequest();
+        showToast("Created " + proof.displayId + " — switch to the shop-owner wallet to approve it");
+      } catch (error) {
+        showToast(error.message || "Could not create the jury-proof request");
+      }
     });
 
     sellerOrdersContainer.addEventListener("click", async event => {
