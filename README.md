@@ -2,7 +2,7 @@
 
 **A USDC-native pork marketplace with merchant-approved onchain store credit on Arc.**
 
-[Final submission links](https://vybao39-rgb.github.io/porkpay/submission.html) · [Live MVP](https://vybao39-rgb.github.io/porkpay/) · [3-minute video](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Demo.mp4) · [Final deck](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vybao39-rgb.github.io/porkpay/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
+[Final submission links](https://vpork.xyz/submission.html) · [Live MVP](https://vpork.xyz/) · [3-minute video](https://vpork.xyz/VPorkPay-Final-Demo.mp4) · [Final deck](https://vpork.xyz/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vpork.xyz/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
 
 **Fully source-verified Arc Testnet deployment:** [`0xd9dab755431664ada2d13868674ddb43ffdef396`](https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396?tab=contract) · [deployment transaction](https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067)
 
@@ -100,7 +100,9 @@ Buyer / Merchant
        |
 Injected EVM wallet
        |
-VPorkPay static web app
+VPorkPay web app on vpork.xyz
+       |
+Supabase Postgres + Web3 Auth + RLS
        |
 Arc Testnet
        |
@@ -111,7 +113,17 @@ Official test USDC -> immutable merchant wallet
 Arcscan transaction evidence
 ```
 
-The frontend is a dependency-free HTML/CSS/JavaScript application hosted on GitHub Pages. All state-changing calls are signed by the user's injected wallet. Browser storage keeps only interface continuity and evidence links; the contract remains authoritative for active debt and repayment.
+The frontend is a static HTML/CSS/JavaScript application hosted on GitHub Pages at `vpork.xyz`. Supabase Postgres stores the shared catalog, wallet-owned carts, orders and fulfilment state. Supabase Web3 Auth verifies wallet ownership, and Row Level Security isolates buyer rows while allowing explicitly promoted seller/admin accounts to manage fulfilment. Browser storage remains an offline continuity cache; the Arc contract remains authoritative for active debt and repayment.
+
+## Supabase setup
+
+1. Open the Supabase SQL Editor for the project.
+2. Run [`supabase/schema.sql`](supabase/schema.sql) once to create tables, indexes, seed products and Row Level Security policies.
+3. In Authentication settings, enable Ethereum Web3 sign-in.
+4. Set the Auth Site URL to `https://vpork.xyz` and add `https://www.vpork.xyz` as an allowed redirect URL.
+5. Connect the shop-owner wallet once. The schema securely matches the verified Web3 identity and automatically assigns the canonical contract merchant wallet the `seller` role; every other wallet starts as `buyer`.
+
+The frontend contains only the Supabase project URL and publishable key. Never commit a Supabase secret key, `service_role` key, database password or personal access token.
 
 ## Reproduce and verify
 

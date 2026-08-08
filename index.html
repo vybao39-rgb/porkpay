@@ -842,6 +842,7 @@
       <button type="button" data-view="seller">Seller hub</button>
     </nav>
     <div class="top-actions">
+      <span class="network" id="databaseStatus" title="Shared database status">LOCAL DATA</span>
       <span class="network">Arc Testnet</span>
       <button class="wallet" id="walletButton" type="button">Connect Arc wallet</button>
     </div>
@@ -1080,8 +1081,9 @@
   </footer>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
   <script>
-    const products = [
+    let products = [
       { id: 1, name: "Premium Pork Belly", cut: "Skin-on · Fresh", seller: "Green Valley Farm", location: "12 km", price: 6.8, stock: 84, minimum: 2, category: "Belly", image: "assets/pork-belly-ai.jpg" },
       { id: 2, name: "Bone-in Pork Chops", cut: "Center cut · Chilled", seller: "Minh Phat Butchery", location: "7 km", price: 5.4, stock: 42, minimum: 2, category: "Lean cuts", image: "assets/pork-chops-ai.jpg" },
       { id: 3, name: "Meaty Pork Ribs", cut: "Spare ribs · Fresh", seller: "An Hoa Foods", location: "18 km", price: 7.2, stock: 31, minimum: 3, category: "Ribs", image: "assets/pork-ribs-ai.jpg" },
@@ -1098,6 +1100,8 @@
     const CART_KEY = "vporkpay-cart-v1";
     const BUYER_ORDERS_KEY = "vporkpay-buyer-orders-v1";
     const SELLER_ORDERS_KEY = "vporkpay-seller-orders-v1";
+    const SUPABASE_URL = "https://oqyuvzxikaibetsgwhsk.supabase.co";
+    const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dvGMr7i_KCvGc1fb1PktXw_RYY1-N06";
     const cart = loadCart();
     const ARC_CHAIN_ID = "0x4cef52";
     const ARC_RPC_URL = "https://rpc.testnet.arc.network";
@@ -1134,6 +1138,11 @@
     let deploymentEvidence = loadDeploymentEvidence();
     let creditArtifact = null;
     let currentPorkPriceChange = PORK_PRICE_CHANGE_YEAR;
+    let supabaseClient = null;
+    let cloudUser = null;
+    let cloudProfile = null;
+    let cloudSchemaReady = false;
+    let cloudWriteQueue = Promise.resolve();
 
     const productGrid = document.querySelector("#productGrid");
     const productCount = document.querySelector("#productCount");
@@ -1193,6 +1202,7 @@
     const onchainStepApprove = document.querySelector("#onchainStepApprove");
     const onchainStepRepay = document.querySelector("#onchainStepRepay");
     const creditRequestCount = document.querySelector("#creditRequestCount");
+    const databaseStatus = document.querySelector("#databaseStatus");
 
     const formatUSDC = value => value.toFixed(2) + " USDC";
     const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -1216,6 +1226,257 @@
       return "0x" + [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
     };
 
+    function setDatabaseStatus(label, detail = "", state = "") {
+      databaseStatus.textContent = label;
+      databaseStatus.title = detail || label;
+      databaseStatus.style.background = state === "success" ? "var(--green)" : state === "error" ? "var(--coral)" : "";
+      databaseStatus.style.color = state ? "white" : "";
+    }
+
+    function queueCloudWrite(task) {
+      if (!supabaseClient || !cloudUser || !cloudSchemaReady) return;
+      cloudWriteQueue = cloudWriteQueue
+        .then(task)
+        .then(() => setDatabaseStatus("CLOUD SYNCED", "Supabase is storing data for this wallet.", "success"))
+        .catch(error => {
+          console.error("VPorkPay cloud sync failed", error);
+          setDatabaseStatus("SYNC RETRY", error.message || "Cloud sync will retry after the next change.", "error");
+        });
+    }
+
+    const cloudProduct = row => ({
+      id: Number(row.id),
+      name: row.name,
+      cut: row.cut,
+      seller: row.seller,
+      location: row.location,
+      price: Number(row.price_usdc),
+      stock: Number(row.stock_kg),
+      minimum: Number(row.minimum_kg),
+      category: row.category,
+      image: row.image_path
+    });
+
+    function cloudOrderRow(order) {
+      return {
+        id: order.id,
+        buyer_id: cloudUser.id,
+        buyer_wallet: order.buyer,
+        total_usdc: roundMoney(order.total),
+        status: order.status,
+        fulfilment_status: order.fulfilmentStatus || "Awaiting acceptance",
+        payment_tx_hash: order.transactionHash || null,
+        is_credit: Boolean(order.credit),
+        credit_order_id: order.orderId || null,
+        principal_usdc: roundMoney(order.principal || 0),
+        onchain_status: order.onchainStatus || null,
+        open_tx_hash: order.openTxHash || null,
+        approve_tx_hash: order.approveTxHash || null,
+        repay_tx_hash: order.repayTxHash || null,
+        created_at: new Date(order.createdAt || Date.now()).toISOString(),
+        updated_at: new Date(order.updatedAt || Date.now()).toISOString()
+      };
+    }
+
+    async function persistOrderToCloud(order) {
+      if (!cloudUser || !isAddress(order?.buyer) || order.buyer.toLowerCase() !== walletAddress.toLowerCase()) return;
+      const { error: orderError } = await supabaseClient
+        .from("orders")
+        .upsert(cloudOrderRow(order), { onConflict: "id" });
+      if (orderError) throw orderError;
+      const { error: deleteError } = await supabaseClient.from("order_items").delete().eq("order_id", order.id);
+      if (deleteError) throw deleteError;
+      const rows = order.lines.map(line => ({
+        order_id: order.id,
+        product_id: Number(line.id) || null,
+        product_name: line.name,
+        seller: line.seller,
+        unit_price_usdc: Number(line.price),
+        quantity_kg: Number(line.quantity)
+      }));
+      if (rows.length) {
+        const { error: itemError } = await supabaseClient.from("order_items").insert(rows);
+        if (itemError) throw itemError;
+      }
+    }
+
+    async function persistSellerStatusesToCloud() {
+      if (!["seller", "admin"].includes(cloudProfile?.role)) return;
+      for (const order of sellerOrders.filter(item => item.userOrder || item.credit)) {
+        const { error } = await supabaseClient
+          .from("orders")
+          .update({
+            status: order.status,
+            onchain_status: order.onchainStatus || null,
+            open_tx_hash: order.openTxHash || null,
+            approve_tx_hash: order.approveTxHash || null,
+            repay_tx_hash: order.repayTxHash || null
+          })
+          .eq("id", order.id);
+        if (error) throw error;
+      }
+    }
+
+    async function syncCartToCloud() {
+      const { error: clearError } = await supabaseClient.from("cart_items").delete().eq("user_id", cloudUser.id);
+      if (clearError) throw clearError;
+      const rows = [...cart.values()].map(item => ({
+        user_id: cloudUser.id,
+        product_id: item.id,
+        quantity_kg: item.quantity
+      }));
+      if (rows.length) {
+        const { error } = await supabaseClient.from("cart_items").insert(rows);
+        if (error) throw error;
+      }
+    }
+
+    function mapCloudOrder(row) {
+      return {
+        id: row.id,
+        buyer: row.buyer_wallet,
+        createdAt: Date.parse(row.created_at),
+        updatedAt: Date.parse(row.updated_at),
+        lines: (row.order_items || []).map(item => ({
+          id: Number(item.product_id),
+          name: item.product_name,
+          seller: item.seller,
+          price: Number(item.unit_price_usdc),
+          quantity: Number(item.quantity_kg)
+        })),
+        total: Number(row.total_usdc),
+        status: row.status,
+        fulfilmentStatus: row.fulfilment_status,
+        transactionHash: row.payment_tx_hash || "",
+        credit: Boolean(row.is_credit),
+        orderId: row.credit_order_id || "",
+        principal: Number(row.principal_usdc || 0),
+        onchainStatus: row.onchain_status || "",
+        openTxHash: row.open_tx_hash || "",
+        approveTxHash: row.approve_tx_hash || "",
+        repayTxHash: row.repay_tx_hash || ""
+      };
+    }
+
+    async function hydrateCloudData() {
+      setDatabaseStatus("SYNCING…", "Uploading local continuity data and loading Supabase.");
+      const profilePayload = { user_id: cloudUser.id, wallet_address: walletAddress.toLowerCase() };
+      const { error: profileError } = await supabaseClient.from("profiles").upsert(profilePayload, { onConflict: "user_id" });
+      if (profileError) throw profileError;
+      const { data: profile, error: profileReadError } = await supabaseClient.from("profiles").select("*").eq("user_id", cloudUser.id).single();
+      if (profileReadError) throw profileReadError;
+      cloudProfile = profile;
+
+      const localWalletOrders = buyerOrders.filter(order => isAddress(order.buyer) && order.buyer.toLowerCase() === walletAddress.toLowerCase());
+      for (const order of localWalletOrders) await persistOrderToCloud(order);
+
+      const { data: cloudOrders, error: ordersError } = await supabaseClient
+        .from("orders")
+        .select("*,order_items(*)")
+        .order("created_at", { ascending: false });
+      if (ordersError) throw ordersError;
+      const mergedOrders = new Map(buyerOrders.map(order => [order.id, order]));
+      (cloudOrders || []).map(mapCloudOrder).filter(order => order.lines.length).forEach(order => mergedOrders.set(order.id, order));
+      buyerOrders = [...mergedOrders.values()].sort((a, b) => b.createdAt - a.createdAt);
+      try {
+        window.localStorage.setItem(BUYER_ORDERS_KEY, JSON.stringify(buyerOrders));
+      } catch {}
+
+      const { data: cloudCart, error: cartError } = await supabaseClient
+        .from("cart_items")
+        .select("product_id,quantity_kg")
+        .eq("user_id", cloudUser.id);
+      if (cartError) throw cartError;
+      if (cloudCart?.length) {
+        cart.clear();
+        cloudCart.forEach(line => {
+          const product = products.find(item => item.id === Number(line.product_id));
+          if (product) cart.set(product.id, { ...product, quantity: Number(line.quantity_kg) });
+        });
+        try {
+          window.localStorage.setItem(CART_KEY, JSON.stringify([...cart.values()].map(({ id, quantity }) => ({ id, quantity }))));
+        } catch {}
+      } else {
+        await syncCartToCloud();
+      }
+
+      if (["seller", "admin"].includes(cloudProfile.role)) {
+        const actualSellerOrders = (cloudOrders || []).map(row => {
+          const order = mapCloudOrder(row);
+          const primary = order.lines[0];
+          return {
+            id: order.id,
+            buyer: order.buyer,
+            detail: `${order.lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${primary?.name || "Order"}${order.lines.length > 1 ? " +" + (order.lines.length - 1) : ""}`,
+            total: order.total,
+            status: order.status,
+            credit: order.credit,
+            orderId: order.orderId,
+            principal: order.principal,
+            onchainStatus: order.onchainStatus,
+            openTxHash: order.openTxHash,
+            approveTxHash: order.approveTxHash,
+            repayTxHash: order.repayTxHash,
+            userOrder: true
+          };
+        });
+        sellerOrders = [...actualSellerOrders, ...defaultSellerOrders];
+      }
+
+      renderProducts();
+      renderCart();
+      renderBuyerOrders();
+      renderSellerOrders();
+      setDatabaseStatus("CLOUD SYNCED", "Products, cart and orders are stored in Supabase for this wallet.", "success");
+    }
+
+    async function signInToSupabaseWithWallet() {
+      if (!supabaseClient || !cloudSchemaReady || !isAddress(walletAddress)) return;
+      const { data: sessionData } = await supabaseClient.auth.getSession();
+      cloudUser = sessionData.session?.user || null;
+      const identityAddress = cloudUser?.user_metadata?.address || cloudUser?.identities?.[0]?.identity_data?.address || "";
+      if (cloudUser && identityAddress && identityAddress.toLowerCase() !== walletAddress.toLowerCase()) {
+        await supabaseClient.auth.signOut({ scope: "local" });
+        cloudUser = null;
+      }
+      if (!cloudUser) {
+        setDatabaseStatus("SIGN CLOUD", "Confirm the Sign-In with Ethereum message in your wallet.");
+        const { data, error } = await supabaseClient.auth.signInWithWeb3({
+          chain: "ethereum",
+          statement: "Sign in to VPorkPay to sync products, cart and orders at https://vpork.xyz"
+        });
+        if (error) throw error;
+        cloudUser = data.user || data.session?.user;
+      }
+      if (!cloudUser) throw new Error("Supabase did not return an authenticated wallet session.");
+      await hydrateCloudData();
+    }
+
+    async function initializeSupabase() {
+      if (!window.supabase?.createClient) {
+        setDatabaseStatus("LOCAL DATA", "Supabase library could not load; local persistence remains active.", "error");
+        return;
+      }
+      supabaseClient = window.supabase.createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
+        auth: { persistSession: true, autoRefreshToken: true, detectSessionInUrl: true }
+      });
+      const { data: catalog, error } = await supabaseClient.from("products").select("*").eq("active", true).order("id");
+      if (error) {
+        cloudSchemaReady = false;
+        setDatabaseStatus("DB SETUP", "Run supabase/schema.sql once in the Supabase SQL Editor.", "error");
+        return;
+      }
+      cloudSchemaReady = true;
+      if (catalog?.length) {
+        products = catalog.map(cloudProduct);
+        renderProducts();
+      }
+      const { data } = await supabaseClient.auth.getSession();
+      cloudUser = data.session?.user || null;
+      if (cloudUser && isAddress(walletAddress)) await hydrateCloudData();
+      else setDatabaseStatus("CLOUD READY", "Connect and sign with an Arc wallet to sync private order data.", "success");
+    }
+
     function loadCart() {
       try {
         const saved = JSON.parse(window.localStorage.getItem(CART_KEY));
@@ -1237,6 +1498,7 @@
       } catch {
         // The cart remains available for this session if browser storage is blocked.
       }
+      queueCloudWrite(syncCartToCloud);
     }
 
     function loadBuyerOrders() {
@@ -1254,6 +1516,9 @@
       } catch {
         // Orders remain available for this session if browser storage is blocked.
       }
+      buyerOrders
+        .filter(order => isAddress(order.buyer) && walletAddress && order.buyer.toLowerCase() === walletAddress.toLowerCase())
+        .forEach(order => queueCloudWrite(() => persistOrderToCloud(order)));
     }
 
     function loadSellerOrders() {
@@ -1274,6 +1539,7 @@
       } catch {
         // Seller orders remain available for this session if browser storage is blocked.
       }
+      queueCloudWrite(persistSellerStatusesToCloud);
     }
 
     function loadCreditContractAddress() {
@@ -1532,7 +1798,23 @@
         principal,
         onchainStatus: "pending"
       });
+      buyerOrders.unshift({
+        id: displayId,
+        buyer: walletAddress,
+        createdAt: customerDebt.createdAt,
+        updatedAt: customerDebt.createdAt,
+        lines: [{ id: null, name: "Jury-proof store credit", seller: "VPorkPay", price: principal, quantity: 1 }],
+        total: principal,
+        status: "Credit requested",
+        fulfilmentStatus: "Awaiting acceptance",
+        transactionHash: "",
+        credit: true,
+        orderId: customerDebt.orderId,
+        principal,
+        onchainStatus: "pending"
+      });
       saveCustomerDebt();
+      saveBuyerOrders();
       saveCreditRequests();
       renderCustomerDebt();
       renderSellerOrders();
@@ -1959,6 +2241,9 @@
 
     async function connectWallet() {
       if (walletAddress) {
+        if (supabaseClient && cloudUser) await supabaseClient.auth.signOut({ scope: "local" }).catch(() => {});
+        cloudUser = null;
+        cloudProfile = null;
         walletAddress = "";
         isInjectedWallet = false;
         walletBalanceUnits = null;
@@ -1989,6 +2274,16 @@
       }
       updateWalletUI();
       showToast("Wallet connected on Arc Testnet");
+      if (supabaseClient && cloudSchemaReady) {
+        try {
+          await signInToSupabaseWithWallet();
+          showToast("Wallet connected · Supabase cloud sync active");
+        } catch (error) {
+          console.error("Supabase wallet sign-in failed", error);
+          setDatabaseStatus("CLOUD SIGN-IN", error.message || "Enable Ethereum Web3 Auth in Supabase.", "error");
+          showToast("Arc wallet connected · cloud sign-in still required");
+        }
+      }
     }
 
     function updateWalletUI() {
@@ -2387,6 +2682,14 @@
         if (walletAddress) {
           refreshTestnetBalance();
           if (creditContractAddress) refreshContractDashboard().catch(error => setContractStatus(error.message, "error"));
+          if (supabaseClient && cloudSchemaReady) {
+            signInToSupabaseWithWallet().catch(error => setDatabaseStatus("CLOUD SIGN-IN", error.message || "Cloud sign-in required.", "error"));
+          }
+        } else if (supabaseClient && cloudUser) {
+          supabaseClient.auth.signOut({ scope: "local" }).catch(() => {});
+          cloudUser = null;
+          cloudProfile = null;
+          setDatabaseStatus("CLOUD READY", "Connect a wallet to sync private order data.", "success");
         }
         renderCustomerDebt();
       });
@@ -2415,6 +2718,10 @@
     renderContractStatus();
     updateWalletUI();
     showView(initialView);
+    initializeSupabase().catch(error => {
+      console.error("Supabase initialization failed", error);
+      setDatabaseStatus("LOCAL DATA", error.message || "Cloud initialization failed.", "error");
+    });
   </script>
 </body>
 </html>

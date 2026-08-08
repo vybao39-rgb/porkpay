@@ -4,7 +4,8 @@
   "scripts": {
     "build:contract": "node contracts/build-artifact.cjs",
     "test:contract": "node contracts/test/VPorkPayStoreCredit.test.cjs",
-    "test:ui": "node test/onchain-credit-ui.test.cjs"
+    "test:ui": "node test/onchain-credit-ui.test.cjs",
+    "test:supabase": "node test/supabase-integration.test.cjs"
   },
   "devDependencies": {
     "ethers": "6.17.0",
