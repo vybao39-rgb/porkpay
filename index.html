@@ -1145,6 +1145,7 @@
     let cloudWriteQueue = Promise.resolve();
     let walletConnectPromise = null;
     let cloudSignInPromise = null;
+    let cloudVerifiedWalletAddress = "";
 
     const productGrid = document.querySelector("#productGrid");
     const productCount = document.querySelector("#productCount");
@@ -1235,15 +1236,26 @@
       databaseStatus.style.color = state ? "white" : "";
     }
 
+    function extractWalletAddress(value) {
+      const match = String(value || "").match(/0x[0-9a-fA-F]{40}/g);
+      return match?.at(-1)?.toLowerCase() || "";
+    }
+
     function cloudIdentityAddress(user = cloudUser) {
-      return user?.identities?.find(identity => identity?.provider === "web3")?.identity_data?.address
-        || user?.user_metadata?.address
-        || user?.identities?.[0]?.identity_data?.address
-        || "";
+      const identities = Array.isArray(user?.identities) ? user.identities : [];
+      const web3Identity = identities.find(identity => identity?.provider === "web3") || identities[0] || {};
+      const candidates = [
+        web3Identity?.identity_data?.address,
+        web3Identity?.identity_data?.sub,
+        web3Identity?.id,
+        user?.user_metadata?.address,
+        user?.user_metadata?.sub
+      ];
+      return candidates.map(extractWalletAddress).find(Boolean) || "";
     }
 
     function cloudSessionMatchesWallet(user = cloudUser) {
-      const identityAddress = cloudIdentityAddress(user);
+      const identityAddress = cloudVerifiedWalletAddress || cloudIdentityAddress(user);
       return Boolean(user && isAddress(walletAddress) && isAddress(identityAddress)
         && identityAddress.toLowerCase() === walletAddress.toLowerCase());
     }
@@ -1462,22 +1474,49 @@
         const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
         if (sessionError) throw sessionError;
         cloudUser = sessionData.session?.user || null;
-        if (cloudUser && !cloudSessionMatchesWallet(cloudUser)) {
+        cloudVerifiedWalletAddress = "";
+        if (cloudUser) {
+          const { data: currentUserData, error: currentUserError } = await supabaseClient.auth.getUser();
+          if (currentUserError) throw currentUserError;
+          cloudUser = currentUserData.user || cloudUser;
+        }
+        if (cloudUser && cloudIdentityAddress(cloudUser) !== requestedWallet) {
           await supabaseClient.auth.signOut({ scope: "local" });
           cloudUser = null;
           cloudProfile = null;
         }
+        let signedNow = false;
         if (!cloudUser) {
           setDatabaseStatus("SIGN CLOUD", "Confirm the Sign-In with Ethereum message in your wallet.");
           const { data, error } = await supabaseClient.auth.signInWithWeb3({
             chain: "ethereum",
+            wallet: window.ethereum,
             statement: "Sign in to VPorkPay to sync products, cart and orders at https://vpork.xyz"
           });
           if (error) throw error;
           cloudUser = data.user || data.session?.user || null;
+          signedNow = true;
+          const { data: verifiedUserData, error: verifiedUserError } = await supabaseClient.auth.getUser();
+          if (verifiedUserError) throw verifiedUserError;
+          cloudUser = verifiedUserData.user || cloudUser;
         }
         if (walletAddress.toLowerCase() !== requestedWallet) throw new Error("Wallet changed during cloud sign-in. Please try again.");
-        if (!cloudSessionMatchesWallet()) throw new Error("Supabase session does not match the connected wallet.");
+        const connectedAccounts = await window.ethereum.request({ method: "eth_accounts" });
+        const providerWallet = extractWalletAddress(connectedAccounts?.[0]);
+        if (providerWallet !== requestedWallet) throw new Error("The wallet provider changed accounts during sign-in. Please retry with one account selected.");
+        const signedWallet = cloudIdentityAddress(cloudUser);
+        if (signedWallet && signedWallet !== requestedWallet) {
+          await supabaseClient.auth.signOut({ scope: "local" });
+          cloudUser = null;
+          throw new Error(`Cloud signed ${shortenAddress(signedWallet)}, but ${shortenAddress(requestedWallet)} is connected. Select the same wallet account and retry.`);
+        }
+        if (!signedWallet && !signedNow) {
+          await supabaseClient.auth.signOut({ scope: "local" });
+          cloudUser = null;
+          throw new Error("The saved Web3 session is outdated. Click the wallet once more to create a fresh session.");
+        }
+        cloudVerifiedWalletAddress = signedWallet || requestedWallet;
+        if (!cloudSessionMatchesWallet()) throw new Error("Could not verify the connected wallet for cloud storage.");
         await hydrateCloudData();
         return cloudUser;
       })();
@@ -2414,7 +2453,14 @@
     }
 
     function renderBuyerOrders() {
-      savedOrderCards.innerHTML = buyerOrders.map(order => {
+      const visibleOrders = isAddress(walletAddress)
+        ? buyerOrders.filter(order => isAddress(order.buyer) && order.buyer.toLowerCase() === walletAddress.toLowerCase())
+        : [];
+      if (!visibleOrders.length) {
+        savedOrderCards.innerHTML = `<article class="order-card"><div class="order-main"><div class="order-symbol" aria-hidden="true">P</div><div><h3>${walletAddress ? "No orders for this wallet" : "Connect your wallet"}</h3><p>${walletAddress ? "Place an order from the marketplace to begin." : "Your wallet-specific cloud orders will appear here after sign-in."}</p></div></div></article>`;
+        return;
+      }
+      savedOrderCards.innerHTML = visibleOrders.map(order => {
         const primary = order.lines[0];
         const totalKg = order.lines.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
         const complete = ["Delivered", "Settled", "Credit repaid"].includes(order.status);
@@ -2783,6 +2829,7 @@
         if (walletChanged) {
           cloudUser = null;
           cloudProfile = null;
+          cloudVerifiedWalletAddress = "";
         }
         updateWalletUI();
         if (walletAddress) {
@@ -2794,6 +2841,7 @@
         } else {
           setDatabaseStatus("WALLET PAUSED", "Unlock or reconnect the wallet; the Supabase session remains safely stored.", "error");
         }
+        renderBuyerOrders();
         renderCustomerDebt();
       });
       window.ethereum.on("chainChanged", chainId => {

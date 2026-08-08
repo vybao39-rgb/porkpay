@@ -121,10 +121,14 @@ stable
 security definer
 set search_path = public, auth
 as $$
-  select lower(coalesce(identity_data ->> 'address', provider_id))
+  select lower((regexp_match(
+    concat_ws(' ', identity_data ->> 'address', identity_data ->> 'sub', provider_id),
+    '(0x[0-9a-fA-F]{40})'
+  ))[1])
   from auth.identities
   where user_id = auth.uid()
-    and lower(coalesce(identity_data ->> 'address', provider_id, '')) ~ '^0x[0-9a-f]{40}$'
+    and provider = 'web3'
+    and concat_ws(' ', identity_data ->> 'address', identity_data ->> 'sub', provider_id) ~ '0x[0-9a-fA-F]{40}'
   order by created_at desc
   limit 1;
 $$;

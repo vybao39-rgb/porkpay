@@ -60,8 +60,8 @@ const ethereum = {
 
 const cloudUser = () => ({
   id: "00000000-0000-4000-8000-000000000001",
-  user_metadata: { address: account },
-  identities: [{ provider: "web3", identity_data: { address: account } }]
+  user_metadata: { sub: `web3:ethereum:${account}` },
+  identities: [{ provider: "web3", identity_data: { sub: `web3:ethereum:${account}` } }]
 });
 
 const supabase = {
@@ -69,6 +69,7 @@ const supabase = {
     return {
       auth: {
         async getSession() { return { data: { session: cloudSession }, error: null }; },
+        async getUser() { return { data: { user: cloudSession?.user || null }, error: null }; },
         async signInWithWeb3() {
           const user = cloudUser();
           cloudSession = { user };

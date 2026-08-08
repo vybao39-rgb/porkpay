@@ -123,6 +123,8 @@ The frontend is a static HTML/CSS/JavaScript application hosted on GitHub Pages 
 4. Set the Auth Site URL to `https://vpork.xyz` and add `https://www.vpork.xyz` as an allowed redirect URL.
 5. Connect the shop-owner wallet once. The schema securely matches the verified Web3 identity and automatically assigns the canonical contract merchant wallet the `seller` role; every other wallet starts as `buyer`.
 
+Existing databases created before the Web3 identity normalization fix should run [`supabase/fix-web3-wallet-session.sql`](supabase/fix-web3-wallet-session.sql) once. The migration is idempotent and supports both plain `0x…` identities and Supabase's `web3:ethereum:0x…` form.
+
 The frontend contains only the Supabase project URL and publishable key. Never commit a Supabase secret key, `service_role` key, database password or personal access token.
 
 ## Reproduce and verify
