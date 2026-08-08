@@ -839,10 +839,10 @@
     <nav class="main-nav" aria-label="Main navigation">
       <button class="active" type="button" data-view="market">Marketplace</button>
       <button type="button" data-view="orders">My orders</button>
-      <button type="button" data-view="seller">Seller hub</button>
+      <button id="sellerNav" type="button" data-view="seller" hidden>Seller hub</button>
     </nav>
     <div class="top-actions">
-      <span class="network" id="databaseStatus" title="Shared database status">LOCAL DATA</span>
+      <span class="network" id="databaseStatus" hidden></span>
       <span class="network">Arc Testnet</span>
       <button class="wallet" id="walletButton" type="button">Connect Arc wallet</button>
     </div>
@@ -869,7 +869,7 @@
         <div class="market-main">
           <section class="hero">
             <div>
-              <span class="tag">Public GitHub Pages demo</span>
+              <span class="tag">LIVE MARKETPLACE</span>
               <div class="eyebrow">FRESH TRADE · FAST SETTLEMENT</div>
               <h1>Source better.<br><em>Pay smarter.</em></h1>
               <p class="hero-copy">
@@ -912,18 +912,15 @@
             <div class="total"><span>Total</span><strong id="cartTotal">0.00 USDC</strong></div>
           </div>
           <button class="checkout" id="checkoutButton" type="button" disabled>Continue to checkout</button>
-          <p class="powered">An injected EVM wallet is required for every onchain action</p>
+          <p class="powered">Connect your wallet to continue securely.</p>
         </aside>
       </div>
     </section>
 
     <section class="page-view dashboard" id="ordersView" hidden>
       <div class="dashboard-hero">
-        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Orders and fulfilment status sync to Supabase after wallet sign-in; a local cache keeps the app usable between connections.</p></div>
-        <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
-          <button class="primary-small" id="createProofCreditRequest" type="button">Create 0.01 USDC jury-proof request</button>
-          <button class="outline-button" type="button" data-view="market">Continue shopping</button>
-        </div>
+        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Track purchases, delivery and payment status in one place.</p></div>
+        <button class="outline-button" type="button" data-view="market">Continue shopping</button>
       </div>
       <article class="debt-card" id="debtCard" hidden>
         <div class="debt-heading">
@@ -946,24 +943,6 @@
       </article>
       <div class="order-cards" id="orderCards">
         <div id="savedOrderCards" style="display:grid;gap:18px"></div>
-        <article class="order-card featured" id="activeOrderCard">
-          <div class="order-top"><span>SAMPLE ORDER PP-240719-08</span><span class="status-chip">FULFILMENT</span></div>
-          <div class="order-main">
-            <div class="order-symbol" aria-hidden="true">P</div>
-            <div><h3>Premium Pork Belly</h3><p>8 kg · Green Valley Farm · 54.40 USDC</p><span class="status-chip">Preparing</span></div>
-            <button class="primary-small" id="confirmDelivery" type="button">Confirm sample delivery</button>
-          </div>
-          <div class="order-progress" id="activeProgress"><span class="done">Paid</span><span class="done">Accepted</span><span class="current">Preparing</span><span>Delivered</span><span>Settled</span></div>
-          <div class="escrow-strip"><span><b>Sample operations data</b> · no funds are held for this order</span><span>Onchain evidence appears only after a signed transaction</span></div>
-        </article>
-        <article class="order-card">
-          <div class="order-top"><span>ORDER PP-240716-22</span><span class="status-chip complete">COMPLETED</span></div>
-          <div class="order-main">
-            <div class="order-symbol" aria-hidden="true">P</div>
-            <div><h3>Meaty Pork Ribs</h3><p>5 kg · An Hoa Foods · 36.00 USDC</p><span class="status-chip complete">Settled</span></div>
-            <button class="outline-button" type="button" data-reorder="3">Order again</button>
-          </div>
-        </article>
       </div>
     </section>
 
@@ -973,8 +952,8 @@
         <a class="outline-button" href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer" style="text-decoration:none">Open Arcscan ↗</a>
       </div>
       <div class="seller-stats">
-        <article class="stat-card"><span>SAMPLE ORDERS</span><strong>3</strong><small>Clearly marked operational examples</small></article>
-        <article class="stat-card"><span>CREDIT REQUESTS</span><strong id="creditRequestCount">0</strong><small>Persisted in this browser</small></article>
+        <article class="stat-card"><span>ORDERS</span><strong id="sellerOrderCount">0</strong><small>Customer orders</small></article>
+        <article class="stat-card"><span>CREDIT REQUESTS</span><strong id="creditRequestCount">0</strong><small>Waiting for approval</small></article>
         <article class="stat-card"><span>CONTRACT</span><strong>v1.1</strong><small>Verified identifier and capped repayment</small></article>
         <article class="stat-card"><span>NETWORK</span><strong>ARC</strong><small>Testnet · Chain ID 5042002</small></article>
       </div>
@@ -1091,12 +1070,6 @@
       { id: 5, name: "Pork Tenderloin", cut: "Trimmed · Premium", seller: "Dalat Fresh Foods", location: "24 km", price: 8.6, stock: 26, minimum: 1, category: "Lean cuts", image: "assets/pork-tenderloin-ai.jpg" },
       { id: 6, name: "Ground Pork", cut: "80/20 · Made today", seller: "Minh Phat Butchery", location: "7 km", price: 4.7, stock: 55, minimum: 2, category: "Ground", image: "assets/ground-pork-ai.jpg" }
     ];
-    const defaultSellerOrders = [
-      { id: "PP-240719-03", buyer: "Lotus Kitchen", detail: "12 kg · Premium Pork Belly", total: 81.6, status: "Awaiting acceptance" },
-      { id: "PP-240719-02", buyer: "Bếp Nhà Restaurant", detail: "8 kg · Meaty Pork Ribs", total: 57.6, status: "Preparing" },
-      { id: "PP-240718-14", buyer: "0x34F...8C10", detail: "5 kg · Lean Pork Shoulder", total: 29.5, status: "Delivered" }
-    ];
-
     const CART_KEY = "vporkpay-cart-v1";
     const BUYER_ORDERS_KEY = "vporkpay-buyer-orders-v1";
     const SELLER_ORDERS_KEY = "vporkpay-seller-orders-v1";
@@ -1131,9 +1104,9 @@
     let activeCategory = "All cuts";
     let activeSearch = "";
     let toastTimer;
-    let buyerOrders = loadBuyerOrders();
-    let sellerOrders = [...loadSellerOrders(), ...defaultSellerOrders];
-    let customerDebt = loadCustomerDebt();
+    let buyerOrders = [];
+    let sellerOrders = [];
+    let customerDebt = null;
     let creditContractAddress = loadCreditContractAddress();
     let deploymentEvidence = loadDeploymentEvidence();
     let creditArtifact = null;
@@ -1146,6 +1119,7 @@
     let walletConnectPromise = null;
     let cloudSignInPromise = null;
     let cloudVerifiedWalletAddress = "";
+    let pendingCheckoutPayment = null;
 
     const productGrid = document.querySelector("#productGrid");
     const productCount = document.querySelector("#productCount");
@@ -1205,7 +1179,9 @@
     const onchainStepApprove = document.querySelector("#onchainStepApprove");
     const onchainStepRepay = document.querySelector("#onchainStepRepay");
     const creditRequestCount = document.querySelector("#creditRequestCount");
+    const sellerOrderCount = document.querySelector("#sellerOrderCount");
     const databaseStatus = document.querySelector("#databaseStatus");
+    const sellerNav = document.querySelector("#sellerNav");
 
     const formatUSDC = value => value.toFixed(2) + " USDC";
     const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
@@ -1394,7 +1370,7 @@
     }
 
     async function hydrateCloudData() {
-      setDatabaseStatus("SYNCING…", "Uploading local continuity data and loading Supabase.");
+      setDatabaseStatus("SYNCING…");
       const profilePayload = { user_id: cloudUser.id, wallet_address: walletAddress.toLowerCase() };
       const { error: profileError } = await supabaseClient.from("profiles").upsert(profilePayload, { onConflict: "user_id" });
       if (profileError) throw profileError;
@@ -1402,20 +1378,35 @@
       if (profileReadError) throw profileReadError;
       cloudProfile = profile;
 
-      const localWalletOrders = buyerOrders.filter(order => isAddress(order.buyer) && order.buyer.toLowerCase() === walletAddress.toLowerCase());
-      for (const order of localWalletOrders) await persistOrderToCloud(order);
-
       const { data: cloudOrders, error: ordersError } = await supabaseClient
         .from("orders")
         .select("*,order_items(*)")
         .order("created_at", { ascending: false });
       if (ordersError) throw ordersError;
-      const mergedOrders = new Map(buyerOrders.map(order => [order.id, order]));
-      (cloudOrders || []).map(mapCloudOrder).filter(order => order.lines.length).forEach(order => mergedOrders.set(order.id, order));
-      buyerOrders = [...mergedOrders.values()].sort((a, b) => b.createdAt - a.createdAt);
+      buyerOrders = (cloudOrders || []).map(mapCloudOrder).filter(order => order.lines.length);
       try {
-        window.localStorage.setItem(BUYER_ORDERS_KEY, JSON.stringify(buyerOrders));
+        window.localStorage.removeItem(BUYER_ORDERS_KEY);
+        window.localStorage.removeItem(SELLER_ORDERS_KEY);
+        window.localStorage.removeItem(CREDIT_REQUESTS_KEY);
       } catch {}
+
+      const creditOrder = buyerOrders.find(order => order.credit && order.orderId
+        && (["seller", "admin"].includes(cloudProfile.role) || order.buyer.toLowerCase() === walletAddress.toLowerCase()));
+      customerDebt = creditOrder ? {
+        principal: creditOrder.principal,
+        apr: calculateCreditApr(),
+        porkPriceChange: currentPorkPriceChange,
+        seller: creditOrder.lines[0]?.seller || "Shop owner",
+        createdAt: creditOrder.createdAt,
+        displayId: creditOrder.id,
+        orderId: creditOrder.orderId,
+        buyer: creditOrder.buyer,
+        contractAddress: creditContractAddress,
+        onchainStatus: creditOrder.onchainStatus || "pending",
+        openTxHash: creditOrder.openTxHash,
+        approveTxHash: creditOrder.approveTxHash,
+        repayTxHash: creditOrder.repayTxHash
+      } : null;
 
       const { data: cloudCart, error: cartError } = await supabaseClient
         .from("cart_items")
@@ -1455,9 +1446,10 @@
             userOrder: true
           };
         });
-        sellerOrders = [...actualSellerOrders, ...defaultSellerOrders];
-      }
+        sellerOrders = actualSellerOrders;
+      } else sellerOrders = [];
 
+      updateRoleAccess();
       renderProducts();
       renderCart();
       renderBuyerOrders();
@@ -1468,7 +1460,7 @@
     async function signInToSupabaseWithWallet() {
       if (cloudSignInPromise) return cloudSignInPromise;
       cloudSignInPromise = (async () => {
-        if (!supabaseClient || !cloudSchemaReady) throw new Error("Supabase is not ready.");
+        if (!supabaseClient || !cloudSchemaReady) throw new Error("Account service is not ready.");
         if (!isAddress(walletAddress)) throw new Error("Connect an Arc wallet first.");
         const requestedWallet = walletAddress.toLowerCase();
         const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
@@ -1516,7 +1508,7 @@
           throw new Error("The saved Web3 session is outdated. Click the wallet once more to create a fresh session.");
         }
         cloudVerifiedWalletAddress = signedWallet || requestedWallet;
-        if (!cloudSessionMatchesWallet()) throw new Error("Could not verify the connected wallet for cloud storage.");
+        if (!cloudSessionMatchesWallet()) throw new Error("Could not verify the connected wallet.");
         await hydrateCloudData();
         return cloudUser;
       })();
@@ -1529,11 +1521,11 @@
 
     async function ensureCloudReadyForCheckout() {
       if (!supabaseClient || !cloudSchemaReady) {
-        throw new Error("Cloud database is unavailable. Checkout is paused so the order cannot be lost.");
+        throw new Error("Orders are temporarily unavailable. Please try again shortly.");
       }
-      setPaymentStatus("Securely signing in before the order is saved…", "pending");
+      setPaymentStatus("Confirm your account to continue…", "pending");
       await signInToSupabaseWithWallet();
-      if (!cloudSessionMatchesWallet()) throw new Error("Cloud sign-in is required before checkout.");
+      if (!cloudSessionMatchesWallet()) throw new Error("Wallet sign-in is required before checkout.");
     }
 
     async function initializeSupabase() {
@@ -1587,21 +1579,7 @@
       queueCloudWrite(syncCartToCloud);
     }
 
-    function loadBuyerOrders() {
-      try {
-        const saved = JSON.parse(window.localStorage.getItem(BUYER_ORDERS_KEY));
-        return Array.isArray(saved) ? saved.filter(order => order?.id && Array.isArray(order.lines)) : [];
-      } catch {
-        return [];
-      }
-    }
-
     function saveBuyerOrders({ sync = true } = {}) {
-      try {
-        window.localStorage.setItem(BUYER_ORDERS_KEY, JSON.stringify(buyerOrders));
-      } catch {
-        // Orders remain available for this session if browser storage is blocked.
-      }
       if (sync) {
         buyerOrders
           .filter(order => isAddress(order.buyer) && walletAddress && order.buyer.toLowerCase() === walletAddress.toLowerCase())
@@ -1609,24 +1587,7 @@
       }
     }
 
-    function loadSellerOrders() {
-      try {
-        const saved = JSON.parse(window.localStorage.getItem(SELLER_ORDERS_KEY));
-        if (Array.isArray(saved)) return saved.filter(order => order?.id).map(order => ({ ...order, userOrder: true }));
-      } catch {
-        // Fall through to the earlier credit-only storage format.
-      }
-      return loadCreditRequests().map(order => ({ ...order, userOrder: true }));
-    }
-
     function saveSellerOrders({ sync = true } = {}) {
-      try {
-        const orders = sellerOrders.filter(order => order.userOrder || order.credit);
-        window.localStorage.setItem(SELLER_ORDERS_KEY, JSON.stringify(orders));
-        window.localStorage.setItem(CREDIT_REQUESTS_KEY, JSON.stringify(orders.filter(order => order.credit)));
-      } catch {
-        // Seller orders remain available for this session if browser storage is blocked.
-      }
       if (sync) queueCloudWrite(persistSellerStatusesToCloud);
     }
 
@@ -1636,15 +1597,6 @@
         return /^0x[0-9a-fA-F]{40}$/.test(saved) ? saved : "";
       } catch {
         return "";
-      }
-    }
-
-    function loadCreditRequests() {
-      try {
-        const saved = JSON.parse(window.localStorage.getItem(CREDIT_REQUESTS_KEY));
-        return Array.isArray(saved) ? saved.filter(order => order?.credit && order.orderId) : [];
-      } catch {
-        return [];
       }
     }
 
@@ -1717,24 +1669,8 @@
         : "Connect an Arc Testnet wallet, then deploy the contract or paste an existing address.", creditContractAddress ? "success" : "");
     }
 
-    function loadCustomerDebt() {
-      try {
-        const saved = JSON.parse(window.localStorage.getItem(STORE_DEBT_KEY));
-        const validState = saved && ["pending", "active", "repaid"].includes(saved.onchainStatus);
-        const validContract = /^0x[0-9a-fA-F]{40}$/.test(saved?.contractAddress || "");
-        return validState && Number(saved.principal) > 0 && validContract ? saved : null;
-      } catch {
-        return null;
-      }
-    }
-
     function saveCustomerDebt() {
-      try {
-        if (customerDebt) window.localStorage.setItem(STORE_DEBT_KEY, JSON.stringify(customerDebt));
-        else window.localStorage.removeItem(STORE_DEBT_KEY);
-      } catch {
-        // The live GitHub Pages origin supports storage; file previews may not.
-      }
+      try { window.localStorage.removeItem(STORE_DEBT_KEY); } catch {}
     }
 
     const roundMoney = value => Math.round((Number(value) + Number.EPSILON) * 100) / 100;
@@ -1778,7 +1714,7 @@
         paymentDisclosure.textContent = "Only 0.01 testnet USDC is transferred to your own address; the displayed order total is not charged.";
         setPaymentStatus(isInjectedWallet
           ? "Ready to create a 0.01 USDC proof transaction."
-          : "Connect an injected EVM wallet to continue.");
+          : "Connect your wallet to continue.");
       }
       return quote;
     }
@@ -1847,67 +1783,6 @@
       saveCustomerDebt();
       renderCustomerDebt();
       return { ...quote, ...customerDebt };
-    }
-
-    function createJuryProofCreditRequest() {
-      if (!isInjectedWallet || !creditContractAddress || !isAddress(walletAddress)) {
-        throw new Error("Connect the buyer wallet on Arc Testnet first.");
-      }
-      if (walletAddress.toLowerCase() === DEFAULT_DEPLOYMENT_EVIDENCE.merchant.toLowerCase()) {
-        throw new Error("Use a buyer wallet different from the shop-owner wallet.");
-      }
-      if (customerDebt && customerDebt.onchainStatus !== "repaid") {
-        throw new Error("Finish the current credit request before creating another one.");
-      }
-      const principal = 0.01;
-      const displayId = "JURY-" + Date.now().toString().slice(-8);
-      customerDebt = {
-        principal,
-        apr: calculateCreditApr(),
-        porkPriceChange: currentPorkPriceChange,
-        seller: "VPorkPay Jury Proof",
-        createdAt: Date.now(),
-        displayId,
-        orderId: creditOrderId(),
-        buyer: walletAddress,
-        contractAddress: creditContractAddress,
-        onchainStatus: "pending",
-        juryProof: true
-      };
-      sellerOrders.unshift({
-        id: displayId,
-        buyer: walletAddress,
-        detail: "0.01 USDC public jury-proof lifecycle",
-        total: principal,
-        status: "Credit requested",
-        credit: true,
-        juryProof: true,
-        orderId: customerDebt.orderId,
-        principal,
-        onchainStatus: "pending"
-      });
-      buyerOrders.unshift({
-        id: displayId,
-        buyer: walletAddress,
-        createdAt: customerDebt.createdAt,
-        updatedAt: customerDebt.createdAt,
-        lines: [{ id: null, name: "Jury-proof store credit", seller: "VPorkPay", price: principal, quantity: 1 }],
-        total: principal,
-        status: "Credit requested",
-        fulfilmentStatus: "Awaiting acceptance",
-        transactionHash: "",
-        credit: true,
-        orderId: customerDebt.orderId,
-        principal,
-        onchainStatus: "pending"
-      });
-      saveCustomerDebt();
-      saveBuyerOrders();
-      saveCreditRequests();
-      renderCustomerDebt();
-      renderSellerOrders();
-      renderContractStatus();
-      return customerDebt;
     }
 
     function setPaymentStatus(message, state = "") {
@@ -2239,7 +2114,16 @@
       toastTimer = window.setTimeout(() => toast.classList.remove("show"), 2500);
     }
 
+    const hasSellerAccess = () => ["seller", "admin"].includes(cloudProfile?.role);
+
+    function updateRoleAccess() {
+      const allowed = hasSellerAccess();
+      sellerNav.hidden = !allowed;
+      if (!allowed && !document.querySelector("#sellerView").hidden) showView("market");
+    }
+
     function showView(view) {
+      if (view === "seller" && !hasSellerAccess()) view = "market";
       ["market", "orders", "seller"].forEach(name => {
         document.querySelector("#" + name + "View").hidden = name !== view;
       });
@@ -2331,8 +2215,8 @@
       if (walletConnectPromise) return walletConnectPromise;
       walletConnectPromise = (async () => {
         if (!window.ethereum) {
-          showToast("Install or open an injected EVM wallet to continue");
-          setPaymentStatus("An injected EVM wallet is required for Arc Testnet transactions.", "error");
+          showToast("Install or open your wallet to continue");
+          setPaymentStatus("Connect a wallet before continuing.", "error");
           return;
         }
         if (!walletAddress) {
@@ -2360,11 +2244,11 @@
         if (supabaseClient && cloudSchemaReady) {
           try {
             await signInToSupabaseWithWallet();
-            showToast("Wallet connected · Supabase cloud sync active");
+            showToast("Wallet connected · account ready");
           } catch (error) {
             console.error("Supabase wallet sign-in failed", error);
             setDatabaseStatus("CLOUD SIGN-IN", error.message || "Cloud wallet signature is required.", "error");
-            showToast("Wallet remains connected · click it to retry cloud sign-in");
+            showToast("Wallet remains connected · click it to retry sign-in");
           }
         }
       })();
@@ -2378,7 +2262,7 @@
     function updateWalletUI() {
       walletButton.textContent = walletAddress ? shortenAddress(walletAddress) : "Connect Arc wallet";
       walletButton.title = walletAddress
-        ? "Wallet connected. Click to verify cloud sync; disconnect from your wallet application."
+        ? "Wallet connected. Click to confirm account access."
         : "Connect an Arc Testnet wallet";
       checkoutWallet.textContent = walletAddress
         ? walletButton.textContent + " · Arc Testnet"
@@ -2457,7 +2341,7 @@
         ? buyerOrders.filter(order => isAddress(order.buyer) && order.buyer.toLowerCase() === walletAddress.toLowerCase())
         : [];
       if (!visibleOrders.length) {
-        savedOrderCards.innerHTML = `<article class="order-card"><div class="order-main"><div class="order-symbol" aria-hidden="true">P</div><div><h3>${walletAddress ? "No orders for this wallet" : "Connect your wallet"}</h3><p>${walletAddress ? "Place an order from the marketplace to begin." : "Your wallet-specific cloud orders will appear here after sign-in."}</p></div></div></article>`;
+        savedOrderCards.innerHTML = `<article class="order-card"><div class="order-main"><div class="order-symbol" aria-hidden="true">P</div><div><h3>${walletAddress ? "No orders for this wallet" : "Connect your wallet"}</h3><p>${walletAddress ? "Place an order from the marketplace to begin." : "Your orders will appear here after sign-in."}</p></div></div></article>`;
         return;
       }
       savedOrderCards.innerHTML = visibleOrders.map(order => {
@@ -2492,7 +2376,6 @@
     }
 
     async function createPlacedOrder(lines, total, transactionHash = "", storeCredit = null) {
-      const primary = lines[0];
       const displayId = storeCredit?.displayId || "PP-" + Date.now().toString().slice(-8);
       const status = storeCredit ? "Credit requested" : "Awaiting acceptance";
       const buyerOrder = {
@@ -2510,38 +2393,27 @@
         principal: storeCredit?.principal || 0,
         onchainStatus: storeCredit?.onchainStatus || ""
       };
-      buyerOrders.unshift(buyerOrder);
-      sellerOrders.unshift({
-        id: displayId,
-        buyer: walletAddress,
-        detail: `${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) : ""}`,
-        total,
-        status,
-        credit: Boolean(storeCredit),
-        orderId: storeCredit?.orderId || "",
-        principal: storeCredit?.principal || 0,
-        onchainStatus: storeCredit?.onchainStatus || "",
-        userOrder: true
-      });
-      saveBuyerOrders({ sync: false });
-      saveSellerOrders({ sync: false });
-      renderBuyerOrders();
-      renderSellerOrders();
-      if (storeCredit) renderContractStatus();
       try {
         await persistOrderToCloud(buyerOrder);
-        setDatabaseStatus("ORDER SAVED", "Order and line items are stored in Supabase.", "success");
-        return { order: buyerOrder, cloudSaved: true };
+        buyerOrders = [buyerOrder, ...buyerOrders.filter(order => order.id !== buyerOrder.id)];
+        renderBuyerOrders();
+        if (storeCredit) renderContractStatus();
+        setDatabaseStatus("ORDER SAVED", "", "success");
+        return buyerOrder;
       } catch (error) {
         console.error("VPorkPay order persistence failed", error);
-        setDatabaseStatus("ORDER RETRY", error.message || "The local order is safe; cloud sync will retry.", "error");
-        queueCloudWrite(() => persistOrderToCloud(buyerOrder));
-        return { order: buyerOrder, cloudSaved: false, error };
+        setDatabaseStatus("ORDER FAILED", "", "error");
+        throw new Error("The order could not be saved. Please try again before leaving checkout.");
       }
     }
 
     function renderSellerOrders() {
+      sellerOrderCount.textContent = sellerOrders.length;
       creditRequestCount.textContent = sellerOrders.filter(order => order.credit && order.status === "Credit requested").length;
+      if (!sellerOrders.length) {
+        sellerOrdersContainer.innerHTML = '<div class="empty-products"><strong>No orders yet</strong>New customer orders will appear here.</div>';
+        return;
+      }
       sellerOrdersContainer.innerHTML = sellerOrders.map(order => {
         const action = order.credit && order.status === "Credit requested"
           ? `<button class="primary-small" type="button" data-credit-approve="${order.id}">Approve onchain</button>`
@@ -2658,30 +2530,31 @@
       const lines = [...cart.values()];
       const total = cartSubtotal();
       confirmPayment.disabled = true;
-      confirmPayment.textContent = "Securing cloud order…";
+      confirmPayment.textContent = "Saving your order…";
       try {
         await ensureCloudReadyForCheckout();
       } catch (error) {
         confirmPayment.disabled = false;
         confirmPayment.textContent = useStoreCredit.checked ? "Send credit request to shop owner" : "Pay with USDC";
-        setPaymentStatus(error.message || "Cloud sign-in is required before checkout.", "error");
-        showToast(error.message || "Sign the cloud login message, then try again");
+        setPaymentStatus(error.message || "Wallet sign-in is required before checkout.", "error");
+        showToast(error.message || "Confirm your wallet account, then try again");
         return;
       }
       if (useStoreCredit.checked) {
         try {
           const storeCredit = createCustomerDebt(lines, total);
           confirmPayment.textContent = "Creating credit request…";
-          const saved = await createPlacedOrder(lines, total, "", storeCredit);
+          await createPlacedOrder(lines, total, "", storeCredit);
           cart.clear();
           saveCart();
           renderCart();
           closeCheckout();
           showView("orders");
-          showToast(saved.cloudSaved
-            ? formatUSDC(storeCredit.principal) + " saved and sent for merchant approval"
-            : "Order saved locally; cloud retry is running");
+          showToast(formatUSDC(storeCredit.principal) + " sent for merchant approval");
         } catch (error) {
+          customerDebt = null;
+          saveCustomerDebt();
+          renderCustomerDebt();
           confirmPayment.disabled = false;
           confirmPayment.textContent = "Send credit request to shop owner";
           setPaymentStatus(error.message, "error");
@@ -2690,22 +2563,28 @@
         return;
       }
       if (isInjectedWallet) {
-        confirmPayment.textContent = "Confirm in wallet…";
-        setPaymentStatus("Confirm the 0.01 USDC test transaction in your wallet.", "pending");
+        const checkoutKey = JSON.stringify(lines.map(line => [line.id, line.quantity]));
+        confirmPayment.textContent = pendingCheckoutPayment?.key === checkoutKey ? "Saving order…" : "Confirm in wallet…";
+        setPaymentStatus(pendingCheckoutPayment?.key === checkoutKey
+          ? "Payment confirmed. Saving your order…"
+          : "Confirm the 0.01 USDC test transaction in your wallet.", "pending");
         try {
-          const transactionHash = await sendArcTestnetProofPayment();
-          const saved = await createPlacedOrder(lines, total, transactionHash);
+          const transactionHash = pendingCheckoutPayment?.key === checkoutKey
+            && pendingCheckoutPayment.wallet === walletAddress.toLowerCase()
+            ? pendingCheckoutPayment.transactionHash
+            : await sendArcTestnetProofPayment();
+          pendingCheckoutPayment = { key: checkoutKey, wallet: walletAddress.toLowerCase(), transactionHash };
+          await createPlacedOrder(lines, total, transactionHash);
+          pendingCheckoutPayment = null;
           cart.clear();
           saveCart();
           renderCart();
           closeCheckout();
           showView("orders");
-          showToast(saved.cloudSaved
-            ? "Arc Testnet payment finalized · order saved to Supabase"
-            : "Payment finalized · local order safe while cloud retries");
+          showToast("Payment finalized · order saved");
         } catch (error) {
           confirmPayment.disabled = false;
-          confirmPayment.textContent = "Retry 0.01 test USDC payment";
+          confirmPayment.textContent = pendingCheckoutPayment ? "Retry saving order" : "Retry 0.01 test USDC payment";
           setPaymentStatus(error.message || "The testnet transaction was cancelled.", "error");
           showToast(error.message || "Testnet payment cancelled");
         }
@@ -2715,22 +2594,6 @@
       confirmPayment.textContent = "Pay with USDC";
       setPaymentStatus("Connect an injected Arc Testnet wallet to submit a transaction.", "error");
       showToast("A real wallet transaction is required");
-    });
-
-    document.querySelector("#confirmDelivery").addEventListener("click", event => {
-      document.querySelector("#activeProgress").innerHTML = '<span class="done">Sample</span><span class="done">Accepted</span><span class="done">Preparing</span><span class="done">Delivered</span><span class="current">Complete</span>';
-      event.target.textContent = "Sample completed";
-      event.target.disabled = true;
-      showToast("Sample order completed — no funds moved");
-    });
-
-    document.querySelector("#createProofCreditRequest").addEventListener("click", () => {
-      try {
-        const proof = createJuryProofCreditRequest();
-        showToast("Created " + proof.displayId + " — switch to the shop-owner wallet to approve it");
-      } catch (error) {
-        showToast(error.message || "Could not create the jury-proof request");
-      }
     });
 
     sellerOrdersContainer.addEventListener("click", async event => {
@@ -2841,7 +2704,9 @@
         } else {
           setDatabaseStatus("WALLET PAUSED", "Unlock or reconnect the wallet; the Supabase session remains safely stored.", "error");
         }
+        updateRoleAccess();
         renderBuyerOrders();
+        renderSellerOrders();
         renderCustomerDebt();
       });
       window.ethereum.on("chainChanged", chainId => {
@@ -2860,6 +2725,12 @@
       if (event.key === "Escape" && !checkoutModal.hidden) closeCheckout();
     });
 
+    try {
+      window.localStorage.removeItem(BUYER_ORDERS_KEY);
+      window.localStorage.removeItem(SELLER_ORDERS_KEY);
+      window.localStorage.removeItem(CREDIT_REQUESTS_KEY);
+      window.localStorage.removeItem(STORE_DEBT_KEY);
+    } catch {}
     const initialView = ["market", "orders", "seller"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "market";
     renderProducts();
     renderCart();

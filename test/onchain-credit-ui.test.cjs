@@ -15,6 +15,8 @@ const listeners = {};
 let cloudSession = null;
 let cloudOrderWrites = 0;
 let cloudItemWrites = 0;
+const cloudOrders = [];
+let cloudOrderItems = [];
 
 const word = value => BigInt(value).toString(16).padStart(64, "0");
 const addressResult = value => "0x" + value.slice(2).padStart(64, "0");
@@ -59,7 +61,7 @@ const ethereum = {
 };
 
 const cloudUser = () => ({
-  id: "00000000-0000-4000-8000-000000000001",
+  id: account === merchant ? "00000000-0000-4000-8000-000000000002" : "00000000-0000-4000-8000-000000000001",
   user_metadata: { sub: `web3:ethereum:${account}` },
   identities: [{ provider: "web3", identity_data: { sub: `web3:ethereum:${account}` } }]
 });
@@ -79,28 +81,58 @@ const supabase = {
       },
       from(table) {
         let operation = "";
-        const result = () => ({ data: operation === "select" ? [] : null, error: null });
+        let payload = null;
+        const filters = {};
+        const selectedRows = () => {
+          if (table === "orders") {
+            const allowed = account === merchant ? cloudOrders : cloudOrders.filter(row => row.buyer_wallet.toLowerCase() === account.toLowerCase());
+            return allowed.map(row => ({
+              ...row,
+              order_items: cloudOrderItems.filter(item => item.order_id === row.id)
+            }));
+          }
+          if (table === "cart_items" || table === "products") return [];
+          return [];
+        };
+        const execute = () => {
+          if (operation === "delete" && table === "order_items") {
+            cloudOrderItems = cloudOrderItems.filter(item => item.order_id !== filters.order_id);
+          }
+          if (operation === "update" && table === "orders") {
+            const row = cloudOrders.find(item => item.id === filters.id);
+            if (row) Object.assign(row, payload);
+          }
+          return { data: operation === "select" ? selectedRows() : null, error: null };
+        };
         const builder = {
           select() { operation = "select"; return builder; },
           delete() { operation = "delete"; return builder; },
-          update() { operation = "update"; return builder; },
-          eq() { return builder; },
-          order() { return Promise.resolve(result()); },
+          update(value) { operation = "update"; payload = value; return builder; },
+          eq(column, value) { filters[column] = value; return builder; },
+          order() { return Promise.resolve(execute()); },
           single() {
             return Promise.resolve({
-              data: { user_id: cloudUser().id, wallet_address: account, role: "buyer" },
+              data: { user_id: cloudUser().id, wallet_address: account, role: account === merchant ? "seller" : "buyer" },
               error: null
             });
           },
-          insert() {
-            if (table === "order_items") cloudItemWrites += 1;
+          insert(value) {
+            if (table === "order_items") {
+              cloudItemWrites += 1;
+              cloudOrderItems.push(...value.map((item, index) => ({ ...item, id: cloudOrderItems.length + index + 1 })));
+            }
             return Promise.resolve({ data: null, error: null });
           },
-          upsert() {
-            if (table === "orders") cloudOrderWrites += 1;
+          upsert(value) {
+            if (table === "orders") {
+              cloudOrderWrites += 1;
+              const existing = cloudOrders.find(row => row.id === value.id);
+              if (existing) Object.assign(existing, value);
+              else cloudOrders.push({ ...value });
+            }
             return Promise.resolve({ data: null, error: null });
           },
-          then(resolve, reject) { return Promise.resolve(result()).then(resolve, reject); }
+          then(resolve, reject) { return Promise.resolve(execute()).then(resolve, reject); }
         };
         return builder;
       }
@@ -135,9 +167,10 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (!document.querySelector("#deploymentProof").href.endsWith("0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067")) {
     throw new Error("Canonical deployment transaction should be linked by default");
   }
-  if (!document.querySelector("#createProofCreditRequest")) throw new Error("Jury-proof request action should be available");
+  if (document.querySelector("#createProofCreditRequest")) throw new Error("Local-only jury-proof orders must not be available");
   click("#walletButton");
-  await wait(0);
+  await wait(20);
+  if (document.querySelector("#sellerNav").hidden) throw new Error("Seller wallet should see Seller hub");
   const connectedWalletLabel = text("#walletButton");
   click("#walletButton");
   await wait(0);
@@ -150,6 +183,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
   ethereum.switchAccount(buyer);
   await wait(0);
+  if (!document.querySelector("#sellerNav").hidden) throw new Error("Buyer wallet must not see Seller hub");
   click('[data-view="market"]');
   click('[data-add="1"]');
   if (!JSON.parse(localStorage.getItem("vporkpay-cart-v1"))?.length) throw new Error("Cart was not persisted");
@@ -160,14 +194,17 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   click("#confirmPayment");
   await wait(700);
   if (text("#debtStatus") !== "AWAITING MERCHANT") throw new Error("Credit request should be pending");
-  if (!localStorage.getItem("vporkpay-credit-requests-v1")) throw new Error("Credit request was not persisted");
-  if (!localStorage.getItem("vporkpay-buyer-orders-v1")) throw new Error("Buyer order history was not persisted");
-  if (!localStorage.getItem("vporkpay-seller-orders-v1")) throw new Error("Seller order history was not persisted");
+  if (localStorage.getItem("vporkpay-buyer-orders-v1") || localStorage.getItem("vporkpay-seller-orders-v1")) {
+    throw new Error("Orders must not be stored as browser-only records");
+  }
   if (!cloudOrderWrites || !cloudItemWrites) throw new Error("Order and line items were not persisted to Supabase");
   if (JSON.parse(localStorage.getItem("vporkpay-cart-v1")).length) throw new Error("Persisted cart was not cleared after checkout");
 
   ethereum.switchAccount(merchant);
   await wait(0);
+  click("#walletButton");
+  await wait(30);
+  if (document.querySelector("#sellerNav").hidden) throw new Error("Seller hub was not restored for the merchant role");
   click('[data-view="seller"]');
   click("[data-credit-approve]");
   await wait(30);
@@ -175,18 +212,21 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
 
   ethereum.switchAccount(buyer);
   await wait(0);
+  click("#walletButton");
+  await wait(30);
+  if (!document.querySelector("#sellerNav").hidden) throw new Error("Seller hub leaked after switching back to buyer");
   click('[data-view="orders"]');
   click("#repayDebt");
   await wait(40);
   if (text("#debtStatus") !== "REPAID") throw new Error("Repayment did not close debt");
   if (text("#debtYearTotal") !== "0.00 USDC") throw new Error("Repaid amount due should be zero");
-  const lifecycleEvidence = JSON.parse(localStorage.getItem("vporkpay-credit-requests-v1"))[0];
-  if (!lifecycleEvidence.openTxHash) throw new Error("Debt-opening proof was not persisted");
-  if (!lifecycleEvidence.approveTxHash) throw new Error("USDC-approval proof was not persisted");
-  if (!lifecycleEvidence.repayTxHash) throw new Error("Repayment proof was not persisted");
-  const persistedBuyerOrder = JSON.parse(localStorage.getItem("vporkpay-buyer-orders-v1"))[0];
+  const lifecycleEvidence = cloudOrders[0];
+  if (!lifecycleEvidence.open_tx_hash) throw new Error("Debt-opening proof was not persisted");
+  if (!lifecycleEvidence.approve_tx_hash) throw new Error("USDC-approval proof was not persisted");
+  if (!lifecycleEvidence.repay_tx_hash) throw new Error("Repayment proof was not persisted");
+  const persistedBuyerOrder = cloudOrders[0];
   if (persistedBuyerOrder.status !== "Credit repaid") throw new Error("Buyer order status was not synchronized after repayment");
-  if (!persistedBuyerOrder.openTxHash || !persistedBuyerOrder.approveTxHash || !persistedBuyerOrder.repayTxHash) {
+  if (!persistedBuyerOrder.open_tx_hash || !persistedBuyerOrder.approve_tx_hash || !persistedBuyerOrder.repay_tx_hash) {
     throw new Error("Buyer order did not retain the complete onchain lifecycle");
   }
   if (document.querySelector("#debtProofLinks").hidden) throw new Error("Lifecycle evidence links should be visible after repayment");
@@ -196,12 +236,9 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   click('[data-add="2"]');
   const storageSnapshot = Object.fromEntries([
     "vporkpay-cart-v1",
-    "vporkpay-buyer-orders-v1",
-    "vporkpay-seller-orders-v1",
     "vporkpay-store-debt-v1",
     "vporkpay-credit-contract-v1",
-    "vporkpay-deployment-evidence-v1",
-    "vporkpay-credit-requests-v1"
+    "vporkpay-deployment-evidence-v1"
   ].map(key => [key, localStorage.getItem(key)]));
   const reloaded = new JSDOM(html, {
     runScripts: "dangerously",
@@ -215,9 +252,11 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
       Object.entries(storageSnapshot).forEach(([key, value]) => {
         if (value !== null) window.localStorage.setItem(key, value);
       });
+      window.localStorage.setItem("vporkpay-buyer-orders-v1", JSON.stringify([{ id: "FAKE-LOCAL", buyer, lines: [] }]));
+      window.localStorage.setItem("vporkpay-seller-orders-v1", JSON.stringify([{ id: "FAKE-SELLER" }]));
     },
   });
-  await wait(0);
+  await wait(40);
   if (reloaded.window.document.querySelector("#walletButton").textContent.includes("Connect")) {
     throw new Error("Connected wallet was not restored after page reload");
   }
@@ -225,15 +264,18 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     throw new Error("Cart was not restored after page reload");
   }
   if (!reloaded.window.document.querySelector("#savedOrderCards").textContent.includes("CREDIT REPAID")) {
-    throw new Error("Buyer order status was not restored after page reload");
+    throw new Error("Database order status was not restored after page reload");
   }
-  if (!reloaded.window.document.querySelector("#sellerOrders").textContent.includes("Credit repaid")) {
-    throw new Error("Seller order status was not restored after page reload");
+  if (reloaded.window.document.querySelector("#savedOrderCards").textContent.includes("FAKE-LOCAL")) {
+    throw new Error("A browser-only order was rendered");
+  }
+  if (!reloaded.window.document.querySelector("#sellerNav").hidden) {
+    throw new Error("Buyer saw Seller hub after page reload");
   }
   reloaded.window.close();
   if (runtimeErrors.length) throw new Error("Runtime errors: " + runtimeErrors.join(" | "));
 
-  console.log("PASS: cart, buyer/seller orders and complete onchain lifecycle survive a page reload");
+  console.log("PASS: database-only orders, role-gated Seller hub and onchain lifecycle survive reload");
   dom.window.close();
 })().catch(error => {
   console.error(error.stack || error.message);

@@ -15,6 +15,16 @@ requireMatch(html, /identity_data\?\.sub/, "Legacy CAIP-style Web3 identity pars
 requireMatch(html, /from\("cart_items"\)/, "Cloud cart persistence is missing");
 requireMatch(html, /from\("orders"\)/, "Cloud order persistence is missing");
 requireMatch(html, /from\("products"\)/, "Cloud catalog loading is missing");
+requireMatch(html, /id="sellerNav"[\s\S]*?hidden/, "Seller navigation must be hidden before role verification");
+requireMatch(html, /hasSellerAccess[\s\S]*\["seller", "admin"\]/, "Seller navigation is not role-gated");
+requireMatch(html, /buyerOrders\s*=\s*\(cloudOrders \|\| \[\]\)/, "Buyer orders must come from the database");
+
+if (/SAMPLE ORDER|Sample operations data|Orders and fulfilment status sync to Supabase/i.test(html)) {
+  throw new Error("Sample orders or implementation commentary remain visible");
+}
+if (/let buyerOrders\s*=\s*loadBuyerOrders|let sellerOrders\s*=\s*\[\.\.\.loadSellerOrders/i.test(html)) {
+  throw new Error("Browser-only orders are still loaded into the interface");
+}
 
 if (/sb_secret_|service_role\s*[:=]/i.test(html)) {
   throw new Error("A privileged Supabase key appears in the public frontend");
