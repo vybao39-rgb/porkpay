@@ -115,7 +115,11 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   await wait(40);
   if (text("#debtStatus") !== "REPAID") throw new Error("Repayment did not close debt");
   if (text("#debtYearTotal") !== "0.00 USDC") throw new Error("Repaid amount due should be zero");
-  if (!JSON.parse(localStorage.getItem("vporkpay-credit-requests-v1"))[0].repayTxHash) throw new Error("Repayment proof was not persisted");
+  const lifecycleEvidence = JSON.parse(localStorage.getItem("vporkpay-credit-requests-v1"))[0];
+  if (!lifecycleEvidence.openTxHash) throw new Error("Debt-opening proof was not persisted");
+  if (!lifecycleEvidence.approveTxHash) throw new Error("USDC-approval proof was not persisted");
+  if (!lifecycleEvidence.repayTxHash) throw new Error("Repayment proof was not persisted");
+  if (document.querySelector("#debtProofLinks").hidden) throw new Error("Lifecycle evidence links should be visible after repayment");
   if (txCount !== 4) throw new Error(`Expected deploy, open, approve and repay transactions; got ${txCount}`);
   if (runtimeErrors.length) throw new Error("Runtime errors: " + runtimeErrors.join(" | "));
 

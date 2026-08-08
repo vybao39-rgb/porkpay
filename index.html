@@ -933,7 +933,11 @@
           <div class="debt-metric"><span>Amount due now</span><strong id="debtYearTotal">0.00 USDC</strong></div>
         </div>
         <p class="debt-note" id="debtNote">Waiting for the shop owner to approve this credit request on Arc Testnet.</p>
-        <a class="transaction-link" id="debtTransactionLink" target="_blank" rel="noreferrer" hidden>View on Arcscan ↗</a>
+        <div class="testnet-links" id="debtProofLinks" hidden>
+          <a class="transaction-link" id="debtOpenTransactionLink" target="_blank" rel="noreferrer" hidden>1 · Open debt ↗</a>
+          <a class="transaction-link" id="debtApproveTransactionLink" target="_blank" rel="noreferrer" hidden>2 · Approve USDC ↗</a>
+          <a class="transaction-link" id="debtTransactionLink" target="_blank" rel="noreferrer" hidden>3 · Repay debt ↗</a>
+        </div>
         <button class="primary-small" id="repayDebt" type="button" style="width:fit-content;background:white;color:var(--green)">Approve USDC & repay onchain</button>
       </article>
       <div class="order-cards" id="orderCards">
@@ -1160,6 +1164,9 @@
     const debtYearTotal = document.querySelector("#debtYearTotal");
     const debtNote = document.querySelector("#debtNote");
     const debtStatus = document.querySelector("#debtStatus");
+    const debtProofLinks = document.querySelector("#debtProofLinks");
+    const debtOpenTransactionLink = document.querySelector("#debtOpenTransactionLink");
+    const debtApproveTransactionLink = document.querySelector("#debtApproveTransactionLink");
     const debtTransactionLink = document.querySelector("#debtTransactionLink");
     const repayDebtButton = document.querySelector("#repayDebt");
     const contractAddressInput = document.querySelector("#contractAddressInput");
@@ -1386,9 +1393,16 @@
         : status === "repaid"
           ? "This Arc Testnet debt has been fully repaid to the shop owner."
           : "Waiting for the shop owner to approve order " + customerDebt.displayId + " on Arc Testnet. No debt exists until that transaction succeeds.";
-      const proofHash = customerDebt.repayTxHash || customerDebt.openTxHash;
-      debtTransactionLink.hidden = !proofHash;
-      if (proofHash) debtTransactionLink.href = ARC_EXPLORER_URL + "/tx/" + proofHash;
+      const proofLinks = [
+        [debtOpenTransactionLink, customerDebt.openTxHash],
+        [debtApproveTransactionLink, customerDebt.approveTxHash],
+        [debtTransactionLink, customerDebt.repayTxHash]
+      ];
+      debtProofLinks.hidden = !proofLinks.some(([, hash]) => hash);
+      proofLinks.forEach(([link, hash]) => {
+        link.hidden = !hash;
+        if (hash) link.href = ARC_EXPLORER_URL + "/tx/" + hash;
+      });
       renderContractStatus();
     }
 
@@ -1632,6 +1646,7 @@
       await waitForTransactionReceipt(transactionHash);
       order.status = "Credit active";
       order.onchainStatus = "active";
+      order.openTxHash = transactionHash;
       customerDebt.onchainStatus = "active";
       customerDebt.openTxHash = transactionHash;
       saveCustomerDebt();
@@ -1668,6 +1683,13 @@
         params: [{ from: walletAddress, to: USDC_CONTRACT, data: approveData }]
       });
       await waitForTransactionReceipt(approveHash);
+      customerDebt.approveTxHash = approveHash;
+      saveCustomerDebt();
+      const approvedSellerOrder = sellerOrders.find(order => order.orderId === customerDebt.orderId);
+      if (approvedSellerOrder) {
+        approvedSellerOrder.approveTxHash = approveHash;
+        saveCreditRequests();
+      }
       repayDebtButton.textContent = "Confirm repayment in wallet…";
       const latestDue = await readOnchainAmountDue(customerDebt.orderId, address);
       if (latestDue > maximumApproved) throw new Error("The repayment quote expired. Retry to authorize a fresh maximum amount.");
@@ -1684,6 +1706,7 @@
       if (sellerOrder) {
         sellerOrder.status = "Credit repaid";
         sellerOrder.onchainStatus = "repaid";
+        sellerOrder.approveTxHash = approveHash;
         sellerOrder.repayTxHash = repayHash;
         saveCreditRequests();
         renderSellerOrders();

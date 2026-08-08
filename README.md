@@ -4,7 +4,7 @@
 
 [Final submission links](https://vybao39-rgb.github.io/porkpay/submission.html) · [Live MVP](https://vybao39-rgb.github.io/porkpay/) · [3-minute video](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Demo.mp4) · [Final deck](https://vybao39-rgb.github.io/porkpay/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vybao39-rgb.github.io/porkpay/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
 
-**Verified Arc Testnet deployment:** [`0xd9dab755431664ada2d13868674ddb43ffdef396`](https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396) · [deployment transaction](https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067)
+**Fully source-verified Arc Testnet deployment:** [`0xd9dab755431664ada2d13868674ddb43ffdef396`](https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396?tab=contract) · [deployment transaction](https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067)
 
 > **Safety:** Arc Testnet only. Do not use real funds. `VPorkPayStoreCredit` is an unaudited hackathon prototype and does not create a legally binding credit agreement.
 
@@ -89,8 +89,9 @@ The canonical VPorkPay v1.1 contract was deployed successfully on Arc Testnet at
 - Immutable merchant: [`0xf2d062b3920b342f6c6c4ecfd22c39a79e1e33d0`](https://testnet.arcscan.app/address/0xf2d062b3920b342f6c6c4ecfd22c39a79e1e33d0)
 - Official Arc Testnet USDC: `0x3600000000000000000000000000000000000000`
 - Initial annual pork-price change: `+6.40%`; opening APR at this setting: `11.20%`
+- Arcscan verification: full Solidity source and ABI, compiler `v0.8.24+commit.e11b9ed9`, optimizer `200`, EVM `shanghai`, MIT license
 
-Independent RPC reads confirm that the deployed bytecode exposes the expected v1.1 `CONTRACT_ID`, merchant, USDC and pork-price parameters. The deployment proves the contract exists; each credit request, merchant approval and buyer repayment still requires its own signed Arc Testnet transaction.
+Independent RPC reads confirm that the deployed bytecode exposes the expected v1.1 `CONTRACT_ID`, merchant, USDC and pork-price parameters. Arcscan independently matched and published the complete source and ABI. Each credit request, merchant approval and buyer repayment still requires its own signed Arc Testnet transaction.
 
 ## Architecture
 
