@@ -10,7 +10,9 @@ const usdc = "0x3600000000000000000000000000000000000000";
 let account = merchant;
 let txCount = 0;
 let amountDue = 5_600_000n;
+let usdcBalance = 8_000_000n;
 const receipts = new Map();
+const sentTransactions = [];
 const listeners = {};
 let cloudSession = null;
 let cloudOrderWrites = 0;
@@ -33,7 +35,7 @@ const ethereum = {
     if (method === "eth_getCode") return "0x6001600055";
     if (method === "eth_call") {
       const call = params[0];
-      if (call.to.toLowerCase() === usdc.toLowerCase()) return "0x" + word(8_000_000n);
+      if (call.to.toLowerCase() === usdc.toLowerCase()) return "0x" + word(usdcBalance);
       if (call.data === artifact.selectors["CONTRACT_ID()"]) return artifact.contractId;
       if (call.data === artifact.selectors["merchant()"]) return addressResult(merchant);
       if (call.data === artifact.selectors["usdc()"]) return addressResult(usdc);
@@ -45,6 +47,7 @@ const ethereum = {
       txCount += 1;
       const hash = "0x" + txCount.toString(16).padStart(64, "0");
       const transaction = params[0];
+      sentTransactions.push(transaction);
       const receipt = { status: "0x1", transactionHash: hash };
       if (!transaction.to) receipt.contractAddress = contractAddress;
       if (transaction.data?.startsWith(artifact.selectors["repayInFull(bytes32,uint256)"])) amountDue = 0n;
@@ -232,6 +235,29 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (document.querySelector("#debtProofLinks").hidden) throw new Error("Lifecycle evidence links should be visible after repayment");
   if (txCount !== 4) throw new Error(`Expected deploy, open, approve and repay transactions; got ${txCount}`);
 
+  usdcBalance = 100_000_000n;
+  click('[data-view="market"]');
+  click('[data-add="2"]');
+  click("#checkoutButton");
+  await wait(0);
+  if (!document.querySelector("#creditOption").hidden || document.querySelector("#useStoreCredit").checked) {
+    throw new Error("A fully funded buyer must not be offered or assigned shop debt");
+  }
+  if (text("#paymentAmount") !== "10.80 USDC") throw new Error("Checkout must display the full order value");
+  click("#confirmPayment");
+  await wait(700);
+  if (txCount !== 5) throw new Error(`Expected one direct USDC payment after the credit lifecycle; got ${txCount} transactions`);
+  const directPayment = sentTransactions[4];
+  if (directPayment.to.toLowerCase() !== usdc) throw new Error("Direct checkout did not call the Arc Testnet USDC contract");
+  if (!directPayment.data.startsWith("0xa9059cbb")) throw new Error("Direct checkout did not call USDC transfer(address,uint256)");
+  const encodedRecipient = "0x" + directPayment.data.slice(10, 74).slice(-40);
+  const encodedAmount = BigInt("0x" + directPayment.data.slice(74, 138));
+  if (encodedRecipient.toLowerCase() !== merchant) throw new Error("Full payment was not addressed to the verified shop owner");
+  if (encodedAmount !== 10_800_000n) throw new Error(`Expected the full 10.80 USDC order value; got ${encodedAmount} units`);
+  const directOrder = cloudOrders.find(order => order.payment_tx_hash && !order.is_credit);
+  if (!directOrder) throw new Error("Direct payment order was not persisted to Supabase");
+  if (Number(directOrder.principal_usdc) !== 0) throw new Error("A fully funded direct payment created shop debt");
+
   click('[data-view="market"]');
   click('[data-add="2"]');
   const storageSnapshot = Object.fromEntries([
@@ -275,7 +301,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   reloaded.window.close();
   if (runtimeErrors.length) throw new Error("Runtime errors: " + runtimeErrors.join(" | "));
 
-  console.log("PASS: database-only orders, role-gated Seller hub and onchain lifecycle survive reload");
+  console.log("PASS: full-value shop payment, database-only orders, role-gated Seller hub and credit lifecycle survive reload");
   dom.window.close();
 })().catch(error => {
   console.error(error.stack || error.message);

@@ -120,8 +120,8 @@
     .hero {
       position: relative;
       display: grid;
-      grid-template-columns: minmax(0, 1fr) 260px;
-      align-items: end;
+      grid-template-columns: minmax(0, 1fr) minmax(280px, 420px);
+      align-items: center;
       gap: 38px;
       overflow: hidden;
       padding: clamp(30px, 5vw, 66px);
@@ -160,25 +160,31 @@
     }
     h1 em { color: var(--coral); font-weight: 400; }
     .hero-copy { max-width: 610px; margin: 0; color: var(--muted); font-size: 15px; line-height: 1.7; }
-    .settlement {
-      padding: 24px;
-      border-radius: 18px;
-      color: white;
-      background: var(--coral);
-      box-shadow: 0 15px 34px rgba(198, 62, 45, .22);
+    .hero-market-art {
+      position: relative;
+      overflow: hidden;
+      margin: 0;
+      border: 5px solid #fffaf1;
+      border-radius: 22px;
+      background: #e6c18b;
+      box-shadow: 0 18px 40px rgba(66, 46, 28, .22);
       transform: rotate(1deg);
     }
-    .settlement small { font-size: 9px; font-weight: 900; letter-spacing: 1.1px; }
-    .settlement strong { display: block; margin-top: 24px; font-family: Georgia, serif; font-size: 36px; font-weight: 400; }
-    .settlement span { color: #ffd9d2; font-size: 10px; }
-    .bars { display: flex; align-items: end; gap: 5px; height: 52px; margin-top: 25px; }
-    .bars i { flex: 1; height: 35%; background: rgba(255, 255, 255, .84); }
-    .bars i:nth-child(2) { height: 52%; }
-    .bars i:nth-child(3) { height: 42%; }
-    .bars i:nth-child(4) { height: 70%; }
-    .bars i:nth-child(5) { height: 61%; }
-    .bars i:nth-child(6) { height: 87%; }
-    .bars i:nth-child(7) { height: 100%; }
+    .hero-market-art::after {
+      position: absolute;
+      inset: 0;
+      border: 1px solid rgba(18, 20, 16, .12);
+      border-radius: 17px;
+      pointer-events: none;
+      content: "";
+    }
+    .hero-market-art img {
+      display: block;
+      width: 100%;
+      aspect-ratio: 4 / 3;
+      object-fit: cover;
+      image-rendering: pixelated;
+    }
 
     .market-header {
       display: flex;
@@ -397,7 +403,7 @@
     }
     @media (max-width: 820px) {
       .hero { grid-template-columns: 1fr; }
-      .settlement { max-width: 310px; }
+      .hero-market-art { width: min(100%, 480px); }
       .products { grid-template-columns: 1fr 1fr; }
     }
     @media (max-width: 600px) {
@@ -877,12 +883,9 @@
                 and settle securely in USDC on Arc.
               </p>
             </div>
-            <aside class="settlement" aria-label="Today's settlement">
-              <small>ONCHAIN CREDIT TERMS</small>
-              <strong>11.20%</strong>
-              <span>APR at a +6.4% pork-price index</span>
-              <div class="bars" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i><i></i></div>
-            </aside>
+            <figure class="hero-market-art">
+              <img src="assets/vpork-market-pixel.png" alt="Pixel-art pork stall at a Vietnamese market with fresh cuts and a wooden chopping block">
+            </figure>
           </section>
 
           <div class="search-row">
@@ -1023,9 +1026,10 @@
           <div class="summary-line"><span>Network fee</span><b>Estimated by wallet</b></div>
           <div class="summary-line grand"><span>Total</span><b id="checkoutTotal">0.00 USDC</b></div>
           <div class="testnet-demo">
-            <div class="testnet-heading"><strong>Arc Testnet proof payment</strong><span class="live-badge">LIVE TESTNET</span></div>
-            <p>Safely sends 0.01 testnet USDC back to your connected wallet. The order total is not charged.</p>
-            <div class="testnet-details"><span>Test amount <b>0.01 USDC</b></span><span>Balance <b id="testnetBalance">Connect wallet</b></span></div>
+            <div class="testnet-heading"><strong>Direct USDC payment</strong><span class="live-badge">ARC TESTNET</span></div>
+            <p>The full order total is sent directly to the verified shop-owner wallet when your balance is sufficient.</p>
+            <div class="testnet-details"><span>Payment <b id="paymentAmount">0.00 USDC</b></span><span>Balance <b id="testnetBalance">Connect wallet</b></span></div>
+            <div class="testnet-details"><span>Shop wallet</span><b id="shopWallet">Not configured</b></div>
             <div class="testnet-links">
               <a href="https://faucet.circle.com/" target="_blank" rel="noreferrer">Get testnet USDC ↗</a>
               <a href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer">Open Arcscan ↗</a>
@@ -1036,7 +1040,7 @@
           <div class="credit-option" id="creditOption" hidden>
             <div class="testnet-heading"><strong>Not enough USDC?</strong><span class="live-badge" style="background:var(--coral)">STORE CREDIT</span></div>
             <p>Your available balance does not cover this order. Request the missing amount as credit from the shop owner.</p>
-            <label class="credit-switch"><input id="useStoreCredit" type="checkbox">Request onchain store credit</label>
+            <label class="credit-switch"><input id="useStoreCredit" type="checkbox" disabled>Request onchain store credit for the shortfall</label>
             <div class="credit-terms" id="creditTerms" hidden>
               <div class="credit-term"><span>Available now</span><b id="creditAvailable">0.00 USDC</b></div>
               <div class="credit-term"><span>Amount owed</span><b id="creditPrincipal">0.00 USDC</b></div>
@@ -1048,7 +1052,7 @@
             <p>Contract formula: 8% base rate + 50% of annual pork-price change, capped between 6% and 18%. The rate is fixed when the merchant approves the debt.</p>
           </div>
           <button class="checkout" id="confirmPayment" type="button">Pay with USDC</button>
-          <p class="powered" id="paymentDisclosure">Onchain demo only · never use real funds</p>
+          <p class="powered" id="paymentDisclosure">Arc Testnet only · review the amount and recipient in your wallet</p>
         </div>
       </div>
     </section>
@@ -1080,8 +1084,6 @@
     const ARC_RPC_URL = "https://rpc.testnet.arc.network";
     const ARC_EXPLORER_URL = "https://testnet.arcscan.app";
     const USDC_CONTRACT = "0x3600000000000000000000000000000000000000";
-    const TEST_PAYMENT_UNITS = 10000n;
-    const TEST_PAYMENT_LABEL = "0.01 USDC";
     const STORE_DEBT_KEY = "vporkpay-store-debt-v1";
     const CREDIT_CONTRACT_KEY = "vporkpay-credit-contract-v1";
     const CREDIT_REQUESTS_KEY = "vporkpay-credit-requests-v1";
@@ -1137,6 +1139,8 @@
     const checkoutForm = document.querySelector("#checkoutForm");
     const confirmPayment = document.querySelector("#confirmPayment");
     const testnetBalance = document.querySelector("#testnetBalance");
+    const paymentAmount = document.querySelector("#paymentAmount");
+    const shopWallet = document.querySelector("#shopWallet");
     const paymentStatus = document.querySelector("#paymentStatus");
     const transactionLink = document.querySelector("#transactionLink");
     const paymentDisclosure = document.querySelector("#paymentDisclosure");
@@ -1688,19 +1692,26 @@
       return { available, principal, apr, yearInterest, yearTotal: roundMoney(principal + yearInterest) };
     }
 
+    const usdcUnits = amount => BigInt(Math.round(roundMoney(amount) * 1000000));
+    const shopOwnerAddress = () => isAddress(deploymentEvidence?.merchant)
+      ? deploymentEvidence.merchant
+      : DEFAULT_DEPLOYMENT_EVIDENCE.merchant;
+
     function updateCreditOption(total = cartSubtotal()) {
       const quote = creditQuote(total);
       const needsCredit = quote.principal > 0;
       creditOption.hidden = !needsCredit;
-      if (!needsCredit) useStoreCredit.checked = false;
-      creditTerms.hidden = !needsCredit || !useStoreCredit.checked;
+      useStoreCredit.checked = needsCredit;
+      creditTerms.hidden = !needsCredit;
+      paymentAmount.textContent = formatUSDC(total);
+      shopWallet.textContent = shortenAddress(shopOwnerAddress());
       creditAvailable.textContent = formatUSDC(quote.available);
       creditPrincipal.textContent = formatUSDC(quote.principal);
       porkPriceChange.textContent = (currentPorkPriceChange >= 0 ? "+" : "") + currentPorkPriceChange.toFixed(2) + "% / year";
       creditApr.textContent = quote.apr.toFixed(2) + "% APR";
       creditYearInterest.textContent = formatUSDC(quote.yearInterest);
       creditYearTotal.textContent = formatUSDC(quote.yearTotal);
-      if (useStoreCredit.checked && needsCredit) {
+      if (needsCredit) {
         confirmPayment.textContent = "Send credit request to shop owner";
         paymentDisclosure.textContent = creditContractAddress && isInjectedWallet
           ? "The merchant must approve this request in an Arc Testnet transaction."
@@ -1710,10 +1721,10 @@
           : "Connect an injected wallet and configure the verified v1.1 contract before requesting credit.", "pending");
         transactionLink.hidden = true;
       } else {
-        confirmPayment.textContent = "Send 0.01 test USDC & place order";
-        paymentDisclosure.textContent = "Only 0.01 testnet USDC is transferred to your own address; the displayed order total is not charged.";
+        confirmPayment.textContent = "Pay " + formatUSDC(total) + " to shop owner";
+        paymentDisclosure.textContent = formatUSDC(total) + " will be transferred directly to " + shortenAddress(shopOwnerAddress()) + ". No shop debt will be created.";
         setPaymentStatus(isInjectedWallet
-          ? "Ready to create a 0.01 USDC proof transaction."
+          ? "Ready to pay the full order total on Arc Testnet."
           : "Connect your wallet to continue.");
       }
       return quote;
@@ -2083,18 +2094,22 @@
       return repayHash;
     }
 
-    async function sendArcTestnetProofPayment() {
+    async function sendOrderPayment(total) {
       await ensureArcTestnet();
       await refreshTestnetBalance();
-      if (walletBalanceUnits !== null && walletBalanceUnits < TEST_PAYMENT_UNITS) {
-        throw new Error("Not enough testnet USDC. Use the Circle Faucet, then try again.");
+      const amountUnits = usdcUnits(total);
+      if (walletBalanceUnits === null) throw new Error("USDC balance is unavailable. Check Arc Testnet and try again.");
+      if (walletBalanceUnits < amountUnits) {
+        updateCreditOption(total);
+        throw new Error("Your USDC balance is no longer sufficient. Review the shop-credit request instead.");
       }
+      const recipient = shopOwnerAddress();
       const transactionHash = await window.ethereum.request({
         method: "eth_sendTransaction",
         params: [{
           from: walletAddress,
           to: USDC_CONTRACT,
-          data: encodeUsdcTransfer(walletAddress, TEST_PAYMENT_UNITS)
+          data: encodeUsdcTransfer(recipient, amountUnits)
         }]
       });
       latestTransactionHash = transactionHash;
@@ -2102,7 +2117,7 @@
       transactionLink.hidden = false;
       setPaymentStatus("Transaction submitted. Waiting for Arc finality…", "pending");
       await waitForTransactionReceipt(transactionHash);
-      setPaymentStatus(TEST_PAYMENT_LABEL + " finalized on Arc Testnet.", "success");
+      setPaymentStatus(formatUSDC(total) + " paid to " + shortenAddress(recipient) + " on Arc Testnet.", "success");
       await refreshTestnetBalance();
       return transactionHash;
     }
@@ -2272,7 +2287,7 @@
         setPaymentStatus("Ready after an Arc Testnet wallet is connected.");
         transactionLink.hidden = true;
       } else {
-        setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
+        setPaymentStatus("Ready to pay with USDC on Arc Testnet.");
       }
     }
 
@@ -2309,7 +2324,6 @@
       ).join("");
       checkoutTotal.textContent = formatUSDC(cartSubtotal());
       checkoutWallet.textContent = walletButton.textContent + " · Arc Testnet";
-      useStoreCredit.checked = false;
       updateCreditOption(cartSubtotal());
       if (isInjectedWallet) {
         refreshTestnetBalance();
@@ -2358,7 +2372,7 @@
               ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.openTxHash}" target="_blank" rel="noreferrer">View active debt on Arcscan ↗</a>`
               : `${formatUSDC(order.principal || 0)} awaiting merchant approval`
           : order.transactionHash
-            ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.transactionHash}" target="_blank" rel="noreferrer">View test payment on Arcscan ↗</a>`
+            ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.transactionHash}" target="_blank" rel="noreferrer">View payment on Arcscan ↗</a>`
             : "No onchain transaction submitted";
         const paymentLabel = credit ? (order.status === "Credit repaid" ? "Repaid" : "Credit") : "Paid";
         return `
@@ -2370,7 +2384,7 @@
               <button class="primary-small" type="button" data-confirm-saved="${order.id}" ${deliveryConfirmed ? "disabled" : ""}>${deliveryConfirmed ? "Delivery confirmed" : "Confirm delivery"}</button>
             </div>
             <div class="order-progress"><span class="done">${paymentLabel}</span><span class="${fulfilmentStatus === "Awaiting acceptance" ? "current" : "done"}">Accepted</span><span class="${fulfilmentStatus === "Preparing" ? "current" : deliveryConfirmed ? "done" : ""}">Preparing</span><span class="${deliveryConfirmed ? "done" : ""}">Delivered</span><span class="${complete ? "current" : ""}">Settled</span></div>
-            <div class="escrow-strip"><span><b>${credit ? formatUSDC(order.principal || 0) : order.transactionHash ? TEST_PAYMENT_LABEL : "0.00 USDC"}</b> ${credit ? "store credit lifecycle" : order.transactionHash ? "test payment finalized" : "no funds moved"}</span><span>${transactionMarkup}</span></div>
+            <div class="escrow-strip"><span><b>${credit ? formatUSDC(order.principal || 0) : order.transactionHash ? formatUSDC(order.total) : "0.00 USDC"}</b> ${credit ? "store credit lifecycle" : order.transactionHash ? "paid directly to shop owner" : "no funds moved"}</span><span>${transactionMarkup}</span></div>
           </article>`;
       }).join("");
     }
@@ -2523,8 +2537,6 @@
     checkoutButton.addEventListener("click", openCheckout);
     document.querySelector("#modalClose").addEventListener("click", closeCheckout);
     document.querySelector("#modalBackdrop").addEventListener("click", closeCheckout);
-    useStoreCredit.addEventListener("change", () => updateCreditOption(cartSubtotal()));
-
     confirmPayment.addEventListener("click", async () => {
       if (!checkoutForm.reportValidity()) return;
       const lines = [...cart.values()];
@@ -2567,12 +2579,12 @@
         confirmPayment.textContent = pendingCheckoutPayment?.key === checkoutKey ? "Saving order…" : "Confirm in wallet…";
         setPaymentStatus(pendingCheckoutPayment?.key === checkoutKey
           ? "Payment confirmed. Saving your order…"
-          : "Confirm the 0.01 USDC test transaction in your wallet.", "pending");
+          : "Confirm the full " + formatUSDC(total) + " payment to " + shortenAddress(shopOwnerAddress()) + " in your wallet.", "pending");
         try {
           const transactionHash = pendingCheckoutPayment?.key === checkoutKey
             && pendingCheckoutPayment.wallet === walletAddress.toLowerCase()
             ? pendingCheckoutPayment.transactionHash
-            : await sendArcTestnetProofPayment();
+            : await sendOrderPayment(total);
           pendingCheckoutPayment = { key: checkoutKey, wallet: walletAddress.toLowerCase(), transactionHash };
           await createPlacedOrder(lines, total, transactionHash);
           pendingCheckoutPayment = null;
@@ -2584,9 +2596,9 @@
           showToast("Payment finalized · order saved");
         } catch (error) {
           confirmPayment.disabled = false;
-          confirmPayment.textContent = pendingCheckoutPayment ? "Retry saving order" : "Retry 0.01 test USDC payment";
-          setPaymentStatus(error.message || "The testnet transaction was cancelled.", "error");
-          showToast(error.message || "Testnet payment cancelled");
+          confirmPayment.textContent = pendingCheckoutPayment ? "Retry saving order" : "Retry full USDC payment";
+          setPaymentStatus(error.message || "The USDC transaction was cancelled.", "error");
+          showToast(error.message || "USDC payment cancelled");
         }
         return;
       }
@@ -2717,7 +2729,7 @@
         } else if (walletAddress) {
           refreshTestnetBalance();
           if (creditContractAddress) refreshContractDashboard().catch(error => setContractStatus(error.message, "error"));
-          setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
+          setPaymentStatus("Ready to pay with USDC on Arc Testnet.");
         }
       });
     }
