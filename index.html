@@ -919,7 +919,7 @@
 
     <section class="page-view dashboard" id="ordersView" hidden>
       <div class="dashboard-hero">
-        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Orders and fulfilment status are saved on this device; onchain proofs remain public on Arc.</p></div>
+        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Orders and fulfilment status sync to Supabase after wallet sign-in; a local cache keeps the app usable between connections.</p></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
           <button class="primary-small" id="createProofCreditRequest" type="button">Create 0.01 USDC jury-proof request</button>
           <button class="outline-button" type="button" data-view="market">Continue shopping</button>
@@ -1143,6 +1143,8 @@
     let cloudProfile = null;
     let cloudSchemaReady = false;
     let cloudWriteQueue = Promise.resolve();
+    let walletConnectPromise = null;
+    let cloudSignInPromise = null;
 
     const productGrid = document.querySelector("#productGrid");
     const productCount = document.querySelector("#productCount");
@@ -1233,8 +1235,26 @@
       databaseStatus.style.color = state ? "white" : "";
     }
 
+    function cloudIdentityAddress(user = cloudUser) {
+      return user?.identities?.find(identity => identity?.provider === "web3")?.identity_data?.address
+        || user?.user_metadata?.address
+        || user?.identities?.[0]?.identity_data?.address
+        || "";
+    }
+
+    function cloudSessionMatchesWallet(user = cloudUser) {
+      const identityAddress = cloudIdentityAddress(user);
+      return Boolean(user && isAddress(walletAddress) && isAddress(identityAddress)
+        && identityAddress.toLowerCase() === walletAddress.toLowerCase());
+    }
+
     function queueCloudWrite(task) {
-      if (!supabaseClient || !cloudUser || !cloudSchemaReady) return;
+      if (!supabaseClient || !cloudSchemaReady || !cloudSessionMatchesWallet()) {
+        if (cloudSchemaReady && isAddress(walletAddress)) {
+          setDatabaseStatus("SIGN TO SYNC", "Click the connected wallet and sign once before cloud data can be updated.", "error");
+        }
+        return cloudWriteQueue;
+      }
       cloudWriteQueue = cloudWriteQueue
         .then(task)
         .then(() => setDatabaseStatus("CLOUD SYNCED", "Supabase is storing data for this wallet.", "success"))
@@ -1279,7 +1299,10 @@
     }
 
     async function persistOrderToCloud(order) {
-      if (!cloudUser || !isAddress(order?.buyer) || order.buyer.toLowerCase() !== walletAddress.toLowerCase()) return;
+      if (!cloudSessionMatchesWallet()) throw new Error("Wallet cloud session is not authenticated.");
+      if (!isAddress(order?.buyer) || order.buyer.toLowerCase() !== walletAddress.toLowerCase()) {
+        throw new Error("Order wallet does not match the connected wallet.");
+      }
       const { error: orderError } = await supabaseClient
         .from("orders")
         .upsert(cloudOrderRow(order), { onConflict: "id" });
@@ -1431,25 +1454,47 @@
     }
 
     async function signInToSupabaseWithWallet() {
-      if (!supabaseClient || !cloudSchemaReady || !isAddress(walletAddress)) return;
-      const { data: sessionData } = await supabaseClient.auth.getSession();
-      cloudUser = sessionData.session?.user || null;
-      const identityAddress = cloudUser?.user_metadata?.address || cloudUser?.identities?.[0]?.identity_data?.address || "";
-      if (cloudUser && identityAddress && identityAddress.toLowerCase() !== walletAddress.toLowerCase()) {
-        await supabaseClient.auth.signOut({ scope: "local" });
-        cloudUser = null;
+      if (cloudSignInPromise) return cloudSignInPromise;
+      cloudSignInPromise = (async () => {
+        if (!supabaseClient || !cloudSchemaReady) throw new Error("Supabase is not ready.");
+        if (!isAddress(walletAddress)) throw new Error("Connect an Arc wallet first.");
+        const requestedWallet = walletAddress.toLowerCase();
+        const { data: sessionData, error: sessionError } = await supabaseClient.auth.getSession();
+        if (sessionError) throw sessionError;
+        cloudUser = sessionData.session?.user || null;
+        if (cloudUser && !cloudSessionMatchesWallet(cloudUser)) {
+          await supabaseClient.auth.signOut({ scope: "local" });
+          cloudUser = null;
+          cloudProfile = null;
+        }
+        if (!cloudUser) {
+          setDatabaseStatus("SIGN CLOUD", "Confirm the Sign-In with Ethereum message in your wallet.");
+          const { data, error } = await supabaseClient.auth.signInWithWeb3({
+            chain: "ethereum",
+            statement: "Sign in to VPorkPay to sync products, cart and orders at https://vpork.xyz"
+          });
+          if (error) throw error;
+          cloudUser = data.user || data.session?.user || null;
+        }
+        if (walletAddress.toLowerCase() !== requestedWallet) throw new Error("Wallet changed during cloud sign-in. Please try again.");
+        if (!cloudSessionMatchesWallet()) throw new Error("Supabase session does not match the connected wallet.");
+        await hydrateCloudData();
+        return cloudUser;
+      })();
+      try {
+        return await cloudSignInPromise;
+      } finally {
+        cloudSignInPromise = null;
       }
-      if (!cloudUser) {
-        setDatabaseStatus("SIGN CLOUD", "Confirm the Sign-In with Ethereum message in your wallet.");
-        const { data, error } = await supabaseClient.auth.signInWithWeb3({
-          chain: "ethereum",
-          statement: "Sign in to VPorkPay to sync products, cart and orders at https://vpork.xyz"
-        });
-        if (error) throw error;
-        cloudUser = data.user || data.session?.user;
+    }
+
+    async function ensureCloudReadyForCheckout() {
+      if (!supabaseClient || !cloudSchemaReady) {
+        throw new Error("Cloud database is unavailable. Checkout is paused so the order cannot be lost.");
       }
-      if (!cloudUser) throw new Error("Supabase did not return an authenticated wallet session.");
-      await hydrateCloudData();
+      setPaymentStatus("Securely signing in before the order is saved…", "pending");
+      await signInToSupabaseWithWallet();
+      if (!cloudSessionMatchesWallet()) throw new Error("Cloud sign-in is required before checkout.");
     }
 
     async function initializeSupabase() {
@@ -1472,8 +1517,10 @@
         renderProducts();
       }
       const { data } = await supabaseClient.auth.getSession();
-      cloudUser = data.session?.user || null;
-      if (cloudUser && isAddress(walletAddress)) await hydrateCloudData();
+      const restoredUser = data.session?.user || null;
+      cloudUser = restoredUser && cloudSessionMatchesWallet(restoredUser) ? restoredUser : null;
+      if (cloudUser) await hydrateCloudData();
+      else if (isAddress(walletAddress)) setDatabaseStatus("SIGN TO SYNC", "Click the connected wallet and sign once to restore cloud sync.", "error");
       else setDatabaseStatus("CLOUD READY", "Connect and sign with an Arc wallet to sync private order data.", "success");
     }
 
@@ -1510,15 +1557,17 @@
       }
     }
 
-    function saveBuyerOrders() {
+    function saveBuyerOrders({ sync = true } = {}) {
       try {
         window.localStorage.setItem(BUYER_ORDERS_KEY, JSON.stringify(buyerOrders));
       } catch {
         // Orders remain available for this session if browser storage is blocked.
       }
-      buyerOrders
-        .filter(order => isAddress(order.buyer) && walletAddress && order.buyer.toLowerCase() === walletAddress.toLowerCase())
-        .forEach(order => queueCloudWrite(() => persistOrderToCloud(order)));
+      if (sync) {
+        buyerOrders
+          .filter(order => isAddress(order.buyer) && walletAddress && order.buyer.toLowerCase() === walletAddress.toLowerCase())
+          .forEach(order => queueCloudWrite(() => persistOrderToCloud(order)));
+      }
     }
 
     function loadSellerOrders() {
@@ -1531,7 +1580,7 @@
       return loadCreditRequests().map(order => ({ ...order, userOrder: true }));
     }
 
-    function saveSellerOrders() {
+    function saveSellerOrders({ sync = true } = {}) {
       try {
         const orders = sellerOrders.filter(order => order.userOrder || order.credit);
         window.localStorage.setItem(SELLER_ORDERS_KEY, JSON.stringify(orders));
@@ -1539,7 +1588,7 @@
       } catch {
         // Seller orders remain available for this session if browser storage is blocked.
       }
-      queueCloudWrite(persistSellerStatusesToCloud);
+      if (sync) queueCloudWrite(persistSellerStatusesToCloud);
     }
 
     function loadCreditContractAddress() {
@@ -2240,54 +2289,58 @@
     }
 
     async function connectWallet() {
-      if (walletAddress) {
-        if (supabaseClient && cloudUser) await supabaseClient.auth.signOut({ scope: "local" }).catch(() => {});
-        cloudUser = null;
-        cloudProfile = null;
-        walletAddress = "";
-        isInjectedWallet = false;
-        walletBalanceUnits = null;
-        latestTransactionHash = "";
-        updateWalletUI();
-        showToast("Wallet disconnected");
-        return;
-      }
-      if (window.ethereum) {
+      if (walletConnectPromise) return walletConnectPromise;
+      walletConnectPromise = (async () => {
+        if (!window.ethereum) {
+          showToast("Install or open an injected EVM wallet to continue");
+          setPaymentStatus("An injected EVM wallet is required for Arc Testnet transactions.", "error");
+          return;
+        }
+        if (!walletAddress) {
+          try {
+            const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
+            if (!accounts || !accounts[0]) throw new Error("No wallet account was selected.");
+            walletAddress = accounts[0];
+            isInjectedWallet = true;
+            updateWalletUI();
+          } catch (error) {
+            showToast(error.message || "Wallet connection was cancelled");
+            return;
+          }
+        }
         try {
-          const accounts = await window.ethereum.request({ method: "eth_requestAccounts" });
-          if (!accounts || !accounts[0]) throw new Error("No wallet account was selected.");
-          walletAddress = accounts[0];
-          isInjectedWallet = true;
           await ensureArcTestnet();
           await refreshTestnetBalance();
           if (creditContractAddress) await refreshContractDashboard();
         } catch (error) {
-          walletAddress = "";
-          isInjectedWallet = false;
-          showToast(error.message || "Wallet connection was cancelled");
-          return;
+          walletBalanceUnits = null;
+          setPaymentStatus(error.message || "Switch to Arc Testnet to continue.", "error");
+          showToast("Wallet stays connected · switch to Arc Testnet when ready");
         }
-      } else {
-        showToast("Install or open an injected EVM wallet to continue");
-        setPaymentStatus("An injected EVM wallet is required for Arc Testnet transactions.", "error");
-        return;
-      }
-      updateWalletUI();
-      showToast("Wallet connected on Arc Testnet");
-      if (supabaseClient && cloudSchemaReady) {
-        try {
-          await signInToSupabaseWithWallet();
-          showToast("Wallet connected · Supabase cloud sync active");
-        } catch (error) {
-          console.error("Supabase wallet sign-in failed", error);
-          setDatabaseStatus("CLOUD SIGN-IN", error.message || "Enable Ethereum Web3 Auth in Supabase.", "error");
-          showToast("Arc wallet connected · cloud sign-in still required");
+        updateWalletUI();
+        if (supabaseClient && cloudSchemaReady) {
+          try {
+            await signInToSupabaseWithWallet();
+            showToast("Wallet connected · Supabase cloud sync active");
+          } catch (error) {
+            console.error("Supabase wallet sign-in failed", error);
+            setDatabaseStatus("CLOUD SIGN-IN", error.message || "Cloud wallet signature is required.", "error");
+            showToast("Wallet remains connected · click it to retry cloud sign-in");
+          }
         }
+      })();
+      try {
+        return await walletConnectPromise;
+      } finally {
+        walletConnectPromise = null;
       }
     }
 
     function updateWalletUI() {
       walletButton.textContent = walletAddress ? shortenAddress(walletAddress) : "Connect Arc wallet";
+      walletButton.title = walletAddress
+        ? "Wallet connected. Click to verify cloud sync; disconnect from your wallet application."
+        : "Connect an Arc Testnet wallet";
       checkoutWallet.textContent = walletAddress
         ? walletButton.textContent + " · Arc Testnet"
         : "Not connected";
@@ -2297,6 +2350,28 @@
         transactionLink.hidden = true;
       } else {
         setPaymentStatus("Ready to create a 0.01 USDC proof transaction.");
+      }
+    }
+
+    async function restoreInjectedWallet() {
+      if (!window.ethereum) return;
+      try {
+        const accounts = await window.ethereum.request({ method: "eth_accounts" });
+        walletAddress = accounts?.[0] || "";
+        isInjectedWallet = Boolean(walletAddress);
+        updateWalletUI();
+        if (!walletAddress) return;
+        const chainId = await window.ethereum.request({ method: "eth_chainId" });
+        if (chainId?.toLowerCase() === ARC_CHAIN_ID) {
+          await refreshTestnetBalance();
+          if (creditContractAddress) await refreshContractDashboard();
+        } else {
+          walletBalanceUnits = null;
+          testnetBalance.textContent = "Wrong network";
+          setPaymentStatus("Wallet restored. Switch to Arc Testnet before paying.", "error");
+        }
+      } catch (error) {
+        console.warn("Could not restore the injected wallet session", error);
       }
     }
 
@@ -2370,11 +2445,11 @@
       }).join("");
     }
 
-    function createPlacedOrder(lines, total, transactionHash = "", storeCredit = null) {
+    async function createPlacedOrder(lines, total, transactionHash = "", storeCredit = null) {
       const primary = lines[0];
       const displayId = storeCredit?.displayId || "PP-" + Date.now().toString().slice(-8);
       const status = storeCredit ? "Credit requested" : "Awaiting acceptance";
-      buyerOrders.unshift({
+      const buyerOrder = {
         id: displayId,
         buyer: walletAddress,
         createdAt: Date.now(),
@@ -2388,7 +2463,8 @@
         orderId: storeCredit?.orderId || "",
         principal: storeCredit?.principal || 0,
         onchainStatus: storeCredit?.onchainStatus || ""
-      });
+      };
+      buyerOrders.unshift(buyerOrder);
       sellerOrders.unshift({
         id: displayId,
         buyer: walletAddress,
@@ -2401,11 +2477,21 @@
         onchainStatus: storeCredit?.onchainStatus || "",
         userOrder: true
       });
-      saveBuyerOrders();
-      saveSellerOrders();
+      saveBuyerOrders({ sync: false });
+      saveSellerOrders({ sync: false });
       renderBuyerOrders();
       renderSellerOrders();
       if (storeCredit) renderContractStatus();
+      try {
+        await persistOrderToCloud(buyerOrder);
+        setDatabaseStatus("ORDER SAVED", "Order and line items are stored in Supabase.", "success");
+        return { order: buyerOrder, cloudSaved: true };
+      } catch (error) {
+        console.error("VPorkPay order persistence failed", error);
+        setDatabaseStatus("ORDER RETRY", error.message || "The local order is safe; cloud sync will retry.", "error");
+        queueCloudWrite(() => persistOrderToCloud(buyerOrder));
+        return { order: buyerOrder, cloudSaved: false, error };
+      }
     }
 
     function renderSellerOrders() {
@@ -2526,17 +2612,29 @@
       const lines = [...cart.values()];
       const total = cartSubtotal();
       confirmPayment.disabled = true;
+      confirmPayment.textContent = "Securing cloud order…";
+      try {
+        await ensureCloudReadyForCheckout();
+      } catch (error) {
+        confirmPayment.disabled = false;
+        confirmPayment.textContent = useStoreCredit.checked ? "Send credit request to shop owner" : "Pay with USDC";
+        setPaymentStatus(error.message || "Cloud sign-in is required before checkout.", "error");
+        showToast(error.message || "Sign the cloud login message, then try again");
+        return;
+      }
       if (useStoreCredit.checked) {
         try {
           const storeCredit = createCustomerDebt(lines, total);
           confirmPayment.textContent = "Creating credit request…";
-          createPlacedOrder(lines, total, "", storeCredit);
+          const saved = await createPlacedOrder(lines, total, "", storeCredit);
           cart.clear();
           saveCart();
           renderCart();
           closeCheckout();
           showView("orders");
-          showToast(formatUSDC(storeCredit.principal) + " sent for merchant onchain approval");
+          showToast(saved.cloudSaved
+            ? formatUSDC(storeCredit.principal) + " saved and sent for merchant approval"
+            : "Order saved locally; cloud retry is running");
         } catch (error) {
           confirmPayment.disabled = false;
           confirmPayment.textContent = "Send credit request to shop owner";
@@ -2550,13 +2648,15 @@
         setPaymentStatus("Confirm the 0.01 USDC test transaction in your wallet.", "pending");
         try {
           const transactionHash = await sendArcTestnetProofPayment();
-          createPlacedOrder(lines, total, transactionHash);
+          const saved = await createPlacedOrder(lines, total, transactionHash);
           cart.clear();
           saveCart();
           renderCart();
           closeCheckout();
           showView("orders");
-          showToast("Arc Testnet payment finalized");
+          showToast(saved.cloudSaved
+            ? "Arc Testnet payment finalized · order saved to Supabase"
+            : "Payment finalized · local order safe while cloud retries");
         } catch (error) {
           confirmPayment.disabled = false;
           confirmPayment.textContent = "Retry 0.01 test USDC payment";
@@ -2676,20 +2776,23 @@
     });
     if (window.ethereum?.on) {
       window.ethereum.on("accountsChanged", accounts => {
-        walletAddress = accounts[0] || "";
+        const nextWallet = accounts[0] || "";
+        const walletChanged = nextWallet.toLowerCase() !== walletAddress.toLowerCase();
+        walletAddress = nextWallet;
         isInjectedWallet = Boolean(walletAddress);
+        if (walletChanged) {
+          cloudUser = null;
+          cloudProfile = null;
+        }
         updateWalletUI();
         if (walletAddress) {
           refreshTestnetBalance();
           if (creditContractAddress) refreshContractDashboard().catch(error => setContractStatus(error.message, "error"));
-          if (supabaseClient && cloudSchemaReady) {
-            signInToSupabaseWithWallet().catch(error => setDatabaseStatus("CLOUD SIGN-IN", error.message || "Cloud sign-in required.", "error"));
+          if (supabaseClient && cloudSchemaReady && (walletChanged || !cloudSessionMatchesWallet())) {
+            setDatabaseStatus("SIGN TO SYNC", "Wallet changed. Click the wallet button and sign once to resume cloud sync.", "error");
           }
-        } else if (supabaseClient && cloudUser) {
-          supabaseClient.auth.signOut({ scope: "local" }).catch(() => {});
-          cloudUser = null;
-          cloudProfile = null;
-          setDatabaseStatus("CLOUD READY", "Connect a wallet to sync private order data.", "success");
+        } else {
+          setDatabaseStatus("WALLET PAUSED", "Unlock or reconnect the wallet; the Supabase session remains safely stored.", "error");
         }
         renderCustomerDebt();
       });
@@ -2718,10 +2821,13 @@
     renderContractStatus();
     updateWalletUI();
     showView(initialView);
-    initializeSupabase().catch(error => {
-      console.error("Supabase initialization failed", error);
-      setDatabaseStatus("LOCAL DATA", error.message || "Cloud initialization failed.", "error");
-    });
+    (async () => {
+      await restoreInjectedWallet();
+      await initializeSupabase();
+    })().catch(error => {
+        console.error("VPorkPay initialization failed", error);
+        setDatabaseStatus("LOCAL DATA", error.message || "Cloud initialization failed.", "error");
+      });
   </script>
 </body>
 </html>

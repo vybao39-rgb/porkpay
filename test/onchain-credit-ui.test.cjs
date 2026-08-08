@@ -12,6 +12,9 @@ let txCount = 0;
 let amountDue = 5_600_000n;
 const receipts = new Map();
 const listeners = {};
+let cloudSession = null;
+let cloudOrderWrites = 0;
+let cloudItemWrites = 0;
 
 const word = value => BigInt(value).toString(16).padStart(64, "0");
 const addressResult = value => "0x" + value.slice(2).padStart(64, "0");
@@ -21,6 +24,7 @@ const ethereum = {
     listeners[event] = handler;
   },
   async request({ method, params = [] }) {
+    if (method === "eth_accounts") return [account];
     if (method === "eth_requestAccounts") return [account];
     if (method === "eth_chainId") return "0x4cef52";
     if (method === "wallet_switchEthereumChain" || method === "wallet_addEthereumChain") return null;
@@ -54,6 +58,55 @@ const ethereum = {
   },
 };
 
+const cloudUser = () => ({
+  id: "00000000-0000-4000-8000-000000000001",
+  user_metadata: { address: account },
+  identities: [{ provider: "web3", identity_data: { address: account } }]
+});
+
+const supabase = {
+  createClient() {
+    return {
+      auth: {
+        async getSession() { return { data: { session: cloudSession }, error: null }; },
+        async signInWithWeb3() {
+          const user = cloudUser();
+          cloudSession = { user };
+          return { data: { user, session: cloudSession }, error: null };
+        },
+        async signOut() { cloudSession = null; return { error: null }; }
+      },
+      from(table) {
+        let operation = "";
+        const result = () => ({ data: operation === "select" ? [] : null, error: null });
+        const builder = {
+          select() { operation = "select"; return builder; },
+          delete() { operation = "delete"; return builder; },
+          update() { operation = "update"; return builder; },
+          eq() { return builder; },
+          order() { return Promise.resolve(result()); },
+          single() {
+            return Promise.resolve({
+              data: { user_id: cloudUser().id, wallet_address: account, role: "buyer" },
+              error: null
+            });
+          },
+          insert() {
+            if (table === "order_items") cloudItemWrites += 1;
+            return Promise.resolve({ data: null, error: null });
+          },
+          upsert() {
+            if (table === "orders") cloudOrderWrites += 1;
+            return Promise.resolve({ data: null, error: null });
+          },
+          then(resolve, reject) { return Promise.resolve(result()).then(resolve, reject); }
+        };
+        return builder;
+      }
+    };
+  }
+};
+
 const runtimeErrors = [];
 const virtualConsole = new VirtualConsole();
 virtualConsole.on("jsdomError", error => runtimeErrors.push(error.message));
@@ -64,6 +117,7 @@ const dom = new JSDOM(html, {
   beforeParse(window) {
     window.scrollTo = () => {};
     window.ethereum = ethereum;
+    window.supabase = supabase;
     window.fetch = async () => ({ ok: true, json: async () => artifact });
   },
 });
@@ -83,6 +137,10 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (!document.querySelector("#createProofCreditRequest")) throw new Error("Jury-proof request action should be available");
   click("#walletButton");
   await wait(0);
+  const connectedWalletLabel = text("#walletButton");
+  click("#walletButton");
+  await wait(0);
+  if (text("#walletButton") !== connectedWalletLabel) throw new Error("Clicking a connected wallet must not disconnect it");
   click("#deployContract");
   await wait(30);
   if (document.querySelector("#contractAddressInput").value.toLowerCase() !== contractAddress) throw new Error("Deployment address was not saved");
@@ -104,6 +162,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (!localStorage.getItem("vporkpay-credit-requests-v1")) throw new Error("Credit request was not persisted");
   if (!localStorage.getItem("vporkpay-buyer-orders-v1")) throw new Error("Buyer order history was not persisted");
   if (!localStorage.getItem("vporkpay-seller-orders-v1")) throw new Error("Seller order history was not persisted");
+  if (!cloudOrderWrites || !cloudItemWrites) throw new Error("Order and line items were not persisted to Supabase");
   if (JSON.parse(localStorage.getItem("vporkpay-cart-v1")).length) throw new Error("Persisted cart was not cleared after checkout");
 
   ethereum.switchAccount(merchant);
@@ -150,6 +209,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     beforeParse(window) {
       window.scrollTo = () => {};
       window.ethereum = ethereum;
+      window.supabase = supabase;
       window.fetch = async () => ({ ok: true, json: async () => artifact });
       Object.entries(storageSnapshot).forEach(([key, value]) => {
         if (value !== null) window.localStorage.setItem(key, value);
@@ -157,6 +217,9 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     },
   });
   await wait(0);
+  if (reloaded.window.document.querySelector("#walletButton").textContent.includes("Connect")) {
+    throw new Error("Connected wallet was not restored after page reload");
+  }
   if (!reloaded.window.document.querySelector("#cartContent").textContent.includes("Bone-in Pork Chops")) {
     throw new Error("Cart was not restored after page reload");
   }
