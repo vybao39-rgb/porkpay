@@ -93,6 +93,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   await wait(0);
   click('[data-view="market"]');
   click('[data-add="1"]');
+  if (!JSON.parse(localStorage.getItem("vporkpay-cart-v1"))?.length) throw new Error("Cart was not persisted");
   click("#checkoutButton");
   await wait(0);
   document.querySelector("#useStoreCredit").checked = true;
@@ -101,6 +102,9 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   await wait(700);
   if (text("#debtStatus") !== "AWAITING MERCHANT") throw new Error("Credit request should be pending");
   if (!localStorage.getItem("vporkpay-credit-requests-v1")) throw new Error("Credit request was not persisted");
+  if (!localStorage.getItem("vporkpay-buyer-orders-v1")) throw new Error("Buyer order history was not persisted");
+  if (!localStorage.getItem("vporkpay-seller-orders-v1")) throw new Error("Seller order history was not persisted");
+  if (JSON.parse(localStorage.getItem("vporkpay-cart-v1")).length) throw new Error("Persisted cart was not cleared after checkout");
 
   ethereum.switchAccount(merchant);
   await wait(0);
@@ -120,11 +124,52 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (!lifecycleEvidence.openTxHash) throw new Error("Debt-opening proof was not persisted");
   if (!lifecycleEvidence.approveTxHash) throw new Error("USDC-approval proof was not persisted");
   if (!lifecycleEvidence.repayTxHash) throw new Error("Repayment proof was not persisted");
+  const persistedBuyerOrder = JSON.parse(localStorage.getItem("vporkpay-buyer-orders-v1"))[0];
+  if (persistedBuyerOrder.status !== "Credit repaid") throw new Error("Buyer order status was not synchronized after repayment");
+  if (!persistedBuyerOrder.openTxHash || !persistedBuyerOrder.approveTxHash || !persistedBuyerOrder.repayTxHash) {
+    throw new Error("Buyer order did not retain the complete onchain lifecycle");
+  }
   if (document.querySelector("#debtProofLinks").hidden) throw new Error("Lifecycle evidence links should be visible after repayment");
   if (txCount !== 4) throw new Error(`Expected deploy, open, approve and repay transactions; got ${txCount}`);
+
+  click('[data-view="market"]');
+  click('[data-add="2"]');
+  const storageSnapshot = Object.fromEntries([
+    "vporkpay-cart-v1",
+    "vporkpay-buyer-orders-v1",
+    "vporkpay-seller-orders-v1",
+    "vporkpay-store-debt-v1",
+    "vporkpay-credit-contract-v1",
+    "vporkpay-deployment-evidence-v1",
+    "vporkpay-credit-requests-v1"
+  ].map(key => [key, localStorage.getItem(key)]));
+  const reloaded = new JSDOM(html, {
+    runScripts: "dangerously",
+    url: "https://vporkpay.test/#orders",
+    virtualConsole,
+    beforeParse(window) {
+      window.scrollTo = () => {};
+      window.ethereum = ethereum;
+      window.fetch = async () => ({ ok: true, json: async () => artifact });
+      Object.entries(storageSnapshot).forEach(([key, value]) => {
+        if (value !== null) window.localStorage.setItem(key, value);
+      });
+    },
+  });
+  await wait(0);
+  if (!reloaded.window.document.querySelector("#cartContent").textContent.includes("Bone-in Pork Chops")) {
+    throw new Error("Cart was not restored after page reload");
+  }
+  if (!reloaded.window.document.querySelector("#savedOrderCards").textContent.includes("CREDIT REPAID")) {
+    throw new Error("Buyer order status was not restored after page reload");
+  }
+  if (!reloaded.window.document.querySelector("#sellerOrders").textContent.includes("Credit repaid")) {
+    throw new Error("Seller order status was not restored after page reload");
+  }
+  reloaded.window.close();
   if (runtimeErrors.length) throw new Error("Runtime errors: " + runtimeErrors.join(" | "));
 
-  console.log("PASS: verified deploy, persistent request, merchant approval and buffered USDC repayment UI");
+  console.log("PASS: cart, buyer/seller orders and complete onchain lifecycle survive a page reload");
   dom.window.close();
 })().catch(error => {
   console.error(error.stack || error.message);

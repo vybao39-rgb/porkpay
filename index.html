@@ -918,7 +918,7 @@
 
     <section class="page-view dashboard" id="ordersView" hidden>
       <div class="dashboard-hero">
-        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Track delivery and control when your USDC is released.</p></div>
+        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Orders and fulfilment status are saved on this device; onchain proofs remain public on Arc.</p></div>
         <div style="display:flex;flex-wrap:wrap;gap:8px;justify-content:flex-end">
           <button class="primary-small" id="createProofCreditRequest" type="button">Create 0.01 USDC jury-proof request</button>
           <button class="outline-button" type="button" data-view="market">Continue shopping</button>
@@ -944,6 +944,7 @@
         <button class="primary-small" id="repayDebt" type="button" style="width:fit-content;background:white;color:var(--green)">Approve USDC & repay onchain</button>
       </article>
       <div class="order-cards" id="orderCards">
+        <div id="savedOrderCards" style="display:grid;gap:18px"></div>
         <article class="order-card featured" id="activeOrderCard">
           <div class="order-top"><span>SAMPLE ORDER PP-240719-08</span><span class="status-chip">FULFILMENT</span></div>
           <div class="order-main">
@@ -1094,7 +1095,10 @@
       { id: "PP-240718-14", buyer: "0x34F...8C10", detail: "5 kg · Lean Pork Shoulder", total: 29.5, status: "Delivered" }
     ];
 
-    const cart = new Map();
+    const CART_KEY = "vporkpay-cart-v1";
+    const BUYER_ORDERS_KEY = "vporkpay-buyer-orders-v1";
+    const SELLER_ORDERS_KEY = "vporkpay-seller-orders-v1";
+    const cart = loadCart();
     const ARC_CHAIN_ID = "0x4cef52";
     const ARC_RPC_URL = "https://rpc.testnet.arc.network";
     const ARC_EXPLORER_URL = "https://testnet.arcscan.app";
@@ -1123,7 +1127,8 @@
     let activeCategory = "All cuts";
     let activeSearch = "";
     let toastTimer;
-    let sellerOrders = [...loadCreditRequests(), ...defaultSellerOrders];
+    let buyerOrders = loadBuyerOrders();
+    let sellerOrders = [...loadSellerOrders(), ...defaultSellerOrders];
     let customerDebt = loadCustomerDebt();
     let creditContractAddress = loadCreditContractAddress();
     let deploymentEvidence = loadDeploymentEvidence();
@@ -1150,6 +1155,7 @@
     const transactionLink = document.querySelector("#transactionLink");
     const paymentDisclosure = document.querySelector("#paymentDisclosure");
     const sellerOrdersContainer = document.querySelector("#sellerOrders");
+    const savedOrderCards = document.querySelector("#savedOrderCards");
     const toast = document.querySelector("#toast");
     const creditOption = document.querySelector("#creditOption");
     const useStoreCredit = document.querySelector("#useStoreCredit");
@@ -1210,6 +1216,66 @@
       return "0x" + [...bytes].map(value => value.toString(16).padStart(2, "0")).join("");
     };
 
+    function loadCart() {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(CART_KEY));
+        if (!Array.isArray(saved)) return new Map();
+        return new Map(saved.map(line => {
+          const product = products.find(item => item.id === Number(line?.id));
+          const quantity = Math.max(product?.minimum || 1, Number(line?.quantity) || 0);
+          return product ? [product.id, { ...product, quantity }] : null;
+        }).filter(Boolean));
+      } catch {
+        return new Map();
+      }
+    }
+
+    function saveCart() {
+      try {
+        const lines = [...cart.values()].map(({ id, quantity }) => ({ id, quantity }));
+        window.localStorage.setItem(CART_KEY, JSON.stringify(lines));
+      } catch {
+        // The cart remains available for this session if browser storage is blocked.
+      }
+    }
+
+    function loadBuyerOrders() {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(BUYER_ORDERS_KEY));
+        return Array.isArray(saved) ? saved.filter(order => order?.id && Array.isArray(order.lines)) : [];
+      } catch {
+        return [];
+      }
+    }
+
+    function saveBuyerOrders() {
+      try {
+        window.localStorage.setItem(BUYER_ORDERS_KEY, JSON.stringify(buyerOrders));
+      } catch {
+        // Orders remain available for this session if browser storage is blocked.
+      }
+    }
+
+    function loadSellerOrders() {
+      try {
+        const saved = JSON.parse(window.localStorage.getItem(SELLER_ORDERS_KEY));
+        if (Array.isArray(saved)) return saved.filter(order => order?.id).map(order => ({ ...order, userOrder: true }));
+      } catch {
+        // Fall through to the earlier credit-only storage format.
+      }
+      return loadCreditRequests().map(order => ({ ...order, userOrder: true }));
+    }
+
+    function saveSellerOrders() {
+      try {
+        const orders = sellerOrders.filter(order => order.userOrder || order.credit);
+        window.localStorage.setItem(SELLER_ORDERS_KEY, JSON.stringify(orders));
+        window.localStorage.setItem(CREDIT_REQUESTS_KEY, JSON.stringify(orders.filter(order => order.credit)));
+      } catch {
+        // Seller orders remain available for this session if browser storage is blocked.
+      }
+    }
+
     function loadCreditContractAddress() {
       try {
         const saved = window.localStorage.getItem(CREDIT_CONTRACT_KEY) || DEFAULT_CREDIT_CONTRACT;
@@ -1229,11 +1295,7 @@
     }
 
     function saveCreditRequests() {
-      try {
-        window.localStorage.setItem(CREDIT_REQUESTS_KEY, JSON.stringify(sellerOrders.filter(order => order.credit)));
-      } catch {
-        // Credit requests remain available for this session if storage is unavailable.
-      }
+      saveSellerOrders();
     }
 
     function loadDeploymentEvidence() {
@@ -1699,6 +1761,11 @@
       customerDebt.openTxHash = transactionHash;
       saveCustomerDebt();
       saveCreditRequests();
+      updateBuyerOrder(item => item.orderId === order.orderId, {
+        status: "Credit active",
+        onchainStatus: "active",
+        openTxHash: transactionHash
+      });
       renderSellerOrders();
       renderCustomerDebt();
       const card = document.querySelector(`[data-order-card="${order.orderId}"]`);
@@ -1733,6 +1800,7 @@
       await waitForTransactionReceipt(approveHash);
       customerDebt.approveTxHash = approveHash;
       saveCustomerDebt();
+      updateBuyerOrder(order => order.orderId === customerDebt.orderId, { approveTxHash: approveHash });
       const approvedSellerOrder = sellerOrders.find(order => order.orderId === customerDebt.orderId);
       if (approvedSellerOrder) {
         approvedSellerOrder.approveTxHash = approveHash;
@@ -1759,6 +1827,12 @@
         saveCreditRequests();
         renderSellerOrders();
       }
+      updateBuyerOrder(order => order.orderId === customerDebt.orderId, {
+        status: "Credit repaid",
+        onchainStatus: "repaid",
+        approveTxHash: approveHash,
+        repayTxHash: repayHash
+      });
       await refreshTestnetBalance();
       renderCustomerDebt();
       return repayHash;
@@ -1847,6 +1921,7 @@
       const product = products.find(item => item.id === Number(productId));
       const current = cart.get(product.id);
       cart.set(product.id, { ...product, quantity: current ? current.quantity + 1 : product.minimum });
+      saveCart();
       renderCart();
       showToast(product.name + " added to your order");
     }
@@ -1856,6 +1931,7 @@
       if (!item) return;
       item.quantity = Math.max(item.minimum, item.quantity + amount);
       cart.set(item.id, item);
+      saveCart();
       renderCart();
     }
 
@@ -1959,45 +2035,82 @@
       creditTerms.hidden = true;
     }
 
+    function updateBuyerOrder(match, changes) {
+      const order = buyerOrders.find(match);
+      if (!order) return;
+      Object.assign(order, changes, { updatedAt: Date.now() });
+      saveBuyerOrders();
+      renderBuyerOrders();
+    }
+
+    function renderBuyerOrders() {
+      savedOrderCards.innerHTML = buyerOrders.map(order => {
+        const primary = order.lines[0];
+        const totalKg = order.lines.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
+        const complete = ["Delivered", "Settled", "Credit repaid"].includes(order.status);
+        const credit = Boolean(order.credit);
+        const fulfilmentStatus = order.fulfilmentStatus || (order.status === "Preparing" || order.status === "Delivered" ? order.status : "Awaiting acceptance");
+        const deliveryConfirmed = fulfilmentStatus === "Delivered";
+        const transactionMarkup = credit
+          ? order.repayTxHash
+            ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.repayTxHash}" target="_blank" rel="noreferrer">View repayment on Arcscan ↗</a>`
+            : order.openTxHash
+              ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.openTxHash}" target="_blank" rel="noreferrer">View active debt on Arcscan ↗</a>`
+              : `${formatUSDC(order.principal || 0)} awaiting merchant approval`
+          : order.transactionHash
+            ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.transactionHash}" target="_blank" rel="noreferrer">View test payment on Arcscan ↗</a>`
+            : "No onchain transaction submitted";
+        const paymentLabel = credit ? (order.status === "Credit repaid" ? "Repaid" : "Credit") : "Paid";
+        return `
+          <article class="order-card featured" ${order.orderId ? `data-order-card="${order.orderId}"` : ""}>
+            <div class="order-top"><span>ORDER ${order.id}</span><span class="status-chip ${complete ? "complete" : ""}">${order.status.toUpperCase()}</span></div>
+            <div class="order-main">
+              <div class="order-symbol" aria-hidden="true">P</div>
+              <div><h3>${primary.name}${order.lines.length > 1 ? " +" + (order.lines.length - 1) + " more" : ""}</h3><p>${totalKg} kg · ${formatUSDC(order.total)}</p><span class="status-chip ${complete ? "complete" : ""}">${fulfilmentStatus}</span></div>
+              <button class="primary-small" type="button" data-confirm-saved="${order.id}" ${deliveryConfirmed ? "disabled" : ""}>${deliveryConfirmed ? "Delivery confirmed" : "Confirm delivery"}</button>
+            </div>
+            <div class="order-progress"><span class="done">${paymentLabel}</span><span class="${fulfilmentStatus === "Awaiting acceptance" ? "current" : "done"}">Accepted</span><span class="${fulfilmentStatus === "Preparing" ? "current" : deliveryConfirmed ? "done" : ""}">Preparing</span><span class="${deliveryConfirmed ? "done" : ""}">Delivered</span><span class="${complete ? "current" : ""}">Settled</span></div>
+            <div class="escrow-strip"><span><b>${credit ? formatUSDC(order.principal || 0) : order.transactionHash ? TEST_PAYMENT_LABEL : "0.00 USDC"}</b> ${credit ? "store credit lifecycle" : order.transactionHash ? "test payment finalized" : "no funds moved"}</span><span>${transactionMarkup}</span></div>
+          </article>`;
+      }).join("");
+    }
+
     function createPlacedOrder(lines, total, transactionHash = "", storeCredit = null) {
       const primary = lines[0];
-      const transactionMarkup = storeCredit
-        ? `${formatUSDC(storeCredit.principal)} requested · merchant approval required on Arc`
-        : transactionHash
-        ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${transactionHash}" target="_blank" rel="noreferrer">View test payment on Arcscan ↗</a>`
-        : "No onchain transaction submitted";
-      const orderStatus = storeCredit ? "CREDIT REQUESTED" : transactionHash ? "ONCHAIN TEST PAYMENT" : "NOT SUBMITTED";
       const displayId = storeCredit?.displayId || "PP-" + Date.now().toString().slice(-8);
-      const orderCard = document.createElement("article");
-      orderCard.className = "order-card featured";
-      if (storeCredit?.orderId) orderCard.dataset.orderCard = storeCredit.orderId;
-      orderCard.innerHTML = `
-        <div class="order-top"><span>ORDER ${displayId}</span><span class="status-chip">${orderStatus}</span></div>
-        <div class="order-main">
-          <div class="order-symbol" aria-hidden="true">P</div>
-          <div><h3>${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) + " more" : ""}</h3><p>${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${formatUSDC(total)}</p><span class="status-chip">Awaiting acceptance</span></div>
-          <button class="primary-small" type="button" data-confirm-new ${storeCredit ? "data-credit-order" : ""}>Confirm delivery</button>
-        </div>
-        <div class="order-progress"><span class="done">${storeCredit ? "Credit" : "Paid"}</span><span class="current">Accepted</span><span>Preparing</span><span>Delivered</span><span>Settled</span></div>
-        <div class="escrow-strip"><span><b>${storeCredit ? formatUSDC(storeCredit.principal) : transactionHash ? TEST_PAYMENT_LABEL : "0.00 USDC"}</b> ${storeCredit ? "awaiting merchant approval" : transactionHash ? "test payment finalized" : "no funds moved"}</span><span>${transactionMarkup}</span></div>
-      `;
-      document.querySelector("#orderCards").prepend(orderCard);
-      if (storeCredit) {
-        sellerOrders.unshift({
-          id: displayId,
-          buyer: storeCredit.buyer,
-          detail: `${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) : ""}`,
-          total,
-          status: "Credit requested",
-          credit: true,
-          orderId: storeCredit.orderId,
-          principal: storeCredit.principal,
-          onchainStatus: storeCredit.onchainStatus
-        });
-        saveCreditRequests();
-        renderSellerOrders();
-        renderContractStatus();
-      }
+      const status = storeCredit ? "Credit requested" : "Awaiting acceptance";
+      buyerOrders.unshift({
+        id: displayId,
+        buyer: walletAddress,
+        createdAt: Date.now(),
+        updatedAt: Date.now(),
+        lines: lines.map(({ id, name, seller, price, quantity }) => ({ id, name, seller, price, quantity })),
+        total: roundMoney(total),
+        status,
+        fulfilmentStatus: "Awaiting acceptance",
+        transactionHash,
+        credit: Boolean(storeCredit),
+        orderId: storeCredit?.orderId || "",
+        principal: storeCredit?.principal || 0,
+        onchainStatus: storeCredit?.onchainStatus || ""
+      });
+      sellerOrders.unshift({
+        id: displayId,
+        buyer: walletAddress,
+        detail: `${lines.reduce((sum, item) => sum + item.quantity, 0)} kg · ${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) : ""}`,
+        total,
+        status,
+        credit: Boolean(storeCredit),
+        orderId: storeCredit?.orderId || "",
+        principal: storeCredit?.principal || 0,
+        onchainStatus: storeCredit?.onchainStatus || "",
+        userOrder: true
+      });
+      saveBuyerOrders();
+      saveSellerOrders();
+      renderBuyerOrders();
+      renderSellerOrders();
+      if (storeCredit) renderContractStatus();
     }
 
     function renderSellerOrders() {
@@ -2044,6 +2157,7 @@
       if (minus) changeQuantity(minus.dataset.minus, -1);
       if (remove) {
         cart.delete(Number(remove.dataset.remove));
+        saveCart();
         renderCart();
         showToast("Item removed");
       }
@@ -2089,6 +2203,21 @@
         event.target.textContent = "Delivery confirmed";
         event.target.disabled = true;
       }
+      const savedConfirmation = event.target.closest("[data-confirm-saved]");
+      if (savedConfirmation) {
+        const orderId = savedConfirmation.dataset.confirmSaved;
+        const buyerOrder = buyerOrders.find(order => order.id === orderId);
+        updateBuyerOrder(order => order.id === orderId, buyerOrder?.credit
+          ? { fulfilmentStatus: "Delivered" }
+          : { status: "Delivered", fulfilmentStatus: "Delivered" });
+        const sellerOrder = sellerOrders.find(order => order.id === orderId);
+        if (sellerOrder && !sellerOrder.credit) {
+          sellerOrder.status = "Delivered";
+          saveSellerOrders();
+          renderSellerOrders();
+        }
+        showToast("Delivery confirmed and order status saved");
+      }
     });
 
     walletButton.addEventListener("click", connectWallet);
@@ -2108,6 +2237,7 @@
           confirmPayment.textContent = "Creating credit request…";
           createPlacedOrder(lines, total, "", storeCredit);
           cart.clear();
+          saveCart();
           renderCart();
           closeCheckout();
           showView("orders");
@@ -2127,6 +2257,7 @@
           const transactionHash = await sendArcTestnetProofPayment();
           createPlacedOrder(lines, total, transactionHash);
           cart.clear();
+          saveCart();
           renderCart();
           closeCheckout();
           showView("orders");
@@ -2183,6 +2314,8 @@
       const order = sellerOrders.find(item => item.id === button.dataset.sellerAction);
       if (order && order.status !== "Delivered") {
         order.status = button.dataset.next;
+        saveSellerOrders();
+        updateBuyerOrder(item => item.id === order.id, { status: order.status, fulfilmentStatus: order.status });
         renderSellerOrders();
         showToast("Order " + order.id + " updated to " + order.status);
       } else {
@@ -2276,6 +2409,7 @@
     const initialView = ["market", "orders", "seller"].includes(location.hash.slice(1)) ? location.hash.slice(1) : "market";
     renderProducts();
     renderCart();
+    renderBuyerOrders();
     renderSellerOrders();
     renderCustomerDebt();
     renderContractStatus();
