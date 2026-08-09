@@ -943,6 +943,21 @@
           <h2 id="cart-title">Shopping bag</h2>
           <div id="cartContent"></div>
           <div class="escrow"><span>●</span><span><b>Arc Testnet settlement</b><br>Use test USDC or request merchant-approved onchain credit.</span></div>
+          <div class="app-kit-panel">
+            <div class="testnet-heading"><strong>Move USDC with Circle App Kit</strong><span class="live-badge">CCTP</span></div>
+            <p>Bridge test USDC in either direction between Arc Testnet and Ethereum Sepolia with your connected MetaMask wallet.</p>
+            <select class="app-kit-route" id="appKitDirection" aria-label="App Kit bridge direction">
+              <option value="arc-to-sepolia">Arc Testnet → Ethereum Sepolia</option>
+              <option value="sepolia-to-arc">Ethereum Sepolia → Arc Testnet</option>
+            </select>
+            <div class="app-kit-controls">
+              <input id="appKitAmount" type="number" min="0.01" max="1000" step="0.01" value="1.00" aria-label="USDC amount to bridge">
+              <button id="estimateBridge" type="button">Estimate</button>
+              <button id="executeBridge" type="button">Bridge</button>
+            </div>
+            <div class="payment-status" id="appKitStatus">Connect MetaMask, then estimate or bridge.</div>
+            <div class="app-kit-proofs" id="appKitProofs"></div>
+          </div>
           <div class="totals">
             <div><span>Network fee</span><span>Estimated at wallet</span></div>
             <div class="total"><span>Total</span><strong id="cartTotal">0.00 USDC</strong></div>
@@ -1069,21 +1084,6 @@
             </div>
             <div class="payment-status" id="paymentStatus">Ready after an Arc Testnet wallet is connected.</div>
             <a class="transaction-link" id="transactionLink" target="_blank" rel="noreferrer" hidden>View transaction on Arcscan ↗</a>
-          </div>
-          <div class="app-kit-panel">
-            <div class="testnet-heading"><strong>Move USDC with Circle App Kit</strong><span class="live-badge">CCTP</span></div>
-            <p>Estimate or bridge test USDC in either direction between Arc Testnet and Ethereum Sepolia with the connected MetaMask wallet.</p>
-            <select class="app-kit-route" id="appKitDirection" aria-label="App Kit bridge direction">
-              <option value="arc-to-sepolia">Arc Testnet → Ethereum Sepolia</option>
-              <option value="sepolia-to-arc">Ethereum Sepolia → Arc Testnet</option>
-            </select>
-            <div class="app-kit-controls">
-              <input id="appKitAmount" type="number" min="0.01" max="1000" step="0.01" value="1.00" aria-label="USDC amount to bridge">
-              <button id="estimateBridge" type="button">Estimate</button>
-              <button id="executeBridge" type="button">Bridge</button>
-            </div>
-            <div class="payment-status" id="appKitStatus">App Kit loads only when you request an estimate.</div>
-            <div class="app-kit-proofs" id="appKitProofs"></div>
           </div>
           <div class="credit-option" id="creditOption" hidden>
             <div class="testnet-heading"><strong>Not enough USDC?</strong><span class="live-badge" style="background:var(--coral)">STORE CREDIT</span></div>
