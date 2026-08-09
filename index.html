@@ -1136,6 +1136,19 @@
     const CART_KEY = "vporkpay-cart-v1";
     const BUYER_ORDERS_KEY = "vporkpay-buyer-orders-v1";
     const SELLER_ORDERS_KEY = "vporkpay-seller-orders-v1";
+    const TEST_DATA_RESET_MARKER_KEY = "vporkpay-test-data-reset-20260809";
+    try {
+      if (!window.localStorage.getItem(TEST_DATA_RESET_MARKER_KEY)) {
+        [
+          CART_KEY,
+          BUYER_ORDERS_KEY,
+          SELLER_ORDERS_KEY,
+          "vporkpay-store-debt-v1",
+          "vporkpay-credit-requests-v1"
+        ].forEach(key => window.localStorage.removeItem(key));
+        window.localStorage.setItem(TEST_DATA_RESET_MARKER_KEY, new Date().toISOString());
+      }
+    } catch {}
     const SUPABASE_URL = "https://oqyuvzxikaibetsgwhsk.supabase.co";
     const SUPABASE_PUBLISHABLE_KEY = "sb_publishable_dvGMr7i_KCvGc1fb1PktXw_RYY1-N06";
     const cart = loadCart();

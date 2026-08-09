@@ -281,7 +281,8 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     "vporkpay-cart-v1",
     "vporkpay-store-debt-v1",
     "vporkpay-credit-contract-v1",
-    "vporkpay-deployment-evidence-v1"
+    "vporkpay-deployment-evidence-v1",
+    "vporkpay-test-data-reset-20260809"
   ].map(key => [key, localStorage.getItem(key)]));
   const reloaded = new JSDOM(html, {
     runScripts: "dangerously",

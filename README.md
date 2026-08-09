@@ -148,6 +148,8 @@ The frontend is a static HTML/CSS/JavaScript application hosted on GitHub Pages 
 
 Existing databases created before the Web3 identity normalization fix should run [`supabase/fix-web3-wallet-session.sql`](supabase/fix-web3-wallet-session.sql) once. The migration is idempotent and supports both plain `0x…` identities and Supabase's `web3:ethereum:0x…` form.
 
+To start a clean test cycle, run [`supabase/reset-test-data.sql`](supabase/reset-test-data.sql) in the Supabase SQL Editor. It backs up and clears carts, orders, order items and order events, then restores the six-product baseline. Authentication users and seller roles are preserved. Signed Arc Testnet history is immutable, so use a fresh buyer wallet when a completely empty onchain history is required.
+
 The frontend contains only the Supabase project URL and publishable key. Never commit a Supabase secret key, `service_role` key, database password or personal access token.
 
 ## Reproduce and verify
