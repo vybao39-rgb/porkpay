@@ -1586,6 +1586,10 @@
       const creditOrder = buyerOrders.find(order => order.credit && order.orderId
         && canInspect(order) && order.onchainStatus !== "repaid")
         || buyerOrders.find(canInspect);
+      selectCustomerDebt(creditOrder);
+    }
+
+    function selectCustomerDebt(creditOrder) {
       customerDebt = creditOrder ? {
         principal: Number(creditOrder.principal || creditOrder.total || 0),
         apr: Number(creditOrder.apr || calculateCreditApr()),
@@ -2764,7 +2768,7 @@
             </div>
             ${financeMarkup}
             ${progressMarkup}
-            <div class="escrow-strip"><span><b>${credit ? debtActive ? formatUSDC(due) + " due now" : debtRepaid ? "Debt fully repaid" : "Awaiting merchant approval" : directlyPaid ? formatUSDC(order.total || 0) + " paid to shop owner" : "Payment pending"}</b></span><span class="order-proof-links">${proofLinks || "No onchain transaction submitted"}</span></div>
+            <div class="escrow-strip"><span><b>${credit ? debtActive ? formatUSDC(due) + " due now" : debtRepaid ? "Debt fully repaid" : "Awaiting merchant approval" : directlyPaid ? formatUSDC(order.total || 0) + " paid to shop owner" : "Payment pending"}</b></span><span class="order-proof-links">${proofLinks || "No onchain transaction submitted"}${debtActive ? `<button class="primary-small" type="button" data-repay-order="${order.orderId}">Repay this debt</button>` : ""}</span></div>
           </article>`;
       }).join("");
     }
@@ -2877,7 +2881,7 @@
       renderProducts();
     });
 
-    document.addEventListener("click", event => {
+    document.addEventListener("click", async event => {
       const viewButton = event.target.closest("[data-view]");
       if (viewButton) showView(viewButton.dataset.view);
       const viewLink = event.target.closest("[data-view-link]");
@@ -2910,6 +2914,22 @@
           renderSellerOrders();
         }
         showToast("Delivery confirmed and order status saved");
+      }
+      const repayOrderButton = event.target.closest("[data-repay-order]");
+      if (repayOrderButton) {
+        const creditOrder = buyerOrders.find(order => order.orderId === repayOrderButton.dataset.repayOrder);
+        if (!creditOrder) return showToast("This debt could not be loaded");
+        selectCustomerDebt(creditOrder);
+        repayOrderButton.disabled = true;
+        repayOrderButton.textContent = "Confirm in wallet…";
+        try {
+          const transactionHash = await repayCreditOnchain();
+          showToast("Debt repaid on Arc: " + shortenAddress(transactionHash));
+        } catch (error) {
+          repayOrderButton.disabled = false;
+          repayOrderButton.textContent = "Repay this debt";
+          showToast(error.message || "Repayment cancelled");
+        }
       }
     });
 

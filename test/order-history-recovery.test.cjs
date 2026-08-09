@@ -80,6 +80,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (text("#paidOrderCount") !== "1") throw new Error("Direct Arc payment was not recovered");
   if (text("#activeDebtCount") !== "2") throw new Error("Both active Arc debts were not recovered");
   if (text("#activeDebtTotal") !== "48.61 USDC") throw new Error("Active debt total is incorrect");
+  if (document.querySelectorAll("[data-repay-order]").length !== 2) throw new Error("Each active debt needs its own repayment action");
   const orders = text("#savedOrderCards");
   for (const label of ["PAID IN FULL", "DEBT ACTIVE", "9.40 USDC", "21.60 USDC", "27.00 USDC", "11.20%", "Ordered at", "Interest now", "Total due now"]) {
     if (!orders.includes(label)) throw new Error(`Recovered order history is missing ${label}`);
