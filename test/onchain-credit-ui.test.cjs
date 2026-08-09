@@ -32,6 +32,7 @@ const ethereum = {
     if (method === "eth_requestAccounts") return [account];
     if (method === "eth_chainId") return "0x4cef52";
     if (method === "wallet_switchEthereumChain" || method === "wallet_addEthereumChain") return null;
+    if (method === "wallet_revokePermissions") return null;
     if (method === "eth_getCode") return "0x6001600055";
     if (method === "eth_call") {
       const call = params[0];
@@ -300,6 +301,14 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
     throw new Error("Buyer saw Seller hub after page reload");
   }
   reloaded.window.close();
+
+  click("#disconnectWalletButton");
+  await wait(20);
+  if (text("#walletButton") !== "Connect Arc wallet") throw new Error("Disconnect did not reset the connect button");
+  if (!document.querySelector("#disconnectWalletButton").hidden) throw new Error("Disconnect button remained visible after disconnect");
+  if (!document.querySelector("#sellerNav").hidden) throw new Error("Seller access remained visible after disconnect");
+  if (cloudSession) throw new Error("Supabase wallet session remained active after disconnect");
+  if (localStorage.getItem("vporkpay-wallet-disconnected-v1") !== "1") throw new Error("Manual disconnect was not persisted");
   if (runtimeErrors.length) throw new Error("Runtime errors: " + runtimeErrors.join(" | "));
 
   console.log("PASS: full-value shop payment, database-only orders, role-gated Seller hub and credit lifecycle survive reload");

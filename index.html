@@ -108,6 +108,8 @@
       font-weight: 900;
       cursor: pointer;
     }
+    .wallet.disconnect { border: 1px solid var(--line); color: var(--coral); background: var(--panel); }
+    .wallet.disconnect:disabled { cursor: wait; opacity: .55; }
 
     .shell {
       display: grid;
@@ -884,6 +886,7 @@
       <span class="network" id="databaseStatus" hidden></span>
       <span class="network">Arc Testnet</span>
       <button class="wallet" id="walletButton" type="button">Connect Arc wallet</button>
+      <button class="wallet disconnect" id="disconnectWalletButton" type="button" hidden>Disconnect</button>
     </div>
   </header>
 
@@ -1136,6 +1139,7 @@
     const CREDIT_CONTRACT_KEY = "vporkpay-credit-contract-v1";
     const CREDIT_REQUESTS_KEY = "vporkpay-credit-requests-v1";
     const DEPLOYMENT_EVIDENCE_KEY = "vporkpay-deployment-evidence-v1";
+    const WALLET_DISCONNECTED_KEY = "vporkpay-wallet-disconnected-v1";
     const DEFAULT_CREDIT_CONTRACT = "0xd9dab755431664ada2d13868674ddb43ffdef396";
     const DEFAULT_DEPLOYMENT_EVIDENCE = Object.freeze({
       address: DEFAULT_CREDIT_CONTRACT,
@@ -1181,6 +1185,7 @@
     const cartTotal = document.querySelector("#cartTotal");
     const checkoutButton = document.querySelector("#checkoutButton");
     const walletButton = document.querySelector("#walletButton");
+    const disconnectWalletButton = document.querySelector("#disconnectWalletButton");
     const checkoutModal = document.querySelector("#checkoutModal");
     const checkoutLines = document.querySelector("#checkoutLines");
     const checkoutTotal = document.querySelector("#checkoutTotal");
@@ -2373,6 +2378,7 @@
             if (!accounts || !accounts[0]) throw new Error("No wallet account was selected.");
             walletAddress = accounts[0];
             isInjectedWallet = true;
+            try { window.localStorage.removeItem(WALLET_DISCONNECTED_KEY); } catch {}
             updateWalletUI();
           } catch (error) {
             showToast(error.message || "Wallet connection was cancelled");
@@ -2412,6 +2418,7 @@
       walletButton.title = walletAddress
         ? "Wallet connected. Click to confirm account access."
         : "Connect an Arc Testnet wallet";
+      disconnectWalletButton.hidden = !walletAddress;
       checkoutWallet.textContent = walletAddress
         ? walletButton.textContent + " · Arc Testnet"
         : "Not connected";
@@ -2426,6 +2433,9 @@
 
     async function restoreInjectedWallet() {
       if (!window.ethereum) return;
+      try {
+        if (window.localStorage.getItem(WALLET_DISCONNECTED_KEY) === "1") return;
+      } catch {}
       try {
         const accounts = await window.ethereum.request({ method: "eth_accounts" });
         walletAddress = accounts?.[0] || "";
@@ -2444,6 +2454,43 @@
       } catch (error) {
         console.warn("Could not restore the injected wallet session", error);
       }
+    }
+
+    async function disconnectWallet() {
+      if (!walletAddress) return;
+      disconnectWalletButton.disabled = true;
+      try {
+        if (supabaseClient) await supabaseClient.auth.signOut({ scope: "local" });
+      } catch (error) {
+        console.warn("Could not end the cloud session cleanly", error);
+      }
+      try {
+        await window.ethereum?.request({ method: "wallet_revokePermissions", params: [{ eth_accounts: {} }] });
+      } catch {
+        // Some injected wallets only support an app-local disconnect.
+      }
+      try { window.localStorage.setItem(WALLET_DISCONNECTED_KEY, "1"); } catch {}
+      walletAddress = "";
+      isInjectedWallet = false;
+      walletBalanceUnits = null;
+      latestTransactionHash = "";
+      pendingCheckoutPayment = null;
+      cloudUser = null;
+      cloudProfile = null;
+      cloudVerifiedWalletAddress = "";
+      buyerOrders = [];
+      sellerOrders = [];
+      customerDebt = null;
+      closeCheckout();
+      updateWalletUI();
+      updateRoleAccess();
+      renderBuyerOrders();
+      renderSellerOrders();
+      renderCustomerDebt();
+      setAppKitStatus("Connect MetaMask, then estimate or bridge.");
+      setDatabaseStatus("WALLET DISCONNECTED", "Connect and sign again to restore cloud orders.", "error");
+      disconnectWalletButton.disabled = false;
+      showToast("Wallet disconnected from VPorkPay");
     }
 
     function openCheckout() {
@@ -2667,6 +2714,7 @@
     });
 
     walletButton.addEventListener("click", connectWallet);
+    disconnectWalletButton.addEventListener("click", disconnectWallet);
     checkoutButton.addEventListener("click", openCheckout);
     document.querySelector("#modalClose").addEventListener("click", closeCheckout);
     document.querySelector("#modalBackdrop").addEventListener("click", closeCheckout);
