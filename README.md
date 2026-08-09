@@ -41,6 +41,7 @@ Buyers compare products, prepare an order and connect an injected EVM wallet. If
 
 - Require an injected EVM wallet; there is no fake wallet or browser-payment fallback.
 - Add or switch the wallet to Arc Testnet (chain ID `5042002`).
+- Prove wallet ownership with a message-only Web3 signature; it submits no transaction, changes no balance and charges no gas.
 - Read the official Arc Testnet USDC balance.
 - Transfer the full order value in test USDC directly to the verified merchant when the connected balance is sufficient; no shop debt is created for that order.
 - Wait for the receipt and link the finalized transaction to Arcscan.

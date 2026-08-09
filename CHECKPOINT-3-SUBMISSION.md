@@ -4,7 +4,7 @@ Use the following values in the Checkpoint 3 form. The order below matches the f
 
 ## 1. Submission Details
 
-VPorkPay is a functional Arc Testnet MVP for everyday pork procurement with direct USDC settlement and merchant-approved onchain store credit. We built a responsive marketplace, wallet-owned carts and orders, Supabase persistence with Web3 authentication and Row Level Security, seller-only fulfilment and credit operations, a two-way Circle App Kit CCTP bridge between Ethereum Sepolia and Arc Testnet, and a policy-bounded Circle Agent Stack payment runner. At checkout, a funded buyer pays the merchant directly in test USDC. If the balance is insufficient, only the exact shortfall becomes a credit request; no debt exists until the shop owner signs `openDebt` on Arc. The source-verified VPorkPayStoreCredit v1.1 contract fixes APR from the pork-price index, accrues simple interest using block time, enforces a buyer-approved repayment cap and transfers repayment directly to the immutable merchant. The public repository includes the complete frontend, Solidity source, reproducible artifacts, automated lifecycle tests, implementation notes and user documentation. The product, video, deck, code and verified Arcscan evidence are all publicly accessible without placeholders. Arc Testnet only; the contract is an unaudited hackathon prototype.
+VPorkPay is a functional Arc Testnet MVP for everyday pork procurement with direct USDC settlement and merchant-approved onchain store credit. We built a responsive marketplace, wallet-owned carts and orders, Supabase persistence with Web3 authentication and Row Level Security, seller-only fulfilment and credit operations, a two-way Circle App Kit CCTP bridge between Ethereum Sepolia and Arc Testnet, and a policy-bounded Circle Agent Stack payment runner. Wallet ownership uses a message-only Web3 sign-in that submits no transaction, changes no balance and charges no gas. At checkout, a funded buyer pays the merchant directly in test USDC. If the balance is insufficient, only the exact shortfall becomes a credit request; no debt exists until the shop owner signs `openDebt` on Arc. The source-verified VPorkPayStoreCredit v1.1 contract fixes APR from the pork-price index, accrues simple interest using block time, enforces a buyer-approved repayment cap and transfers repayment directly to the immutable merchant. The public repository includes the complete frontend, Solidity source, reproducible artifacts, automated lifecycle tests, reset tooling, implementation notes and user documentation. The product, video, deck, code and verified Arcscan evidence are all publicly accessible without placeholders. Arc Testnet only; the contract is an unaudited hackathon prototype.
 
 ## 2. Link to Code
 
@@ -38,6 +38,7 @@ This field is optional in the displayed form. Leave it empty unless a separate p
 - Verified Arc Testnet contract: https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396?tab=contract
 - Deployment transaction: https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067
 - Vietnamese user guide: https://vpork.xyz/VPorkPay-User-Guide-VI.pdf
+- Clean test-cycle SQL: https://vpork.xyz/supabase/reset-test-data.sql
 
 ## Final pre-submit check
 
@@ -46,4 +47,5 @@ This field is optional in the displayed form. Leave it empty unless a separate p
 - Interactive presentation opens in the browser; the editable PowerPoint is also public.
 - Live MVP opens at the root domain without a hash route.
 - No required field contains a placeholder.
+- All artifact descriptions and links were synchronized on 9 August 2026.
 - The separate team-introduction field is intentionally blank unless a real team video is available.
