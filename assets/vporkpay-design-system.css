@@ -1,0 +1,348 @@
+/* VPorkPay product design system — market-led, data-first, deliberately restrained. */
+:root {
+  --vp-ink: #17211d;
+  --vp-ink-soft: #26332e;
+  --vp-paper: #f4f1e9;
+  --vp-surface: #fffdf8;
+  --vp-line: #cfcac0;
+  --vp-muted: #66706b;
+  --vp-red: #d94b32;
+  --vp-red-dark: #ad3423;
+  --vp-teal: #0c665a;
+  --vp-yellow: #e8b64b;
+  --vp-positive: #18725f;
+  --vp-font: "Avenir Next", Avenir, "Helvetica Neue", Helvetica, Arial, sans-serif;
+  --vp-mono: "SFMono-Regular", Consolas, "Liberation Mono", monospace;
+}
+
+body.vpork-app {
+  --ink: var(--vp-ink);
+  --muted: var(--vp-muted);
+  --paper: var(--vp-paper);
+  --panel: var(--vp-surface);
+  --line: var(--vp-line);
+  --coral: var(--vp-red);
+  --coral-dark: var(--vp-red-dark);
+  --green: var(--vp-teal);
+  --lime: var(--vp-yellow);
+  --shadow: none;
+  color: var(--vp-ink);
+  background: var(--vp-paper);
+  font-family: var(--vp-font);
+  font-feature-settings: "tnum" 1, "ss01" 1;
+}
+
+.vpork-app .topbar {
+  min-height: 76px;
+  padding: 0 clamp(18px, 3vw, 48px);
+  border-color: var(--vp-line);
+  background: rgba(255, 253, 248, .97);
+  backdrop-filter: blur(12px);
+}
+.vpork-app .brand { gap: 9px; font-size: 18px; font-weight: 750; letter-spacing: -.04em; }
+.vpork-app .brand-logo { width: 50px; height: 50px; flex-basis: 50px; }
+.vpork-app .main-nav { align-self: stretch; gap: 20px; }
+.vpork-app .main-nav button { padding: 0 2px; font-size: 13px; font-weight: 650; }
+.vpork-app .main-nav button.active::after { right: 0; bottom: 0; left: 0; height: 3px; }
+.vpork-app .top-actions { gap: 8px; }
+.vpork-app .network,
+.vpork-app .wallet {
+  min-height: 38px;
+  padding: 9px 12px;
+  border-radius: 7px;
+  font-size: 11px;
+  font-weight: 700;
+}
+.vpork-app .wallet { background: var(--vp-ink); }
+.vpork-app .wallet.disconnect { color: var(--vp-red-dark); background: transparent; }
+
+.vpork-app .market-shell {
+  grid-template-columns: 190px minmax(0, 1fr) 356px;
+  gap: 24px;
+  width: min(1480px, calc(100% - 48px));
+  padding: 28px 0 72px;
+}
+.vpork-app .filter-panel {
+  top: 104px;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+}
+.vpork-app .filter-heading { padding: 0 10px 14px; border-bottom: 1px solid var(--vp-line); }
+.vpork-app .category-list { gap: 0; }
+.vpork-app .category-list button {
+  padding: 14px 10px;
+  border-bottom: 1px solid #dedad1;
+  border-radius: 0;
+  font-size: 12px;
+  font-weight: 650;
+}
+.vpork-app .category-list button.selected { color: white; background: var(--vp-ink); }
+.vpork-app .arc-info { margin-top: 24px; padding: 18px; border-radius: 7px; background: var(--vp-teal); }
+.vpork-app .arc-info strong { color: white; }
+.vpork-app .arc-info p { color: rgba(255,255,255,.76); }
+
+.vpork-app .hero {
+  min-height: 390px;
+  grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+  gap: 42px;
+  padding: clamp(34px, 4vw, 58px);
+  border: 0;
+  border-radius: 9px;
+  color: white;
+  background: var(--vp-ink);
+  box-shadow: none;
+}
+.vpork-app .tag {
+  margin-bottom: 26px;
+  padding: 7px 9px;
+  border: 1px solid rgba(255,255,255,.28);
+  border-radius: 4px;
+  color: white;
+  background: transparent;
+  letter-spacing: .08em;
+}
+.vpork-app .tag::before { border-radius: 1px; background: var(--vp-yellow); }
+.vpork-app .eyebrow { color: var(--vp-red); font-size: 10px; letter-spacing: .12em; }
+.vpork-app .hero .eyebrow { color: var(--vp-yellow); }
+.vpork-app h1,
+.vpork-app h2,
+.vpork-app h3,
+.vpork-app .market-header h2,
+.vpork-app .cart h2,
+.vpork-app .order-main h3,
+.vpork-app .total strong,
+.vpork-app .summary-line.grand b,
+.vpork-app .buyer-finance-stat strong {
+  font-family: var(--vp-font);
+}
+.vpork-app .hero h1 {
+  max-width: 650px;
+  margin: 12px 0 22px;
+  font-size: clamp(46px, 5vw, 70px);
+  font-weight: 750;
+  letter-spacing: -.065em;
+  line-height: .96;
+}
+.vpork-app .hero h1 em { color: var(--vp-yellow); font-style: normal; font-weight: 750; }
+.vpork-app .hero-copy { max-width: 600px; color: rgba(255,255,255,.7); font-size: 15px; line-height: 1.65; }
+.vpork-app .hero-market-art {
+  border: 0;
+  border-radius: 6px;
+  background: #d7b579;
+  box-shadow: none;
+  transform: none;
+}
+.vpork-app .hero-market-art::after { border-color: rgba(0,0,0,.2); border-radius: 6px; }
+
+.vpork-app .search-row { margin: 24px 0 8px; }
+.vpork-app .search-box { border-radius: 6px; background: var(--vp-surface); }
+.vpork-app .market-stats { font-family: var(--vp-mono); }
+.vpork-app .market-header { margin-top: 30px; }
+.vpork-app .market-header h2 { font-size: 30px; font-weight: 720; letter-spacing: -.035em; }
+.vpork-app .outline-button,
+.vpork-app .primary-small,
+.vpork-app .add,
+.vpork-app .checkout {
+  border-radius: 6px;
+  font-weight: 720;
+  letter-spacing: -.01em;
+}
+.vpork-app .outline-button { background: var(--vp-surface); }
+.vpork-app .products { gap: 12px; }
+.vpork-app .product {
+  border-color: var(--vp-line);
+  border-radius: 8px;
+  transition: border-color .16s ease, background .16s ease;
+}
+.vpork-app .product:hover { border-color: var(--vp-ink); box-shadow: none; transform: none; }
+.vpork-app .product-art { background: #ece8df; }
+.vpork-app .product-art img { padding: 5px; }
+.vpork-app .product:hover .product-art img { transform: none; }
+.vpork-app .verified { top: 10px; bottom: auto; border-radius: 3px; background: var(--vp-teal); }
+.vpork-app .product-body { padding: 16px; }
+.vpork-app .product h3 { font-size: 19px; font-weight: 720; letter-spacing: -.025em; }
+.vpork-app .product-footer { margin-top: 16px; padding-top: 14px; }
+.vpork-app .price strong { font-family: var(--vp-mono); font-size: 18px; }
+.vpork-app .add { background: var(--vp-ink); }
+
+.vpork-app .cart {
+  top: 100px;
+  padding: 22px;
+  border-radius: 9px;
+  background: var(--vp-surface);
+  box-shadow: none;
+  backdrop-filter: none;
+}
+.vpork-app .cart-label { color: var(--vp-red); letter-spacing: .11em; }
+.vpork-app .cart h2 { font-size: 27px; font-weight: 740; letter-spacing: -.04em; }
+.vpork-app .cart-empty { border-radius: 6px; }
+.vpork-app .bag-icon { border-radius: 5px; font-family: var(--vp-font); font-weight: 800; }
+.vpork-app .escrow,
+.vpork-app .app-kit-panel,
+.vpork-app .testnet-demo,
+.vpork-app .credit-option { border-radius: 6px; }
+.vpork-app .app-kit-panel { background: #edf3f0; }
+.vpork-app .app-kit-route,
+.vpork-app .app-kit-controls input,
+.vpork-app .app-kit-controls button { border-radius: 5px; }
+.vpork-app .total strong { font-family: var(--vp-mono); font-size: 22px; font-weight: 700; }
+
+.vpork-app .dashboard { width: min(1180px, calc(100% - 40px)); padding-top: 52px; }
+.vpork-app .dashboard-hero { margin-bottom: 28px; padding-bottom: 24px; border-bottom: 1px solid var(--vp-line); }
+.vpork-app .dashboard-hero h1 { margin-top: 4px; font-size: clamp(42px, 6vw, 64px); font-weight: 760; letter-spacing: -.06em; line-height: 1; }
+.vpork-app .dashboard-hero p { font-size: 14px; }
+.vpork-app .buyer-finance-summary,
+.vpork-app .seller-stats { gap: 10px; }
+.vpork-app .buyer-finance-stat,
+.vpork-app .stat-card {
+  padding: 18px;
+  border-radius: 7px;
+  background: var(--vp-surface);
+}
+.vpork-app .buyer-finance-stat { border-top: 3px solid var(--vp-teal); }
+.vpork-app .buyer-finance-stat strong,
+.vpork-app .stat-card strong { font-family: var(--vp-mono); font-size: 24px; font-weight: 700; }
+.vpork-app .debt-card { border-radius: 8px; background: var(--vp-ink); }
+.vpork-app .debt-metric { border-radius: 5px; background: rgba(255,255,255,.08); }
+.vpork-app .debt-metric strong { font-family: var(--vp-mono); }
+.vpork-app .order-card { border-radius: 8px; }
+.vpork-app .order-card.featured { box-shadow: none; }
+.vpork-app .order-top { background: #f0ede5; }
+.vpork-app .order-main h3 { font-weight: 730; }
+.vpork-app .order-finance-grid { border-radius: 5px; }
+.vpork-app .order-finance-item strong { font-family: var(--vp-mono); }
+.vpork-app .status-chip,
+.vpork-app .live-badge { border-radius: 4px; }
+.vpork-app .escrow-strip { background: var(--vp-ink); }
+
+.vpork-app .seller-grid { gap: 12px; }
+.vpork-app .seller-table,
+.vpork-app .settlement-card,
+.vpork-app .onchain-card { border-radius: 8px; box-shadow: none; }
+.vpork-app .settlement-card { background: var(--vp-teal); }
+.vpork-app .seller-row { font-size: 11px; }
+.vpork-app .onchain-step,
+.vpork-app .contract-fact { border-radius: 5px; }
+.vpork-app .onchain-controls input { border-radius: 5px; }
+.vpork-app .contract-fact b,
+.vpork-app .contract-fact a,
+.vpork-app .onchain-status { font-family: var(--vp-mono); }
+
+.vpork-app .modal-backdrop { background: rgba(12, 20, 17, .68); }
+.vpork-app .checkout-modal { border-radius: 10px; box-shadow: 0 24px 70px rgba(0,0,0,.28); }
+.vpork-app .modal-heading { background: var(--vp-surface); }
+.vpork-app .modal-heading h2 { font-family: var(--vp-font); font-weight: 750; letter-spacing: -.04em; }
+.vpork-app .checkout-form input,
+.vpork-app .checkout-form textarea { border-radius: 5px; }
+.vpork-app .wallet-payment { border-radius: 6px; }
+.vpork-app .summary-line b,
+.vpork-app .testnet-details b,
+.vpork-app .credit-term b { font-family: var(--vp-mono); }
+.vpork-app footer { background: var(--vp-ink); color: rgba(255,255,255,.62); }
+
+body.vpork-submission {
+  --cream: var(--vp-paper);
+  --paper: var(--vp-surface);
+  --ink: var(--vp-ink);
+  --coral: var(--vp-red);
+  --green: var(--vp-teal);
+  --lime: var(--vp-yellow);
+  --muted: var(--vp-muted);
+  --line: var(--vp-line);
+  color: var(--vp-ink);
+  background: var(--vp-paper);
+  font-family: var(--vp-font);
+}
+.vpork-submission header { padding: 18px clamp(22px, 5vw, 72px); background: var(--vp-surface); }
+.vpork-submission .brand { font-size: 18px; letter-spacing: -.03em; }
+.vpork-submission .brand img { width: 46px; height: 46px; }
+.vpork-submission .badge { border-radius: 5px; background: var(--vp-ink); font-size: 10px; letter-spacing: .08em; }
+.vpork-submission main { width: min(1100px, calc(100% - 40px)); padding: 64px 0 80px; }
+.vpork-submission .eyebrow { color: var(--vp-red); font-size: 10px; letter-spacing: .12em; }
+.vpork-submission h1 { max-width: 760px; margin: 14px 0 20px; font-family: var(--vp-font); font-size: clamp(42px, 6vw, 68px); font-weight: 760; letter-spacing: -.06em; line-height: 1.02; }
+.vpork-submission .lead { max-width: 760px; font-size: 17px; }
+.vpork-submission .grid { gap: 1px; margin-top: 44px; border: 1px solid var(--vp-line); background: var(--vp-line); }
+.vpork-submission .card { min-height: 230px; padding: 26px; border: 0; border-radius: 0; background: var(--vp-surface); }
+.vpork-submission .card:hover { color: white; background: var(--vp-ink); transform: none; }
+.vpork-submission .number { color: var(--vp-red); font-family: var(--vp-mono); font-size: 18px; font-weight: 700; }
+.vpork-submission .card h2 { margin: 50px 0 10px; font-size: 22px; letter-spacing: -.025em; }
+.vpork-submission .card:hover p { color: rgba(255,255,255,.7); }
+.vpork-submission .card strong { color: var(--vp-teal); }
+.vpork-submission .card:hover strong { color: var(--vp-yellow); }
+.vpork-submission .stack h2 { font-family: var(--vp-font); font-size: 34px; font-weight: 740; letter-spacing: -.045em; }
+.vpork-submission .stack-grid { gap: 10px; }
+.vpork-submission .stack-card,
+.vpork-submission .guide { border-radius: 6px; }
+.vpork-submission .stack-card .status { border-radius: 3px; background: var(--vp-teal); }
+.vpork-submission .deployment { border-radius: 6px; background: var(--vp-ink); }
+.vpork-submission .deployment code { font-family: var(--vp-mono); }
+.vpork-submission .safety { border-radius: 6px; }
+.vpork-submission footer { background: var(--vp-surface); }
+
+body.vpork-deck {
+  --cream: var(--vp-paper);
+  --paper: var(--vp-surface);
+  --ink: var(--vp-ink);
+  --coral: var(--vp-red);
+  --green: var(--vp-teal);
+  --lime: var(--vp-yellow);
+  --muted: var(--vp-muted);
+  --line: var(--vp-line);
+  font-family: var(--vp-font);
+  background: #101714;
+}
+.vpork-deck .slide { background: var(--vp-surface); box-shadow: 0 18px 60px rgba(0,0,0,.32); }
+.vpork-deck .cream { background: var(--vp-paper); }
+.vpork-deck .dark { background: var(--vp-ink); }
+.vpork-deck .coral { background: var(--vp-red); }
+.vpork-deck h1,
+.vpork-deck h2 { font-family: var(--vp-font); font-weight: 760; letter-spacing: -.055em; }
+.vpork-deck h1 { line-height: .95; }
+.vpork-deck h2 { line-height: 1.02; }
+.vpork-deck h3 { letter-spacing: -.025em; }
+.vpork-deck .eyebrow { font-size: clamp(8px, .85vw, 12px); letter-spacing: .12em; }
+.vpork-deck .tag { border-radius: 3px; background: var(--vp-teal); }
+.vpork-deck .title-copy { color: white; background: var(--vp-ink); }
+.vpork-deck .title-copy .eyebrow { color: var(--vp-yellow); }
+.vpork-deck .title-copy .tagline { color: var(--vp-yellow); font-style: normal; }
+.vpork-deck .title-copy .sub { color: rgba(255,255,255,.68); }
+.vpork-deck .title-art { background: var(--vp-yellow); }
+.vpork-deck .title-art img { border: 6px solid var(--vp-surface); border-radius: 4px; }
+.vpork-deck .photo-pair img,
+.vpork-deck .screen,
+.vpork-deck .proof-screen { border-radius: 4px; }
+.vpork-deck .callout,
+.vpork-deck .warning,
+.vpork-deck .network,
+.vpork-deck .complete { border-radius: 4px; }
+.vpork-deck .step-num,
+.vpork-deck .claim-num { font-family: var(--vp-mono); font-weight: 700; }
+.vpork-deck .node { border-radius: 4px; }
+.vpork-deck .controls button,
+.vpork-deck .download { border-radius: 4px; background: rgba(255,255,255,.08); }
+.vpork-deck .submission-copy { background: var(--vp-red); }
+
+@media (max-width: 1180px) {
+  .vpork-app .market-shell { grid-template-columns: 170px minmax(0, 1fr); }
+  .vpork-app .market-shell .cart { grid-column: 1 / -1; }
+}
+@media (max-width: 920px) {
+  .vpork-app .topbar { min-height: 68px; }
+  .vpork-app .main-nav { gap: 0; }
+  .vpork-app .market-shell { width: min(94vw, 760px); }
+  .vpork-app .filter-panel { padding: 14px; border: 1px solid var(--vp-line); background: var(--vp-surface); }
+}
+@media (max-width: 680px) {
+  .vpork-app .brand-logo { width: 44px; height: 44px; flex-basis: 44px; }
+  .vpork-app .brand span { display: none; }
+  .vpork-app .hero { min-height: 0; gap: 28px; padding: 30px 24px; }
+  .vpork-app .hero h1 { font-size: 45px; }
+  .vpork-app .dashboard { width: calc(100% - 28px); }
+  .vpork-app .dashboard-hero h1 { font-size: 44px; }
+  .vpork-app .buyer-finance-summary { grid-template-columns: repeat(3, 1fr); }
+  .vpork-app .buyer-finance-stat { padding: 13px; }
+  .vpork-app .buyer-finance-stat strong { font-size: 18px; }
+  .vpork-submission .grid { grid-template-columns: 1fr; }
+}

@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <meta name="description" content="VPorkPay is a public USDC pork marketplace demo built for the Build on Arc hackathon.">
+  <meta name="description" content="VPorkPay connects pork buyers and suppliers with USDC settlement and transparent merchant credit on Arc.">
   <meta name="theme-color" content="#f4f0e7">
   <link rel="icon" type="image/png" href="assets/vporkpay-logo.png">
   <title>VPorkPay — Pork trading settled in USDC</title>
@@ -253,20 +253,6 @@
       font-size: 8px;
       font-weight: 900;
       letter-spacing: .7px;
-    }
-    .ai-image-badge {
-      position: absolute;
-      right: 12px;
-      bottom: 12px;
-      padding: 6px 8px;
-      border: 1px solid rgba(255, 255, 255, .7);
-      border-radius: 6px;
-      color: var(--ink);
-      background: rgba(255, 253, 248, .88);
-      font-size: 7px;
-      font-weight: 900;
-      letter-spacing: .6px;
-      backdrop-filter: blur(8px);
     }
     .product-body { padding: 18px; }
     .product-meta { display: flex; justify-content: space-between; color: #8c8e85; font-size: 9px; font-weight: 800; text-transform: uppercase; }
@@ -887,8 +873,9 @@
       .onchain-steps, .contract-facts { grid-template-columns: 1fr; }
     }
   </style>
+  <link rel="stylesheet" href="assets/vporkpay-design-system.css">
 </head>
-<body>
+<body class="vpork-app">
   <header class="topbar">
     <a class="brand" href="/" aria-label="VPorkPay marketplace" data-view-link="market">
       <img class="brand-logo" src="assets/vporkpay-logo.png" alt="">
@@ -928,12 +915,11 @@
         <div class="market-main">
           <section class="hero">
             <div>
-              <span class="tag">LIVE MARKETPLACE</span>
-              <div class="eyebrow">FRESH TRADE · FAST SETTLEMENT</div>
-              <h1>Source better.<br><em>Pay smarter.</em></h1>
+              <span class="tag">WHOLESALE MARKET · OPEN</span>
+              <div class="eyebrow">FRESH CUTS · CLEAR TERMS · USDC</div>
+              <h1>Buy pork.<br><em>Keep cash moving.</em></h1>
               <p class="hero-copy">
-                A trusted pork marketplace where buyers order from verified suppliers
-                and settle securely in USDC on Arc.
+                Compare cuts from local suppliers, place an order in minutes and settle directly in USDC. When cash is tight, request clear merchant credit for the exact shortfall.
               </p>
             </div>
             <figure class="hero-market-art">
@@ -946,7 +932,7 @@
               <span aria-hidden="true">⌕</span>
               <input id="searchInput" type="search" placeholder="Search cuts or suppliers" aria-label="Search cuts or suppliers">
             </label>
-            <div class="market-stats"><span><b>18</b> verified sellers</span><span><b>4.9</b> average rating</span></div>
+            <div class="market-stats"><span><b>6</b> cuts available</span><span><b>USDC</b> settlement</span></div>
           </div>
 
           <section aria-labelledby="available-title">
@@ -990,7 +976,7 @@
 
     <section class="page-view dashboard" id="ordersView" hidden>
       <div class="dashboard-hero">
-        <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Track purchases, delivery and payment status in one place.</p></div>
+        <div><div class="eyebrow">PURCHASE LEDGER</div><h1>Orders & credit</h1><p>Payment, delivery and debt terms for the connected wallet.</p></div>
         <button class="outline-button" type="button" data-view="market">Continue shopping</button>
       </div>
       <div class="buyer-finance-summary" aria-label="Buyer payment summary">
@@ -1024,7 +1010,7 @@
 
     <section class="page-view dashboard" id="sellerView" hidden>
       <div class="dashboard-hero">
-        <div><div class="eyebrow">SELLER HUB</div><h1>Good morning.</h1><p>Green Valley Farm · Manage orders and USDC settlement.</p></div>
+        <div><div class="eyebrow">MERCHANT OPERATIONS</div><h1>Orders & settlement</h1><p>Review fulfilment, approve trade credit and verify USDC receipts.</p></div>
         <a class="outline-button" href="https://testnet.arcscan.app/" target="_blank" rel="noreferrer" style="text-decoration:none">Open Arcscan ↗</a>
       </div>
       <div class="seller-stats">
@@ -1048,7 +1034,7 @@
       </div>
       <article class="onchain-card" id="onchainCard">
         <div class="onchain-heading">
-          <div><div class="eyebrow">REAL ONCHAIN CREDIT</div><h2>Arc Testnet contract</h2><p>Deploy once from the shop-owner wallet. Credit approval and USDC repayment are then recorded onchain.</p></div>
+          <div><div class="eyebrow">CREDIT OPERATIONS</div><h2>Store-credit contract</h2><p>Manage price-linked terms, approve customer debt and verify repayment on Arc.</p></div>
           <span class="live-badge" id="contractBadge" style="background:var(--coral)">NOT CONFIGURED</span>
         </div>
         <div class="onchain-steps" aria-label="Onchain credit progress">
@@ -1074,7 +1060,7 @@
           <div class="contract-fact"><span>Deployment proof</span><a id="deploymentProof" target="_blank" rel="noreferrer">Not recorded</a></div>
         </div>
         <div class="onchain-status" id="contractStatus">Connect an Arc Testnet wallet, then deploy the contract or paste an existing address.</div>
-        <p class="onchain-note">Testnet prototype only. Test USDC has no monetary value. The smart contract is open source and has not been independently audited.</p>
+        <p class="onchain-note">Arc Testnet only. Test USDC has no monetary value. The smart contract is open source and has not been independently audited.</p>
       </article>
     </section>
   </main>
@@ -1132,20 +1118,20 @@
   </div>
 
   <footer>
-    <span>VPorkPay · Stablecoin commerce for real-world supply</span>
-    <span>Built for Build on Arc 2026</span>
+    <span>VPorkPay · Pork supply, orders and merchant credit</span>
+    <span>USDC settlement on Arc Testnet</span>
   </footer>
   <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.105.0/dist/umd/supabase.min.js" crossorigin="anonymous"></script>
   <script>
     let products = [
-      { id: 1, name: "Premium Pork Belly", cut: "Skin-on · Fresh", seller: "Green Valley Farm", location: "12 km", price: 6.8, stock: 84, minimum: 2, category: "Belly", image: "assets/pork-belly-ai.jpg" },
-      { id: 2, name: "Bone-in Pork Chops", cut: "Center cut · Chilled", seller: "Minh Phat Butchery", location: "7 km", price: 5.4, stock: 42, minimum: 2, category: "Lean cuts", image: "assets/pork-chops-ai.jpg" },
-      { id: 3, name: "Meaty Pork Ribs", cut: "Spare ribs · Fresh", seller: "An Hoa Foods", location: "18 km", price: 7.2, stock: 31, minimum: 3, category: "Ribs", image: "assets/pork-ribs-ai.jpg" },
-      { id: 4, name: "Lean Pork Shoulder", cut: "Boneless · Chilled", seller: "Green Valley Farm", location: "12 km", price: 5.9, stock: 68, minimum: 2, category: "Lean cuts", image: "assets/pork-shoulder-ai.jpg" },
-      { id: 5, name: "Pork Tenderloin", cut: "Trimmed · Premium", seller: "Dalat Fresh Foods", location: "24 km", price: 8.6, stock: 26, minimum: 1, category: "Lean cuts", image: "assets/pork-tenderloin-ai.jpg" },
-      { id: 6, name: "Ground Pork", cut: "80/20 · Made today", seller: "Minh Phat Butchery", location: "7 km", price: 4.7, stock: 55, minimum: 2, category: "Ground", image: "assets/ground-pork-ai.jpg" }
+      { id: 1, name: "Premium Pork Belly", cut: "Skin-on · Fresh", seller: "Green Valley Farm", location: "12 km", price: 6.8, stock: 84, minimum: 2, category: "Belly", image: "assets/pork-belly.jpg" },
+      { id: 2, name: "Bone-in Pork Chops", cut: "Center cut · Chilled", seller: "Minh Phat Butchery", location: "7 km", price: 5.4, stock: 42, minimum: 2, category: "Lean cuts", image: "assets/pork-chops.jpg" },
+      { id: 3, name: "Meaty Pork Ribs", cut: "Spare ribs · Fresh", seller: "An Hoa Foods", location: "18 km", price: 7.2, stock: 31, minimum: 3, category: "Ribs", image: "assets/pork-ribs.jpg" },
+      { id: 4, name: "Lean Pork Shoulder", cut: "Boneless · Chilled", seller: "Green Valley Farm", location: "12 km", price: 5.9, stock: 68, minimum: 2, category: "Lean cuts", image: "assets/pork-shoulder.jpg" },
+      { id: 5, name: "Pork Tenderloin", cut: "Trimmed · Premium", seller: "Dalat Fresh Foods", location: "24 km", price: 8.6, stock: 26, minimum: 1, category: "Lean cuts", image: "assets/pork-tenderloin.jpg" },
+      { id: 6, name: "Ground Pork", cut: "80/20 · Made today", seller: "Minh Phat Butchery", location: "7 km", price: 4.7, stock: 55, minimum: 2, category: "Ground", image: "assets/ground-pork.jpg" }
     ];
     const CART_KEY = "vporkpay-cart-v1";
     const BUYER_ORDERS_KEY = "vporkpay-buyer-orders-v1";
@@ -1362,7 +1348,7 @@
       stock: Number(row.stock_kg),
       minimum: Number(row.minimum_kg),
       category: row.category,
-      image: row.image_path
+      image: String(row.image_path || "").replace(/-ai\.jpg$/i, ".jpg")
     });
 
     function cloudOrderRow(order) {
@@ -2546,8 +2532,7 @@
         <article class="product product-${product.id}">
           <div class="product-art">
             <img src="${product.image}" alt="${product.name}" loading="lazy" decoding="async">
-            <span class="verified">✓ VERIFIED</span>
-            <span class="ai-image-badge">AI IMAGE</span>
+            <span class="verified">✓ SUPPLIER VERIFIED</span>
             <button class="save" type="button" data-save="${product.id}" aria-label="Save ${product.name}">♡</button>
           </div>
           <div class="product-body">

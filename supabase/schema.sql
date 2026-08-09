@@ -265,12 +265,12 @@ grant usage, select on all sequences in schema public to authenticated;
 
 insert into public.products (id, name, cut, seller, location, price_usdc, stock_kg, minimum_kg, category, image_path)
 values
-  (1, 'Premium Pork Belly', 'Skin-on · Fresh', 'Green Valley Farm', '12 km', 6.80, 84, 2, 'Belly', 'assets/pork-belly-ai.jpg'),
-  (2, 'Bone-in Pork Chops', 'Center cut · Chilled', 'Minh Phat Butchery', '7 km', 5.40, 42, 2, 'Lean cuts', 'assets/pork-chops-ai.jpg'),
-  (3, 'Meaty Pork Ribs', 'Spare ribs · Fresh', 'An Hoa Foods', '18 km', 7.20, 31, 3, 'Ribs', 'assets/pork-ribs-ai.jpg'),
-  (4, 'Lean Pork Shoulder', 'Boneless · Chilled', 'Green Valley Farm', '12 km', 5.90, 68, 2, 'Lean cuts', 'assets/pork-shoulder-ai.jpg'),
-  (5, 'Pork Tenderloin', 'Trimmed · Premium', 'Dalat Fresh Foods', '24 km', 8.60, 26, 1, 'Lean cuts', 'assets/pork-tenderloin-ai.jpg'),
-  (6, 'Ground Pork', '80/20 · Made today', 'Minh Phat Butchery', '7 km', 4.70, 55, 2, 'Ground', 'assets/ground-pork-ai.jpg')
+  (1, 'Premium Pork Belly', 'Skin-on · Fresh', 'Green Valley Farm', '12 km', 6.80, 84, 2, 'Belly', 'assets/pork-belly.jpg'),
+  (2, 'Bone-in Pork Chops', 'Center cut · Chilled', 'Minh Phat Butchery', '7 km', 5.40, 42, 2, 'Lean cuts', 'assets/pork-chops.jpg'),
+  (3, 'Meaty Pork Ribs', 'Spare ribs · Fresh', 'An Hoa Foods', '18 km', 7.20, 31, 3, 'Ribs', 'assets/pork-ribs.jpg'),
+  (4, 'Lean Pork Shoulder', 'Boneless · Chilled', 'Green Valley Farm', '12 km', 5.90, 68, 2, 'Lean cuts', 'assets/pork-shoulder.jpg'),
+  (5, 'Pork Tenderloin', 'Trimmed · Premium', 'Dalat Fresh Foods', '24 km', 8.60, 26, 1, 'Lean cuts', 'assets/pork-tenderloin.jpg'),
+  (6, 'Ground Pork', '80/20 · Made today', 'Minh Phat Butchery', '7 km', 4.70, 55, 2, 'Ground', 'assets/ground-pork.jpg')
 on conflict (id) do update set
   name = excluded.name,
   cut = excluded.cut,

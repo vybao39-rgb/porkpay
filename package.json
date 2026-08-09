@@ -7,6 +7,8 @@
     "agent:quote": "node agent/vporkpay-agent.mjs",
     "test:contract": "node contracts/test/VPorkPayStoreCredit.test.cjs",
     "test:circle-stack": "node test/circle-stack.test.cjs",
+    "test:design": "node test/design-system.test.cjs",
+    "test:history": "node test/order-history-recovery.test.cjs",
     "test:ui": "node test/onchain-credit-ui.test.cjs",
     "test:supabase": "node test/supabase-integration.test.cjs"
   },

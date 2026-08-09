@@ -49,16 +49,17 @@
     footer a { color:var(--green); font-weight:800; }
     @media (max-width:720px) { .grid, .stack-grid { grid-template-columns:1fr; } header { align-items:flex-start; gap:14px; } .badge { text-align:center; } }
   </style>
+  <link rel="stylesheet" href="assets/vporkpay-design-system.css">
 </head>
-<body>
+<body class="vpork-submission">
   <header>
     <a class="brand" href="index.html"><img src="assets/vporkpay-logo.png" alt="VPorkPay logo"><span>VPorkPay</span></a>
-    <span class="badge">FINAL SUBMISSION · DEFI TRACK</span>
+    <span class="badge">DEFI · FINAL PROJECT</span>
   </header>
   <main>
-    <p class="eyebrow">Build on Arc 2026 · Checkpoint 3</p>
-    <h1>Four final artifacts.<br>Every link works.</h1>
-    <p class="lead">VPorkPay applies merchant-approved onchain store credit to real pork commerce. Review the functional Arc Testnet MVP, public implementation, three-minute pitch and final deck below.</p>
+    <p class="eyebrow">FINAL PROJECT DOSSIER · BUILD ON ARC 2026</p>
+    <h1>VPorkPay, documented end to end.</h1>
+    <p class="lead">Product, code, contract evidence and the three-minute walkthrough are collected here for review. VPorkPay brings direct USDC settlement and merchant-approved store credit into everyday pork purchasing.</p>
     <section class="grid" aria-label="Final submission artifacts">
       <a class="card" href="index.html"><span class="number">01</span><h2>Functional MVP</h2><p>Marketplace, injected-wallet checkout, verified credit contract flow, live amount due and capped test-USDC repayment.</p><strong>Open live MVP ↗</strong></a>
       <a class="card" href="https://github.com/vybao39-rgb/porkpay" target="_blank" rel="noreferrer"><span class="number">02</span><h2>Public code repository</h2><p>Frontend, Solidity v1.1 contract, reproducible browser artifact, lifecycle tests and implementation documentation.</p><strong>View GitHub repository ↗</strong></a>
@@ -66,9 +67,9 @@
       <a class="card" href="VPorkPay-Final-Submission-Deck.pptx"><span class="number">04</span><h2>Final presentation deck</h2><p>Editable eight-slide PowerPoint with public links and source notes. An interactive web version is also available.</p><strong>Download PowerPoint ↗</strong></a>
     </section>
     <section class="stack" aria-labelledby="circle-stack-title">
-      <p class="eyebrow">Meaningful Circle stack use</p>
-      <h2 id="circle-stack-title">Arc-native commerce, funded and automated with Circle.</h2>
-      <p>These integrations extend the core DeFi checkout without replacing it: App Kit brings test USDC onto Arc, while Agent Stack supports policy-bounded supplier payments from a Circle Agent Wallet.</p>
+      <p class="eyebrow">CIRCLE INFRASTRUCTURE</p>
+      <h2 id="circle-stack-title">Funding and settlement around one USDC balance.</h2>
+      <p>App Kit moves test USDC between networks when checkout needs liquidity. Agent Stack supports supplier payments under a fixed recipient policy, spending cap and explicit human approval.</p>
       <div class="stack-grid">
         <article class="stack-card"><span class="status">LIVE IN CHECKOUT</span><h3>Circle App Kit · two-way CCTP bridge</h3><p>The connected browser wallet can estimate and bridge test USDC in either direction between Arc Testnet and Ethereum Sepolia with <code>@circle-fin/app-kit</code> and the official Viem adapter.</p><a href="https://github.com/vybao39-rgb/porkpay/blob/main/src/circle-app-kit.js" target="_blank" rel="noreferrer">Inspect App Kit integration ↗</a></article>
         <article class="stack-card"><span class="status">AGENT-READY</span><h3>Circle Agent Stack · procurement payment</h3><p>The official Circle CLI drives an Arc Testnet Agent Wallet with a verified-merchant allowlist, a 100 USDC order cap and mandatory human confirmation.</p><a href="https://github.com/vybao39-rgb/porkpay/tree/main/agent" target="_blank" rel="noreferrer">Inspect Agent Stack runner ↗</a></article>
@@ -76,8 +77,8 @@
     </section>
     <div class="deployment"><div><strong>Verified Arc Testnet deployment</strong><code>0xd9dab755431664ada2d13868674ddb43ffdef396</code><br><span>Fully verified Solidity source + ABI · merchant 0xf2d0…33d0 · official test USDC</span></div><span><a href="https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396?tab=contract" target="_blank" rel="noreferrer">Verified source ↗</a> · <a href="https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067" target="_blank" rel="noreferrer">Deployment tx ↗</a></span></div>
     <div class="guide"><div><strong>Hướng dẫn sử dụng VPorkPay</strong><span>Tài liệu tiếng Việt cho người mua và chủ cửa hàng: cấu hình Arc, checkout, tín dụng, phê duyệt, trả nợ và xử lý lỗi.</span></div><span><a href="VPorkPay-User-Guide-VI.pdf">PDF</a> · <a href="VPorkPay-User-Guide-VI.docx">DOCX</a></span></div>
-    <div class="safety"><b>Arc Testnet only.</b> Never use real funds. The store-credit contract is an unaudited hackathon prototype and does not create a legally binding credit agreement.</div>
+    <div class="safety"><b>Arc Testnet only.</b> Never use real funds. The store-credit contract is unaudited and does not create a legally binding credit agreement.</div>
   </main>
-  <footer><span>VPorkPay · Source better. Finance smarter.</span><a href="presentation.html">Open interactive deck</a></footer>
+  <footer><span>VPorkPay · Pork supply, orders and merchant credit.</span><a href="presentation.html">Open interactive deck</a></footer>
 </body>
 </html>
