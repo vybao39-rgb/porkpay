@@ -5,437 +5,118 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <meta name="description" content="VPorkPay final submission presentation for the Build on Arc 2026 DeFi Track.">
   <link rel="icon" type="image/png" href="assets/vporkpay-logo.png">
-  <title>VPorkPay · Final Submission</title>
+  <title>VPorkPay · Final Presentation</title>
   <style>
-    :root {
-      --cream: #f4f0e7;
-      --paper: #fffdf8;
-      --ink: #171712;
-      --coral: #dc624c;
-      --green: #24493b;
-      --lime: #dceb7b;
-      --muted: #6b6f66;
-      --line: #dad6cc;
-      --slide-width: min(94vw, calc(86vh * 16 / 9));
-    }
-    * { box-sizing: border-box; }
-    html { color-scheme: light; }
-    body {
-      margin: 0;
-      overflow: hidden;
-      color: var(--ink);
-      background: #11110f;
-      font-family: Arial, sans-serif;
-    }
-    a { color: inherit; }
-    button { font: inherit; }
-    .deck {
-      display: grid;
-      place-items: center;
-      min-height: 100svh;
-      padding: 3.5vh 3vw 9vh;
-    }
-    .slide {
-      position: absolute;
-      display: none;
-      width: var(--slide-width);
-      aspect-ratio: 16 / 9;
-      overflow: hidden;
-      padding: 5.3% 5.6%;
-      background: var(--paper);
-      box-shadow: 0 24px 90px rgba(0, 0, 0, .35);
-    }
-    .slide.active { display: block; }
-    .cream { background: var(--cream); }
-    .dark { color: white; background: var(--ink); }
-    .coral { color: white; background: var(--coral); }
-    .eyebrow {
-      margin: 0 0 3.3%;
-      color: var(--coral);
-      font-size: clamp(8px, 1vw, 14px);
-      font-weight: 900;
-      letter-spacing: .08em;
-      text-transform: uppercase;
-    }
-    .dark .eyebrow { color: var(--lime); }
-    h1, h2, h3, p { margin-top: 0; }
-    h1, h2 { font-family: Georgia, serif; font-weight: 400; }
-    h1 { margin-bottom: 4%; font-size: clamp(36px, 6.2vw, 78px); line-height: .98; }
-    h2 { margin-bottom: 4.5%; font-size: clamp(28px, 4vw, 52px); line-height: 1.05; }
-    h3 { margin-bottom: .5em; font-size: clamp(14px, 1.8vw, 24px); }
-    p { color: var(--muted); font-size: clamp(10px, 1.35vw, 18px); line-height: 1.45; }
-    .dark p { color: #c8cbc3; }
-    .footer {
-      position: absolute;
-      right: 5.6%;
-      bottom: 3.2%;
-      left: 5.6%;
-      display: flex;
-      justify-content: space-between;
-      color: #85887f;
-      font-size: clamp(7px, .7vw, 10px);
-      font-weight: 800;
-      letter-spacing: .04em;
-    }
-    .dark .footer { color: #c8cbc3; }
-    .tag {
-      display: inline-flex;
-      padding: .8em 1.5em;
-      border-radius: 999px;
-      color: white;
-      background: var(--green);
-      font-size: clamp(8px, .9vw, 12px);
-      font-weight: 900;
-    }
-    .title-grid { display: grid; grid-template-columns: 57% 43%; margin: -5.3% -5.6%; height: 111%; }
-    .title-copy { padding: 9% 10%; background: var(--cream); }
-    .title-copy h1 { margin-top: 13%; }
-    .title-copy .tagline { color: var(--coral); font-style: italic; }
-    .title-copy .sub { max-width: 560px; margin: 8% 0; font-size: clamp(13px, 1.8vw, 23px); }
-    .title-art { position: relative; background: var(--coral); }
-    .title-art img {
-      position: absolute;
-      width: 74%;
-      height: 38%;
-      object-fit: cover;
-      border-radius: 24px;
-    }
-    .title-art img:first-child { top: 10%; right: 7%; }
-    .title-art img:last-child { right: 18%; bottom: 10%; width: 82%; }
-    .problem-grid, .solution-grid, .proof-grid, .arc-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6%; }
-    .point { position: relative; margin-bottom: 7%; padding-left: 6%; }
-    .point::before {
-      position: absolute;
-      top: .35em;
-      left: 0;
-      width: .65em;
-      height: .65em;
-      border-radius: 50%;
-      background: var(--coral);
-      content: "";
-    }
-    .photo-pair { display: grid; grid-template-columns: 1fr 1.15fr; gap: 4%; }
-    .photo-pair img, .screen, .proof-screen {
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
-      border: 1px solid var(--line);
-      border-radius: 24px;
-    }
-    .callout { margin-top: 4%; padding: 1em 1.4em; border-radius: 14px; color: white; background: var(--green); font-weight: 800; text-align: center; }
-    .step { display: grid; grid-template-columns: 15% 1fr; padding: 3% 0 5%; border-bottom: 1px solid var(--line); }
-    .step:last-child { border-bottom: 0; }
-    .step-num { color: var(--coral); font-family: Georgia, serif; font-size: clamp(24px, 3vw, 40px); }
-    .proof-screen { padding: 2%; background: var(--paper); object-fit: cover; }
-    .check { position: relative; margin-bottom: 5%; padding-left: 12%; }
-    .check::before {
-      position: absolute;
-      top: 0;
-      left: 0;
-      display: grid;
-      place-items: center;
-      width: 1.7em;
-      height: 1.7em;
-      border-radius: 50%;
-      color: var(--ink);
-      background: var(--coral);
-      content: "✓";
-      font-weight: 900;
-    }
-    .check:last-child::before { background: var(--lime); }
-    .warning { padding: 1em; border-radius: 12px; color: white; background: var(--coral); font-size: clamp(9px, 1vw, 13px); font-weight: 900; text-align: center; }
-    .usdc { margin: 9% 0 2%; color: var(--coral); font-size: clamp(58px, 9vw, 112px); font-weight: 900; }
-    .network { margin-top: 8%; padding: 5%; border-radius: 20px; color: white; background: var(--green); }
-    .network strong { color: var(--lime); }
-    .claim { display: grid; grid-template-columns: 12% 1fr; padding: 4% 0; border-bottom: 1px solid var(--line); }
-    .claim:last-child { border-bottom: 0; }
-    .claim-num { color: var(--coral); font-family: Georgia, serif; font-size: clamp(20px, 2.5vw, 32px); }
-    .flow {
-      display: grid;
-      grid-template-columns: 1fr auto 1fr auto 1fr auto 1fr auto 1fr;
-      align-items: center;
-      gap: 1.1%;
-      margin-top: 7%;
-    }
-    .node {
-      display: grid;
-      place-items: center;
-      min-height: 11em;
-      padding: 10%;
-      border: 1px solid var(--line);
-      border-radius: 22px;
-      background: var(--paper);
-      text-align: center;
-    }
-    .node.arc { color: white; background: var(--green); }
-    .node b { color: var(--coral); font-size: clamp(9px, 1.1vw, 15px); }
-    .node.arc b { color: var(--lime); }
-    .arrow { color: var(--coral); font-size: clamp(18px, 2.5vw, 34px); }
-    .constraints { display: grid; grid-template-columns: repeat(3, 1fr); gap: 5%; margin-top: 7%; padding-top: 4%; border-top: 1px solid var(--line); }
-    .timeline { position: relative; display: grid; grid-template-columns: repeat(4, 1fr); gap: 3%; margin-top: 13%; }
-    .timeline::before { position: absolute; top: 1.35em; right: 4%; left: 4%; height: 3px; background: #62675e; content: ""; }
-    .milestone { position: relative; z-index: 1; }
-    .milestone span { display: grid; place-items: center; width: 3em; height: 3em; margin: 0 0 15%; border-radius: 50%; color: var(--ink); background: var(--coral); font-weight: 900; }
-    .milestone:first-child span { background: var(--lime); }
-    .complete { display: inline-block; margin-top: 7%; padding: 1.2em 2em; border-radius: 18px; color: white; background: var(--green); }
-    .complete strong { color: var(--lime); }
-    .submission {
-      display: grid;
-      grid-template-columns: 63% 37%;
-      height: 100%;
-      margin: -5.3% -5.6%;
-    }
-    .submission-copy { padding: 9%; background: var(--coral); }
-    .submission-copy h2 { margin-top: 9%; font-size: clamp(38px, 5.4vw, 68px); }
-    .submission-art img { width: 100%; height: 100%; object-fit: cover; }
-    .links { margin: 6% 0; padding-top: 5%; border-top: 2px solid white; }
-    .link-row { display: grid; grid-template-columns: 16% 1fr; margin-bottom: 3.5%; font-size: clamp(9px, 1.3vw, 18px); }
-    .link-row b { color: var(--ink); font-size: .72em; }
-    .controls {
-      position: fixed;
-      right: 0;
-      bottom: 1.6vh;
-      left: 0;
-      z-index: 10;
-      display: flex;
-      justify-content: center;
-      align-items: center;
-      gap: 12px;
-      color: white;
-    }
-    .controls button, .download {
-      min-width: 42px;
-      min-height: 38px;
-      padding: 9px 14px;
-      border: 1px solid rgba(255, 255, 255, .35);
-      border-radius: 999px;
-      color: white;
-      background: rgba(255, 255, 255, .12);
-      text-decoration: none;
-      cursor: pointer;
-      backdrop-filter: blur(10px);
-    }
-    .counter { min-width: 64px; text-align: center; }
-    .progress { position: fixed; right: 0; bottom: 0; left: 0; height: 3px; background: rgba(255, 255, 255, .2); }
-    .progress span { display: block; height: 100%; background: var(--coral); transition: width .2s ease; }
-    @media (max-width: 700px) {
-      :root { --slide-width: 96vw; }
-      .deck { align-items: start; padding: 1vh 1vw 84px; }
-      .slide {
-        top: 1vh;
-        height: calc(100svh - 92px);
-        aspect-ratio: auto;
-        overflow-y: auto;
-        padding: 8% 7%;
-      }
-      .footer { display: none; }
-      .controls { bottom: 1vh; }
-      .title-grid, .submission {
-        display: block;
-        height: calc(100svh - 92px);
-        min-height: 610px;
-        margin: -8% -7%;
-      }
-      .title-copy, .submission-copy { min-height: 100%; padding: 13% 9%; }
-      .title-copy h1 { margin-top: 14%; }
-      .title-art, .submission-art { display: none; }
-      .problem-grid, .solution-grid, .proof-grid, .arc-grid { grid-template-columns: 1fr; gap: 24px; }
-      .photo-pair { height: 240px; }
-      .screen, .proof-screen { max-height: 280px; }
-      .flow { grid-template-columns: 1fr; gap: 10px; margin-top: 28px; }
-      .node { min-height: 110px; }
-      .arrow { transform: rotate(90deg); text-align: center; }
-      .constraints { grid-template-columns: 1fr; gap: 16px; margin-bottom: 20px; }
-      .timeline { grid-template-columns: 1fr; gap: 20px; margin-top: 30px; }
-      .timeline::before { display: none; }
-      .milestone span { margin-bottom: 12px; }
-      .complete { margin-bottom: 24px; }
-      .link-row { grid-template-columns: 20% 1fr; overflow-wrap: anywhere; }
-    }
-    @media (prefers-reduced-motion: no-preference) {
-      .slide.active { animation: enter .24s ease both; }
-      @keyframes enter { from { opacity: 0; transform: translateY(8px) scale(.995); } }
-    }
+    :root { --paper:#f4f1e9; --white:#fffdf8; --ink:#17211d; --coral:#d94b32; --green:#0c665a; --yellow:#e8b64b; --line:#d8d1c4; --muted:#6f746e; --slide:min(94vw,calc(86vh * 16 / 9)); }
+    * { box-sizing:border-box; }
+    body { margin:0; overflow:hidden; color:var(--ink); background:#0d1310; font-family:"Avenir Next",Arial,sans-serif; }
+    a { color:inherit; }
+    .deck { display:grid; min-height:100svh; place-items:center; padding:3vh 3vw 9vh; }
+    .slide { position:absolute; display:none; width:var(--slide); aspect-ratio:16/9; overflow:hidden; padding:4.4% 5%; background:var(--paper); box-shadow:0 24px 90px #0008; }
+    .slide.active { display:block; }
+    .dark { color:var(--white); background:var(--ink); }
+    .coral { color:var(--white); background:var(--coral); }
+    .head,.foot { position:absolute; right:5%; left:5%; display:flex; align-items:center; justify-content:space-between; font-size:clamp(7px,.72vw,11px); font-weight:900; letter-spacing:.04em; }
+    .head { top:4.2%; }
+    .head strong { display:flex; align-items:center; gap:.8em; font-size:1.4em; letter-spacing:0; }
+    .mark { display:grid; width:2.3em; height:2.3em; place-items:center; border-radius:50%; color:white; background:var(--coral); font-size:.72em; }
+    .foot { bottom:3.4%; color:var(--muted); }
+    .dark .foot,.dark .head>span { color:#aab4ae; }
+    .eyebrow { margin:5.8% 0 1.5%; color:var(--coral); font-size:clamp(8px,.95vw,13px); font-weight:900; letter-spacing:.05em; text-transform:uppercase; }
+    .dark .eyebrow { color:var(--yellow); }
+    h1,h2,h3,p { margin-top:0; }
+    h1,h2 { max-width:82%; margin-bottom:3%; font-size:clamp(36px,4.8vw,68px); line-height:1.02; letter-spacing:-.035em; }
+    h2 { font-size:clamp(30px,4.2vw,58px); }
+    h3 { font-size:clamp(13px,1.65vw,23px); }
+    p { color:var(--muted); font-size:clamp(10px,1.2vw,17px); line-height:1.45; }
+    .dark p { color:#c7d0cb; }
+    .hero { display:grid; grid-template-columns:60% 40%; height:100%; margin:-4.4% -5%; }
+    .hero-copy { padding:9% 8%; }
+    .hero-copy h1 { margin-top:12%; font-size:clamp(44px,5.2vw,72px); }
+    .hero-copy .claim { color:var(--coral); font-size:clamp(40px,5vw,70px); font-weight:900; line-height:1.04; letter-spacing:-.04em; }
+    .hero-copy .lead { max-width:630px; margin:7% 0; font-size:clamp(12px,1.5vw,21px); }
+    .hero-art { padding:6%; background:var(--ink); }
+    .hero-art img { width:100%; height:100%; object-fit:cover; border-radius:24px; }
+    .tag { display:inline-flex; padding:.75em 1.45em; border-radius:999px; color:white; background:var(--green); font-size:clamp(7px,.8vw,11px); font-weight:900; }
+    .problem { display:grid; grid-template-columns:64% 32%; gap:4%; margin-top:4%; }
+    .ledger-row { display:grid; grid-template-columns:7% 22% 1fr; gap:2%; padding:3.1% 0; border-bottom:1px solid var(--line); }
+    .ledger-row:last-child { border-bottom:0; }
+    .ledger-row b:first-child { color:var(--coral); }
+    .ledger-row span { color:var(--muted); font-size:clamp(9px,1vw,14px); }
+    .callout { display:flex; flex-direction:column; justify-content:center; padding:10%; border-radius:22px; color:white; background:var(--coral); }
+    .callout strong { font-size:clamp(22px,2.8vw,40px); line-height:1.08; }
+    .callout p { margin:10% 0 0; color:#ffede8; }
+    .cards { display:grid; grid-template-columns:repeat(3,1fr); gap:3%; margin-top:6%; }
+    .card { min-height:13em; padding:3%; border:1px solid var(--line); border-radius:20px; background:var(--white); }
+    .card:last-child { color:white; background:var(--ink); }
+    .card b { display:inline-grid; min-width:3.7em; min-height:2.1em; place-items:center; border-radius:999px; color:white; background:var(--green); font-size:.75em; }
+    .card:last-child b { background:var(--coral); }
+    .card h3 { margin-top:13%; }
+    .outcomes { display:grid; grid-template-columns:1fr 1.08fr; gap:2%; margin-top:3%; }
+    .outcome { padding:2.3% 3%; border-radius:18px; background:#e4f0ea; }
+    .outcome:last-child { background:#f8e8ae; }
+    .outcome strong { display:block; margin-bottom:.55em; color:var(--green); font-size:.72em; }
+    .surface { display:grid; grid-template-columns:repeat(3,1fr); gap:3%; margin-top:6%; }
+    .surface .card { border-color:#3e4b45; background:#24302b; }
+    .surface .card.active { background:var(--coral); }
+    .surface .card h3 { color:white; }
+    .surface .card p { color:#c7d0cb; }
+    .surface .active p { color:#ffede8; }
+    .live-link { display:inline-block; margin-top:4%; color:white; font-weight:900; }
+    .metrics { display:grid; grid-template-columns:repeat(3,1fr); gap:2%; margin-top:4%; }
+    .metric { padding:3%; border:1px solid var(--line); border-radius:18px; background:var(--white); }
+    .metric small { color:var(--muted); font-weight:900; }
+    .metric strong { display:block; margin:8% 0 4%; color:var(--green); font-size:clamp(22px,2.6vw,38px); }
+    .metric:nth-child(2) strong { color:var(--coral); }
+    .metric:nth-child(3) strong { color:var(--yellow); }
+    .proof { display:grid; grid-template-columns:1fr 1fr; gap:4%; margin-top:2.5%; padding:3%; border:1px solid var(--line); border-radius:18px; background:var(--white); }
+    .proof a { color:var(--green); font-weight:900; }
+    .stack-row { display:grid; grid-template-columns:16% 10% 1fr; align-items:center; gap:3%; padding:2.5% 0; border-bottom:1px solid var(--line); }
+    .stack-row:last-child { border-bottom:0; }
+    .status { padding:.65em; border-radius:999px; color:white; background:var(--green); font-size:.68em; font-weight:900; text-align:center; }
+    .status.ready { color:var(--ink); background:var(--yellow); }
+    .flow { display:grid; grid-template-columns:repeat(5,1fr); gap:3%; margin-top:7%; }
+    .node { position:relative; display:grid; min-height:11em; padding:8%; place-items:center; border:1px solid var(--line); border-radius:18px; background:var(--white); text-align:center; }
+    .node:nth-child(1) { background:#e4f0ea; }
+    .node:nth-child(4) { background:#f8e8ae; }
+    .node:nth-child(5) { background:#f7dad3; }
+    .node:not(:last-child)::after { position:absolute; right:-14%; color:var(--muted); content:"→"; }
+    .node b { color:var(--green); font-size:.75em; }
+    .node span { font-size:clamp(9px,1vw,14px); }
+    .rules { display:grid; grid-template-columns:repeat(3,1fr); gap:3%; margin-top:5%; }
+    .rules b { color:var(--coral); font-size:.7em; }
+    .submission { display:grid; grid-template-columns:63% 37%; height:100%; margin:-4.4% -5%; }
+    .submission-copy { padding:10% 8%; }
+    .submission-copy h2 { max-width:100%; margin-top:12%; font-size:clamp(40px,5vw,70px); }
+    .submission-copy p { max-width:670px; color:#ffede8; }
+    .submission-links { padding:12% 10%; color:var(--ink); background:var(--paper); }
+    .submission-links a { display:block; margin:0 0 8%; padding-bottom:8%; border-bottom:1px solid var(--line); color:var(--green); font-size:clamp(9px,1vw,15px); font-weight:900; overflow-wrap:anywhere; }
+    .controls { position:fixed; right:0; bottom:1.6vh; left:0; z-index:10; display:flex; align-items:center; justify-content:center; gap:12px; color:white; }
+    .controls button,.download { min-height:38px; padding:9px 14px; border:1px solid #ffffff59; border-radius:999px; color:white; background:#ffffff1f; font:inherit; text-decoration:none; cursor:pointer; backdrop-filter:blur(10px); }
+    .counter { min-width:64px; text-align:center; }
+    .progress { position:fixed; right:0; bottom:0; left:0; height:3px; background:#ffffff33; }
+    .progress span { display:block; height:100%; background:var(--coral); transition:width .2s; }
+    @media (max-width:700px) { :root{--slide:96vw}.deck{align-items:start;padding:1vh 1vw 84px}.slide{top:1vh;height:calc(100svh - 92px);aspect-ratio:auto;overflow-y:auto;padding:8% 7%}.head,.foot{display:none}.hero,.submission{display:block;height:calc(100svh - 92px);min-height:650px;margin:-8% -7%}.hero-copy,.submission-copy{min-height:100%;padding:13% 9%}.hero-art{display:none}.problem,.cards,.outcomes,.surface,.metrics,.proof,.flow,.rules{grid-template-columns:1fr}.callout{min-height:220px}.node:not(:last-child)::after{right:50%;bottom:-17%;transform:rotate(90deg)}.submission-links{min-height:100%}.stack-row{grid-template-columns:25% 20% 1fr}.slide h1,.slide h2{max-width:100%}.controls{bottom:1vh} }
   </style>
   <link rel="stylesheet" href="assets/vporkpay-design-system.css">
 </head>
 <body class="vpork-deck">
   <main class="deck" aria-live="polite">
-    <section class="slide cream active" id="slide-1" aria-label="Slide 1 of 8">
-      <div class="title-grid">
-        <div class="title-copy">
-          <p class="eyebrow">VPORKPAY · PRODUCT BRIEF</p>
-          <h1>VPorkPay</h1>
-          <h1 class="tagline">Buy pork.<br>Keep cash moving.</h1>
-          <p class="sub">A USDC-native pork marketplace with merchant-approved onchain store credit on Arc.</p>
-          <span class="tag">DEFI · USDC COMMERCE ON ARC</span>
-        </div>
-        <div class="title-art">
-          <img src="assets/pork-belly.jpg" alt="Premium pork belly">
-          <img src="assets/pork-chops.jpg" alt="Bone-in pork chops">
-        </div>
-      </div>
-    </section>
-
-    <section class="slide" id="slide-2" aria-label="Slide 2 of 8">
-      <p class="eyebrow">The problem</p>
-      <h2>Pork trade still runs on fragmented coordination.</h2>
-      <div class="problem-grid">
-        <div>
-          <div class="point"><h3>Prices are hard to compare</h3><p>Buyers discover offers across disconnected messages and spreadsheets.</p></div>
-          <div class="point"><h3>Settlement is slow to verify</h3><p>Cash and bank transfers separate payment confirmation from the order record.</p></div>
-          <div class="point"><h3>Delivery has no shared state</h3><p>Buyer and supplier lack one timeline for payment, fulfilment and settlement.</p></div>
-        </div>
-        <div>
-          <div class="photo-pair">
-            <img src="assets/ground-pork.jpg" alt="Ground pork">
-            <img src="assets/pork-shoulder.jpg" alt="Pork shoulder">
-          </div>
-          <div class="callout">One USDC-denominated commerce record.</div>
-        </div>
-      </div>
-      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>02</span></div>
-    </section>
-
-    <section class="slide cream" id="slide-3" aria-label="Slide 3 of 8">
-      <p class="eyebrow">The product</p>
-      <h2>One flow connects discovery, ordering and working capital.</h2>
-      <div class="solution-grid">
-        <div>
-          <div class="step"><span class="step-num">01</span><div><h3>Discover</h3><p>Compare verified suppliers, cuts and USDC prices.</p></div></div>
-          <div class="step"><span class="step-num">02</span><div><h3>Order</h3><p>Build a cart and capture delivery details.</p></div></div>
-          <div class="step"><span class="step-num">03</span><div><h3>Finance</h3><p>Pay with test USDC or request the shortfall as merchant-approved onchain credit.</p></div></div>
-        </div>
-        <img class="screen" src="assets/presentation-products.png" alt="VPorkPay marketplace">
-      </div>
-      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>03</span></div>
-    </section>
-
-    <section class="slide dark" id="slide-4" aria-label="Slide 4 of 8">
-      <p class="eyebrow">Deployed MVP</p>
-      <h2>VPorkPay v1.1 is live on Arc Testnet.</h2>
-      <div class="proof-grid">
-        <img class="proof-screen" src="assets/presentation-checkout.png" alt="VPorkPay Arc Testnet checkout">
-        <div>
-          <div class="check"><h3>Verified deployment</h3><p><a href="https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067" target="_blank" rel="noreferrer" style="color:inherit">0xd9da…f396 · merchant 0xf2d0…33d0 ↗</a></p></div>
-          <div class="check"><h3>Merchant-approved debt</h3><p>A buyer request creates no debt until the shop owner signs <code>openDebt</code>.</p></div>
-          <div class="check"><h3>Price-linked interest</h3><p>APR is fixed at opening and the amount due accrues from Arc block time.</p></div>
-          <div class="check"><h3>Direct repayment</h3><p>The buyer sets a capped allowance; test USDC moves directly to the merchant.</p></div>
-          <div class="warning">TESTNET ONLY · NEVER USE REAL FUNDS</div>
-        </div>
-      </div>
-      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>04</span></div>
-    </section>
-
-    <section class="slide" id="slide-5" aria-label="Slide 5 of 8">
-      <p class="eyebrow">Why Arc</p>
-      <h2>Arc makes USDC the payment asset and the gas asset.</h2>
-      <div class="arc-grid">
-        <div>
-          <div class="usdc">USDC</div>
-          <p>One balance for value transfer and network fees.</p>
-          <div class="network"><strong>Arc Testnet</strong><br><br>Chain ID 5042002<br>RPC rpc.testnet.arc.network</div>
-        </div>
-        <div>
-          <div class="claim"><span class="claim-num">01</span><div><h3>Dollar-denominated gas</h3><p>USDC is Arc's native gas token, removing the need for a separate volatile fee asset.</p></div></div>
-          <div class="claim"><span class="claim-num">02</span><div><h3>Sub-second deterministic finality</h3><p>Transactions finalize in under one second with no chain-reorganization risk.</p></div></div>
-          <div class="claim"><span class="claim-num">03</span><div><h3>EVM compatibility</h3><p>Existing Solidity contracts and standard Ethereum tooling remain usable.</p></div></div>
-        </div>
-      </div>
-      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>05</span></div>
-    </section>
-
-    <section class="slide cream" id="slide-6" aria-label="Slide 6 of 8">
-      <p class="eyebrow">Current architecture</p>
-      <h2>Every trust boundary stays visible.</h2>
-      <div class="flow">
-        <div class="node"><b>BUYER</b><span>Browses and orders</span></div><span class="arrow">→</span>
-        <div class="node"><b>VPORKPAY WEB</b><span>Calculates USDC total</span></div><span class="arrow">→</span>
-        <div class="node"><b>EVM WALLET</b><span>Buyer or merchant signs</span></div><span class="arrow">→</span>
-        <div class="node arc"><b>CREDIT CONTRACT</b><span>Records debt and interest</span></div><span class="arrow">→</span>
-        <div class="node"><b>USDC + ARCSCAN</b><span>Repays and proves finality</span></div>
-      </div>
-      <div class="constraints">
-        <div><h3>No custodial keys</h3><p>The wallet signs from the user's browser.</p></div>
-        <div><h3>No real funds</h3><p>Every money path is restricted to Arc Testnet.</p></div>
-        <div><h3>Contract is authoritative</h3><p>Local storage preserves UI continuity, never the live amount due.</p></div>
-      </div>
-      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>06</span></div>
-    </section>
-
-    <section class="slide dark" id="slide-7" aria-label="Slide 7 of 8">
-      <p class="eyebrow">End-to-end credit lifecycle</p>
-      <h2>Four serious steps, each with an explicit owner.</h2>
-      <div class="timeline">
-        <div class="milestone"><span>01</span><h3>Buyer requests</h3><p>The shortfall is saved as pending; no debt exists yet.</p></div>
-        <div class="milestone"><span>02</span><h3>Merchant approves</h3><p>The shop-owner wallet opens the exact principal onchain.</p></div>
-        <div class="milestone"><span>03</span><h3>Interest accrues</h3><p>Arc block time advances a transparent fixed APR.</p></div>
-        <div class="milestone"><span>04</span><h3>Buyer repays</h3><p>Capped test USDC transfers directly to the merchant.</p></div>
-      </div>
-      <div class="complete"><strong>Tested lifecycle</strong><br>Deploy → request → approve → accrue → repay</div>
-      <div class="footer"><span>VPORKPAY · FINAL SUBMISSION · DEFI TRACK</span><span>07</span></div>
-    </section>
-
-    <section class="slide coral" id="slide-8" aria-label="Slide 8 of 8">
-      <div class="submission">
-        <div class="submission-copy">
-          <p class="eyebrow" style="color:white">VPORKPAY · BUILD ON ARC</p>
-          <h2>Pork trade,<br>financed on Arc.</h2>
-          <h3>Buy pork. Request credit. Repay in USDC.</h3>
-          <div class="links">
-            <div class="link-row"><b>CODE</b><a href="https://github.com/vybao39-rgb/porkpay">GitHub repository</a></div>
-            <div class="link-row"><b>DEMO</b><a href="https://vpork.xyz/">Live VPorkPay demo</a></div>
-            <div class="link-row"><b>VIDEO</b><a href="VPorkPay-Final-Demo.mp4">3-minute pitch and demo</a></div>
-          </div>
-          <span class="tag" style="background:var(--ink)">FINAL SUBMISSION · DEFI</span>
-        </div>
-        <div class="submission-art"><img src="assets/pork-ribs.jpg" alt="Meaty pork ribs"></div>
-      </div>
-    </section>
+    <section class="slide active" id="slide-1" aria-label="Slide 1 of 8"><div class="hero"><div class="hero-copy"><p class="eyebrow">BUILD ON ARC 2026 · DEFI TRACK</p><h1>VPorkPay</h1><div class="claim">Buy pork.<br>Keep cash moving.</div><p class="lead">A working-capital marketplace where buyers settle in USDC or request merchant-approved onchain credit on Arc.</p><span class="tag">FUNCTIONAL MVP · ARC TESTNET</span></div><div class="hero-art"><img src="assets/vpork-market-pixel.png" alt="Pixel-art Vietnamese pork market"></div></div></section>
+    <section class="slide" id="slide-2" aria-label="Slide 2 of 8"><div class="head"><strong><span class="mark">VP</span>VPorkPay</strong><span>02</span></div><p class="eyebrow">The market gap</p><h2>A simple order becomes three disconnected records.</h2><div class="problem"><div><div class="ledger-row"><b>01</b><b>Product</b><span>Price, weight and supplier are negotiated in chat or at the stall.</span></div><div class="ledger-row"><b>02</b><b>Payment</b><span>Cash and bank transfers are difficult to reconcile with the order.</span></div><div class="ledger-row"><b>03</b><b>Credit</b><span>Shortfalls become informal debt with no shared balance or repayment proof.</span></div></div><div class="callout"><strong>ONE ORDER<br>ONE MONEY LAYER<br>ONE AUDIT TRAIL</strong><p>Commerce and working capital without hiding who must sign each action.</p></div></div><div class="foot"><span>Problem → product → proof</span><span>BUILD ON ARC · FINAL SUBMISSION</span></div></section>
+    <section class="slide" id="slide-3" aria-label="Slide 3 of 8"><div class="head"><strong><span class="mark">VP</span>VPorkPay</strong><span>03</span></div><p class="eyebrow">The product</p><h2>One checkout. Two honest outcomes.</h2><div class="cards"><article class="card"><b>01</b><h3>Build the order</h3><p>Verified pork cuts, quantity and delivery details.</p></article><article class="card"><b>02</b><h3>Read wallet balance</h3><p>VPorkPay compares the cart total with test USDC.</p></article><article class="card"><b>03</b><h3>Settle or finance</h3><p>Pay merchant directly, or send only the shortfall for approval.</p></article></div><div class="outcomes"><div class="outcome"><strong>FUNDED BUYER</strong>USDC transfers directly to the merchant wallet.</div><div class="outcome"><strong>CASH SHORTFALL</strong>Merchant signs openDebt; APR is fixed for that order.</div></div><div class="foot"><span>No synthetic balance · no automatic approval</span><span>BUILD ON ARC · FINAL SUBMISSION</span></div></section>
+    <section class="slide dark" id="slide-4" aria-label="Slide 4 of 8"><div class="head"><strong><span class="mark">VP</span>VPorkPay</strong><span>04</span></div><p class="eyebrow">Live MVP</p><h2>The interface reads like a merchant ledger.</h2><div class="surface"><article class="card"><b>MARKETPLACE</b><h3>Browse cuts</h3><p>Build a cart by kilogram and supplier.</p></article><article class="card active"><b>MY ORDERS</b><h3>See paid vs. owed</h3><p>Order time, payment mode, APR, accrued interest and due amount.</p></article><article class="card"><b>SELLER HUB</b><h3>Operate credit</h3><p>Only approved seller wallets see fulfilment and debt actions.</p></article></div><a class="live-link" href="https://vpork.xyz/">OPEN LIVE MVP · https://vpork.xyz/ ↗</a><div class="foot"><span>Latest release · Supabase sync · wallet-owned</span><span>BUILD ON ARC · FINAL SUBMISSION</span></div></section>
+    <section class="slide" id="slide-5" aria-label="Slide 5 of 8"><div class="head"><strong><span class="mark">VP</span>VPorkPay</strong><span>05</span></div><p class="eyebrow">Onchain proof</p><h2>VPorkPay v1.1 is deployed and source-verified on Arc.</h2><div class="metrics"><div class="metric"><small>NETWORK</small><strong>Arc Testnet</strong><p>Chain ID 5042002 · USDC gas</p></div><div class="metric"><small>CONTRACT</small><strong>Source verified</strong><p>Solidity 0.8.24 · optimizer 200</p></div><div class="metric"><small>MONEY LAYER</small><strong>USDC</strong><p>Official Arc Testnet token</p></div></div><div class="proof"><div><small>DEPLOYMENT</small><h3>0xd9dA…F396</h3><a href="https://testnet.arcscan.app/address/0xd9dAB755431664aDA2D13868674Ddb43FfDEF396?tab=contract">View verified source and ABI on Arcscan ↗</a></div><div><small>AUTHORITY</small><h3>Merchant signs credit · Buyer signs repayment</h3><p>The contract—not the browser—owns principal, APR and amount due.</p></div></div><div class="foot"><span>Public evidence · independently inspectable</span><span>BUILD ON ARC · FINAL SUBMISSION</span></div></section>
+    <section class="slide" id="slide-6" aria-label="Slide 6 of 8"><div class="head"><strong><span class="mark">VP</span>VPorkPay</strong><span>06</span></div><p class="eyebrow">Circle stack</p><h2>Meaningful use, with implementation status visible.</h2><div><div class="stack-row"><h3>ARC</h3><span class="status">LIVE</span><p>Settlement, contract execution and USDC-denominated gas on chain 5042002.</p></div><div class="stack-row"><h3>USDC</h3><span class="status">LIVE</span><p>Direct order payment, contract repayment and official test token accounting.</p></div><div class="stack-row"><h3>APP KIT</h3><span class="status">LIVE</span><p>Two-way CCTP bridge between Ethereum Sepolia and Arc Testnet in checkout.</p></div><div class="stack-row"><h3>AGENT STACK</h3><span class="status ready">READY</span><p>Circle CLI runner with merchant allowlist, order cap and human confirmation.</p></div></div><div class="foot"><span>Status labels separate shipped flows from agent-ready code</span><span>BUILD ON ARC · FINAL SUBMISSION</span></div></section>
+    <section class="slide" id="slide-7" aria-label="Slide 7 of 8"><div class="head"><strong><span class="mark">VP</span>VPorkPay</strong><span>07</span></div><p class="eyebrow">Trust boundaries</p><h2>Every state has one accountable owner.</h2><div class="flow"><div class="node"><b>BUYER WALLET</b><span>Signs payment, request and repayment</span></div><div class="node"><b>VPORKPAY</b><span>Builds order and reads wallet / contract state</span></div><div class="node"><b>SUPABASE</b><span>Stores catalog, order and fulfilment records</span></div><div class="node"><b>ARC CONTRACT</b><span>Stores debt, APR and amount due</span></div><div class="node"><b>MERCHANT</b><span>Receives USDC and approves credit</span></div></div><div class="rules"><div><b>NO CUSTODIAL KEYS</b><p>The app never stores seed phrases or private keys.</p></div><div><b>NO SILENT CREDIT</b><p>Merchant approval is a signed Arc transaction.</p></div><div><b>NO HIDDEN BALANCE</b><p>Debt and repayment remain readable onchain.</p></div></div><div class="foot"><span>Supabase for operations · Arc for money and debt</span><span>BUILD ON ARC · FINAL SUBMISSION</span></div></section>
+    <section class="slide coral" id="slide-8" aria-label="Slide 8 of 8"><div class="submission"><div class="submission-copy"><p class="eyebrow" style="color:#ffede8">FINAL SUBMISSION</p><h2>Pork trade,<br>financed on Arc.</h2><p>A functional MVP, public code, a 180-second demo and an editable final deck—released from one source of truth.</p><span class="tag" style="margin-top:9%;background:var(--ink)">READY TO JUDGE</span></div><div class="submission-links"><a href="https://vpork.xyz/">MVP · vpork.xyz</a><a href="https://github.com/vybao39-rgb/porkpay">CODE · GitHub repository</a><a href="VPorkPay-Final-Demo.mp4">VIDEO · 180-second demo</a><a href="VPorkPay-Final-Submission-Deck.pptx">DECK · Editable PowerPoint</a><a href="submission.html">HUB · Final submission dossier</a></div></div></section>
   </main>
-
-  <nav class="controls" aria-label="Presentation controls">
-    <button id="previous" type="button" aria-label="Previous slide">←</button>
-    <span class="counter" id="counter">1 / 8</span>
-    <button id="next" type="button" aria-label="Next slide">→</button>
-    <a class="download" href="VPorkPay-Final-Submission-Deck.pptx" download>Download PPTX</a>
-  </nav>
+  <nav class="controls" aria-label="Presentation controls"><button id="previous" type="button" aria-label="Previous slide">←</button><span class="counter" id="counter">1 / 8</span><button id="next" type="button" aria-label="Next slide">→</button><a class="download" href="VPorkPay-Final-Submission-Deck.pptx" download>Download PPTX</a></nav>
   <div class="progress" aria-hidden="true"><span id="progress"></span></div>
-
   <script>
-    const slides = [...document.querySelectorAll(".slide")];
-    const counter = document.querySelector("#counter");
-    const progress = document.querySelector("#progress");
-    let current = Math.max(0, Math.min(slides.length - 1, Number(location.hash.replace("#slide-", "")) - 1 || 0));
-    let touchStart = 0;
-
-    function show(index) {
-      current = (index + slides.length) % slides.length;
-      slides.forEach((slide, position) => slide.classList.toggle("active", position === current));
-      counter.textContent = `${current + 1} / ${slides.length}`;
-      progress.style.width = `${((current + 1) / slides.length) * 100}%`;
-      history.replaceState(null, "", `#slide-${current + 1}`);
-      document.title = `VPorkPay · Final Submission · ${current + 1}/${slides.length}`;
-    }
-
-    document.querySelector("#previous").addEventListener("click", () => show(current - 1));
-    document.querySelector("#next").addEventListener("click", () => show(current + 1));
-    document.addEventListener("keydown", event => {
-      if (["ArrowRight", "PageDown", " "].includes(event.key)) show(current + 1);
-      if (["ArrowLeft", "PageUp"].includes(event.key)) show(current - 1);
-      if (event.key === "Home") show(0);
-      if (event.key === "End") show(slides.length - 1);
-    });
-    document.addEventListener("touchstart", event => { touchStart = event.changedTouches[0].clientX; }, { passive: true });
-    document.addEventListener("touchend", event => {
-      const distance = event.changedTouches[0].clientX - touchStart;
-      if (Math.abs(distance) > 50) show(current + (distance < 0 ? 1 : -1));
-    }, { passive: true });
-    window.addEventListener("hashchange", () => {
-      const target = Number(location.hash.replace("#slide-", "")) - 1;
-      if (Number.isInteger(target) && target >= 0 && target < slides.length && target !== current) show(target);
-    });
-    show(current);
+    const slides=[...document.querySelectorAll('.slide')],counter=document.querySelector('#counter'),progress=document.querySelector('#progress');let current=Math.max(0,Math.min(slides.length-1,Number(location.hash.replace('#slide-',''))-1||0)),touchStart=0;
+    function show(index){current=(index+slides.length)%slides.length;slides.forEach((slide,position)=>slide.classList.toggle('active',position===current));counter.textContent=`${current+1} / ${slides.length}`;progress.style.width=`${((current+1)/slides.length)*100}%`;history.replaceState(null,'',`#slide-${current+1}`)}
+    document.querySelector('#previous').addEventListener('click',()=>show(current-1));document.querySelector('#next').addEventListener('click',()=>show(current+1));addEventListener('keydown',event=>{if(['ArrowRight','PageDown',' '].includes(event.key))show(current+1);if(['ArrowLeft','PageUp'].includes(event.key))show(current-1)});addEventListener('touchstart',event=>touchStart=event.changedTouches[0].screenX,{passive:true});addEventListener('touchend',event=>{const delta=event.changedTouches[0].screenX-touchStart;if(Math.abs(delta)>50)show(current+(delta<0?1:-1))},{passive:true});show(current);
   </script>
 </body>
 </html>

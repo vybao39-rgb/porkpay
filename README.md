@@ -1,8 +1,8 @@
 # VPorkPay
 
-**A USDC-native pork marketplace with merchant-approved onchain store credit on Arc.**
+**Buy pork. Keep cash moving.** VPorkPay is a USDC-native pork marketplace with direct merchant settlement and merchant-approved onchain store credit on Arc.
 
-[Final submission links](https://vpork.xyz/submission.html) · [Live MVP](https://vpork.xyz/) · [3-minute video](https://vpork.xyz/VPorkPay-Final-Demo.mp4) · [Final deck](https://vpork.xyz/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vpork.xyz/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
+[Final submission hub](https://vpork.xyz/submission.html) · [Live MVP](https://vpork.xyz/) · [180-second video](https://vpork.xyz/VPorkPay-Final-Demo.mp4) · [Final deck](https://vpork.xyz/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vpork.xyz/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
 
 **Fully source-verified Arc Testnet deployment:** [`0xd9dab755431664ada2d13868674ddb43ffdef396`](https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396?tab=contract) · [deployment transaction](https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067)
 
@@ -33,8 +33,9 @@ Buyers compare products, prepare an order and connect an injected EVM wallet. If
 
 - Browse, search and filter six pork products priced in USDC.
 - Add products to a cart, adjust quantity and capture delivery details.
-- Review buyer orders and seller fulfilment status.
-- Distinguish sample operations data from signed onchain evidence.
+- Persist wallet-owned products, carts, orders and fulfilment state in Supabase.
+- Separate paid orders from active credit, including order time, payment method, principal, APR, accrued interest and live amount due per order.
+- Hide Seller Hub from buyer wallets and expose operations only to authorized seller/admin roles.
 
 ### Arc Testnet wallet and payment proof
 
@@ -135,7 +136,7 @@ Official test USDC -> immutable merchant wallet
 Arcscan transaction evidence
 ```
 
-The frontend is a static HTML/CSS/JavaScript application hosted on GitHub Pages at `vpork.xyz`. Supabase Postgres stores the shared catalog, wallet-owned carts, orders and fulfilment state. Supabase Web3 Auth verifies wallet ownership, and Row Level Security isolates buyer rows while allowing explicitly promoted seller/admin accounts to manage fulfilment. Browser storage remains an offline continuity cache; the Arc contract remains authoritative for active debt and repayment.
+The frontend is a static HTML/CSS/JavaScript application hosted on GitHub Pages at `vpork.xyz`. Supabase Postgres stores the shared catalog, wallet-owned carts, orders and fulfilment state. Supabase Web3 Auth verifies wallet ownership, and Row Level Security isolates buyer rows while allowing explicitly promoted seller/admin accounts to manage fulfilment. Browser storage is only a continuity cache; Supabase remains authoritative for commerce records, and the Arc contract remains authoritative for active debt and repayment.
 
 ## Supabase setup
 
