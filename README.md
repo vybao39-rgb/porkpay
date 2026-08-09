@@ -2,7 +2,7 @@
 
 **Buy pork. Keep cash moving.** VPorkPay is a USDC-native pork marketplace with direct merchant settlement and merchant-approved onchain store credit on Arc.
 
-[Final submission hub](https://vpork.xyz/submission.html) · [Live MVP](https://vpork.xyz/) · [180-second video](https://vpork.xyz/VPorkPay-Final-Demo.mp4) · [Final deck](https://vpork.xyz/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vpork.xyz/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
+[Checkpoint 3 form values](CHECKPOINT-3-SUBMISSION.md) · [Final submission hub](https://vpork.xyz/submission.html) · [Live MVP](https://vpork.xyz/) · [180-second video](https://vpork.xyz/VPorkPay-Final-Demo.mp4) · [Final deck](https://vpork.xyz/VPorkPay-Final-Submission-Deck.pptx) · [Vietnamese user guide](https://vpork.xyz/VPorkPay-User-Guide-VI.pdf) · [Public repository](https://github.com/vybao39-rgb/porkpay)
 
 **Fully source-verified Arc Testnet deployment:** [`0xd9dab755431664ada2d13868674ddb43ffdef396`](https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396?tab=contract) · [deployment transaction](https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067)
 
