@@ -1156,6 +1156,7 @@
     const ARC_CHAIN_ID = "0x4cef52";
     const ARC_RPC_URL = "https://rpc.testnet.arc.network";
     const ARC_EXPLORER_URL = "https://testnet.arcscan.app";
+    const ARC_EXPLORER_API_URL = ARC_EXPLORER_URL + "/api/v2";
     const USDC_CONTRACT = "0x3600000000000000000000000000000000000000";
     const STORE_DEBT_KEY = "vporkpay-store-debt-v1";
     const CREDIT_CONTRACT_KEY = "vporkpay-credit-contract-v1";
@@ -1488,25 +1489,100 @@
       return block?.timestamp ? Number(BigInt(block.timestamp)) * 1000 : Date.now();
     }
 
-    async function recoverOnchainBuyerActivity() {
-      if (!window.ethereum || !isInjectedWallet || !isAddress(walletAddress) || !isAddress(creditContractAddress)) return;
+    async function fetchArcscanPages(url, maximumPages = 10) {
+      const items = [];
+      let nextUrl = url;
+      for (let page = 0; nextUrl && page < maximumPages; page += 1) {
+        const response = await fetch(nextUrl, { headers: { accept: "application/json" } });
+        if (!response.ok) throw new Error("Arcscan history request failed.");
+        const payload = await response.json();
+        items.push(...(payload.items || []));
+        if (!payload.next_page_params) break;
+        const parsed = new URL(url);
+        Object.entries(payload.next_page_params).forEach(([key, value]) => parsed.searchParams.set(key, value));
+        nextUrl = parsed.toString();
+      }
+      return items;
+    }
+
+    async function fetchArcscanBuyerHistory() {
+      const [contractItems, transferItems] = await Promise.all([
+        fetchArcscanPages(`${ARC_EXPLORER_API_URL}/addresses/${creditContractAddress}/logs`),
+        fetchArcscanPages(`${ARC_EXPLORER_API_URL}/addresses/${walletAddress}/token-transfers?type=ERC-20&filter=from`)
+      ]);
+      const buyer = walletAddress.toLowerCase();
+      const merchant = shopOwnerAddress().toLowerCase();
+      const relevantContractLogs = contractItems.filter(item =>
+        [DEBT_OPENED_TOPIC, DEBT_REPAID_TOPIC].includes(item.topics?.[0]?.toLowerCase())
+        && item.topics?.[2]?.toLowerCase() === topicAddress(buyer));
+      const paymentLogs = transferItems.filter(item =>
+        item.from?.hash?.toLowerCase() === buyer
+        && item.to?.hash?.toLowerCase() === merchant
+        && item.token?.address_hash?.toLowerCase() === USDC_CONTRACT.toLowerCase())
+        .map(item => ({
+          transactionHash: item.transaction_hash,
+          blockNumber: "0x" + Number(item.block_number).toString(16),
+          blockTimestamp: item.timestamp,
+          data: "0x" + BigInt(item.total?.value || 0).toString(16)
+        }));
+      return {
+        debtLogs: relevantContractLogs.filter(item => item.topics[0].toLowerCase() === DEBT_OPENED_TOPIC)
+          .map(item => ({ topics: item.topics, transactionHash: item.transaction_hash, blockTimestamp: item.block_timestamp })),
+        repaymentLogs: relevantContractLogs.filter(item => item.topics[0].toLowerCase() === DEBT_REPAID_TOPIC)
+          .map(item => ({ topics: item.topics, transactionHash: item.transaction_hash, blockTimestamp: item.block_timestamp })),
+        paymentLogs
+      };
+    }
+
+    async function getLogsInChunks(filter) {
+      const latest = Number(BigInt(await window.ethereum.request({ method: "eth_blockNumber" })));
+      const logs = [];
+      const maximumRange = 19999;
+      for (let from = CREDIT_DEPLOYMENT_BLOCK; from <= latest; from += maximumRange + 1) {
+        const to = Math.min(latest, from + maximumRange);
+        const batch = await window.ethereum.request({
+          method: "eth_getLogs",
+          params: [{ ...filter, fromBlock: "0x" + from.toString(16), toBlock: "0x" + to.toString(16) }]
+        });
+        logs.push(...(batch || []));
+      }
+      return logs;
+    }
+
+    async function fetchRpcBuyerHistory() {
       const buyerTopic = topicAddress(walletAddress);
       const merchantTopic = topicAddress(shopOwnerAddress());
-      const fromBlock = "0x" + CREDIT_DEPLOYMENT_BLOCK.toString(16);
       const [debtLogs, repaymentLogs, paymentLogs] = await Promise.all([
-        window.ethereum.request({
-          method: "eth_getLogs",
-          params: [{ address: creditContractAddress, fromBlock, toBlock: "latest", topics: [DEBT_OPENED_TOPIC, null, buyerTopic] }]
-        }),
-        window.ethereum.request({
-          method: "eth_getLogs",
-          params: [{ address: creditContractAddress, fromBlock, toBlock: "latest", topics: [DEBT_REPAID_TOPIC, null, buyerTopic, merchantTopic] }]
-        }),
-        window.ethereum.request({
-          method: "eth_getLogs",
-          params: [{ address: USDC_CONTRACT, fromBlock, toBlock: "latest", topics: [TRANSFER_TOPIC, buyerTopic, merchantTopic] }]
-        })
+        getLogsInChunks({ address: creditContractAddress, topics: [DEBT_OPENED_TOPIC, null, buyerTopic] }),
+        getLogsInChunks({ address: creditContractAddress, topics: [DEBT_REPAID_TOPIC, null, buyerTopic, merchantTopic] }),
+        getLogsInChunks({ address: USDC_CONTRACT, topics: [TRANSFER_TOPIC, buyerTopic, merchantTopic] })
       ]);
+      return { debtLogs, repaymentLogs, paymentLogs };
+    }
+
+    async function recoverOnchainBuyerActivity() {
+      if (!window.ethereum || !isInjectedWallet || !isAddress(walletAddress) || !isAddress(creditContractAddress)) return;
+      const hasVisibleOrders = buyerOrders.some(order => isAddress(order.buyer)
+        && order.buyer.toLowerCase() === walletAddress.toLowerCase());
+      if (!hasVisibleOrders) {
+        savedOrderCards.innerHTML = '<article class="order-card"><div class="order-main"><div class="order-symbol" aria-hidden="true">P</div><div><h3>Loading Arc history…</h3><p>Checking paid purchases and active debts for this wallet.</p></div></div></article>';
+      }
+      let history;
+      try {
+        history = await fetchArcscanBuyerHistory();
+      } catch (arcscanError) {
+        console.warn("Arcscan history unavailable; using chunked wallet RPC", arcscanError);
+        try {
+          history = await fetchRpcBuyerHistory();
+        } catch (rpcError) {
+          console.error("Arc order history could not be loaded", rpcError);
+          if (!hasVisibleOrders) {
+            savedOrderCards.innerHTML = '<article class="order-card"><div class="order-main"><div class="order-symbol" aria-hidden="true">!</div><div><h3>Arc history is temporarily unavailable</h3><p>Keep the wallet connected and select My orders again to retry.</p></div></div></article>';
+          }
+          return;
+        }
+      }
+      const { debtLogs, repaymentLogs, paymentLogs } = history;
       const repaymentByOrder = new Map((repaymentLogs || [])
         .filter(log => /^0x[0-9a-fA-F]{64}$/.test(log.topics?.[1] || ""))
         .map(log => [log.topics[1].toLowerCase(), log.transactionHash]));
@@ -1559,7 +1635,7 @@
         if (buyerOrders.some(order => [order.transactionHash, order.repayTxHash]
           .some(hash => hash?.toLowerCase() === log.transactionHash?.toLowerCase()))) continue;
         const amount = Number(BigInt(log.data || "0x0")) / 1000000;
-        const createdAt = await blockTimestamp(log.blockNumber);
+        const createdAt = log.blockTimestamp ? Date.parse(log.blockTimestamp) : await blockTimestamp(log.blockNumber);
         buyerOrders.push({
           id: "ARC-" + log.transactionHash.slice(2, 10).toUpperCase(),
           buyer: walletAddress,

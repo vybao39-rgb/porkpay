@@ -28,6 +28,20 @@ const paymentLogs = [{
   blockNumber: "0x3560809",
   transactionHash: paymentHash
 }];
+const contractApiItems = debtLogs.map((log, index) => ({
+  topics: [...log.topics, null],
+  transaction_hash: log.transactionHash,
+  block_timestamp: index ? "2026-08-08T16:05:19.000000Z" : "2026-08-08T16:24:17.000000Z"
+}));
+const transferApiItems = [{
+  from: { hash: buyer },
+  to: { hash: merchant },
+  token: { address_hash: usdc },
+  total: { value: "9400000" },
+  block_number: 55974905,
+  timestamp: "2026-08-08T17:02:41.000000Z",
+  transaction_hash: paymentHash
+}];
 
 const ethereum = {
   on() {},
@@ -68,7 +82,11 @@ const dom = new JSDOM(html, {
   beforeParse(window) {
     window.scrollTo = () => {};
     window.ethereum = ethereum;
-    window.fetch = async () => ({ ok: true, json: async () => artifact });
+    window.fetch = async url => {
+      if (String(url).includes("/logs")) return { ok: true, json: async () => ({ items: contractApiItems, next_page_params: null }) };
+      if (String(url).includes("/token-transfers")) return { ok: true, json: async () => ({ items: transferApiItems, next_page_params: null }) };
+      return { ok: true, json: async () => artifact };
+    };
   }
 });
 
