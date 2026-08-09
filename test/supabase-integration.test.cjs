@@ -10,6 +10,7 @@ const requireMatch = (source, pattern, message) => {
 requireMatch(html, /https:\/\/oqyuvzxikaibetsgwhsk\.supabase\.co/, "Supabase project URL is not configured");
 requireMatch(html, /sb_publishable_[A-Za-z0-9_-]+/, "Supabase publishable key is not configured");
 requireMatch(html, /signInWithWeb3\(\{[\s\S]*chain:\s*"ethereum"/, "Ethereum Web3 sign-in is missing");
+requireMatch(html, /does not submit a transaction, change any balance, or charge gas fees/, "Wallet sign-in safety statement is missing");
 requireMatch(html, /wallet:\s*window\.ethereum/, "Web3 sign-in must use the same injected wallet provider");
 requireMatch(html, /identity_data\?\.sub/, "Legacy CAIP-style Web3 identity parsing is missing");
 requireMatch(html, /from\("cart_items"\)/, "Cloud cart persistence is missing");

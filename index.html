@@ -1177,6 +1177,7 @@
     const CREDIT_ARTIFACT_URL = "assets/vporkpay-store-credit.json";
     const PORK_PRICE_CHANGE_YEAR = 6.4;
     const BASE_CREDIT_APR = 8;
+    const WALLET_SIGN_IN_STATEMENT = "By signing, you prove you own this wallet and sign in to VPorkPay. This signature does not submit a transaction, change any balance, or charge gas fees.";
     let walletAddress = "";
     let isInjectedWallet = false;
     let walletBalanceUnits = null;
@@ -1338,7 +1339,7 @@
     function queueCloudWrite(task) {
       if (!supabaseClient || !cloudSchemaReady || !cloudSessionMatchesWallet()) {
         if (cloudSchemaReady && isAddress(walletAddress)) {
-          setDatabaseStatus("SIGN TO SYNC", "Click the connected wallet and sign once before cloud data can be updated.", "error");
+          setDatabaseStatus("SIGN TO SYNC", "Signature only: no transaction, balance change or gas fee.", "error");
         }
         return cloudWriteQueue;
       }
@@ -1778,11 +1779,12 @@
         }
         let signedNow = false;
         if (!cloudUser) {
-          setDatabaseStatus("SIGN CLOUD", "Confirm the Sign-In with Ethereum message in your wallet.");
+          setDatabaseStatus("SIGN CLOUD", "Confirm the ownership signature. No transaction or gas fee will be created.");
+          showToast("Sign-in signature only · no transaction or gas fee");
           const { data, error } = await supabaseClient.auth.signInWithWeb3({
             chain: "ethereum",
             wallet: window.ethereum,
-            statement: "Sign in to VPorkPay to sync products, cart and orders at https://vpork.xyz"
+            statement: WALLET_SIGN_IN_STATEMENT
           });
           if (error) throw error;
           cloudUser = data.user || data.session?.user || null;
@@ -1850,7 +1852,7 @@
       const restoredUser = data.session?.user || null;
       cloudUser = restoredUser && cloudSessionMatchesWallet(restoredUser) ? restoredUser : null;
       if (cloudUser) await hydrateCloudData();
-      else if (isAddress(walletAddress)) setDatabaseStatus("SIGN TO SYNC", "Click the connected wallet and sign once to restore cloud sync.", "error");
+      else if (isAddress(walletAddress)) setDatabaseStatus("SIGN TO SYNC", "Sign to prove wallet ownership. No transaction, balance change or gas fee.", "error");
       else setDatabaseStatus("CLOUD READY", "Connect and sign with an Arc wallet to sync private order data.", "success");
     }
 
@@ -2654,7 +2656,7 @@
     function updateWalletUI() {
       walletButton.textContent = walletAddress ? shortenAddress(walletAddress) : "Connect Arc wallet";
       walletButton.title = walletAddress
-        ? "Wallet connected. Click to confirm account access."
+        ? "Wallet connected. Click to sign in without a transaction or gas fee."
         : "Connect an Arc Testnet wallet";
       disconnectWalletButton.hidden = !walletAddress;
       checkoutWallet.textContent = walletAddress
@@ -3188,7 +3190,7 @@
           refreshTestnetBalance();
           if (creditContractAddress) refreshContractDashboard().catch(error => setContractStatus(error.message, "error"));
           if (supabaseClient && cloudSchemaReady && (walletChanged || !cloudSessionMatchesWallet())) {
-            setDatabaseStatus("SIGN TO SYNC", "Wallet changed. Click the wallet button and sign once to resume cloud sync.", "error");
+            setDatabaseStatus("SIGN TO SYNC", "Wallet changed. Sign again without a transaction or gas fee to resume cloud sync.", "error");
           }
         } else {
           setDatabaseStatus("WALLET PAUSED", "Unlock or reconnect the wallet; the Supabase session remains safely stored.", "error");
