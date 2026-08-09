@@ -853,7 +853,7 @@
 </head>
 <body>
   <header class="topbar">
-    <a class="brand" href="#market" aria-label="VPorkPay marketplace" data-view-link="market">
+    <a class="brand" href="/" aria-label="VPorkPay marketplace" data-view-link="market">
       <img class="brand-logo" src="assets/vporkpay-logo.png" alt="">
       <span>VPorkPay</span>
     </a>
@@ -2160,7 +2160,10 @@
       document.querySelectorAll("[data-view]").forEach(button => {
         button.classList.toggle("active", button.dataset.view === view);
       });
-      history.replaceState(null, "", "#" + view);
+      const nextUrl = view === "market"
+        ? location.pathname + location.search
+        : "#" + view;
+      history.replaceState(null, "", nextUrl);
       window.scrollTo({ top: 0, behavior: "smooth" });
     }
 

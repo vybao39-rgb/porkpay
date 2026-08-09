@@ -188,6 +188,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   await wait(0);
   if (!document.querySelector("#sellerNav").hidden) throw new Error("Buyer wallet must not see Seller hub");
   click('[data-view="market"]');
+  if (dom.window.location.hash) throw new Error("Marketplace home must use the clean domain URL without #market");
   click('[data-add="1"]');
   if (!JSON.parse(localStorage.getItem("vporkpay-cart-v1"))?.length) throw new Error("Cart was not persisted");
   click("#checkoutButton");
