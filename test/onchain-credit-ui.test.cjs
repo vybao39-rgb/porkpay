@@ -34,6 +34,8 @@ const ethereum = {
     if (method === "wallet_switchEthereumChain" || method === "wallet_addEthereumChain") return null;
     if (method === "wallet_revokePermissions") return null;
     if (method === "eth_getCode") return "0x6001600055";
+    if (method === "eth_getLogs") return [];
+    if (method === "eth_getBlockByNumber") return { timestamp: "0x0" };
     if (method === "eth_call") {
       const call = params[0];
       if (call.to.toLowerCase() === usdc.toLowerCase()) return "0x" + word(usdcBalance);
@@ -221,6 +223,11 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   await wait(30);
   if (!document.querySelector("#sellerNav").hidden) throw new Error("Seller hub leaked after switching back to buyer");
   click('[data-view="orders"]');
+  const activeOrderText = text("#savedOrderCards");
+  for (const label of ["Ordered at", "Principal", "Fixed APR", "Interest now", "Total due now", "DEBT ACTIVE"]) {
+    if (!activeOrderText.includes(label)) throw new Error(`Active debt order is missing ${label}`);
+  }
+  if (text("#activeDebtCount") !== "1") throw new Error("Active debt summary should count the open debt");
   click("#repayDebt");
   await wait(40);
   if (text("#debtStatus") !== "REPAID") throw new Error("Repayment did not close debt");
@@ -233,6 +240,9 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (persistedBuyerOrder.status !== "Credit repaid") throw new Error("Buyer order status was not synchronized after repayment");
   if (!persistedBuyerOrder.open_tx_hash || !persistedBuyerOrder.approve_tx_hash || !persistedBuyerOrder.repay_tx_hash) {
     throw new Error("Buyer order did not retain the complete onchain lifecycle");
+  }
+  if (text("#paidOrderCount") !== "1" || text("#activeDebtCount") !== "0") {
+    throw new Error("Repaid debt was not moved from active debt to paid orders");
   }
   if (document.querySelector("#debtProofLinks").hidden) throw new Error("Lifecycle evidence links should be visible after repayment");
   if (txCount !== 4) throw new Error(`Expected deploy, open, approve and repay transactions; got ${txCount}`);
@@ -259,6 +269,11 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   const directOrder = cloudOrders.find(order => order.payment_tx_hash && !order.is_credit);
   if (!directOrder) throw new Error("Direct payment order was not persisted to Supabase");
   if (Number(directOrder.principal_usdc) !== 0) throw new Error("A fully funded direct payment created shop debt");
+  if (text("#paidOrderCount") !== "2") throw new Error("Paid-order summary did not include the direct USDC purchase");
+  const paidOrderText = text("#savedOrderCards");
+  for (const label of ["PAID IN FULL", "Payment method", "Amount paid", "Debt created", "Payment on Arcscan"]) {
+    if (!paidOrderText.includes(label)) throw new Error(`Paid order is missing ${label}`);
+  }
 
   click('[data-view="market"]');
   click('[data-add="2"]');
@@ -291,7 +306,7 @@ const wait = ms => new Promise(resolve => setTimeout(resolve, ms));
   if (!reloaded.window.document.querySelector("#cartContent").textContent.includes("Bone-in Pork Chops")) {
     throw new Error("Cart was not restored after page reload");
   }
-  if (!reloaded.window.document.querySelector("#savedOrderCards").textContent.includes("CREDIT REPAID")) {
+  if (!reloaded.window.document.querySelector("#savedOrderCards").textContent.includes("DEBT REPAID")) {
     throw new Error("Database order status was not restored after page reload");
   }
   if (reloaded.window.document.querySelector("#savedOrderCards").textContent.includes("FAKE-LOCAL")) {

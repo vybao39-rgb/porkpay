@@ -592,6 +592,10 @@
       cursor: pointer;
     }
     .order-cards { display: grid; gap: 18px; }
+    .buyer-finance-summary { display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 24px; }
+    .buyer-finance-stat { padding: 18px; border: 1px solid var(--line); border-radius: 14px; background: var(--panel); }
+    .buyer-finance-stat span { display: block; color: var(--muted); font-size: 9px; font-weight: 900; letter-spacing: .7px; text-transform: uppercase; }
+    .buyer-finance-stat strong { display: block; margin-top: 8px; font-family: Georgia, serif; font-size: 26px; font-weight: 400; }
     .order-card {
       overflow: hidden;
       border: 1px solid var(--line);
@@ -599,6 +603,11 @@
       background: var(--panel);
     }
     .order-card.featured { box-shadow: var(--shadow); }
+    .order-finance-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 1px; margin: 0 24px 22px; overflow: hidden; border: 1px solid var(--line); border-radius: 11px; background: var(--line); }
+    .order-finance-item { min-width: 0; padding: 13px; background: var(--panel); }
+    .order-finance-item span { display: block; margin-bottom: 6px; color: var(--muted); font-size: 8px; font-weight: 800; text-transform: uppercase; }
+    .order-finance-item strong { display: block; overflow-wrap: anywhere; font-size: 11px; line-height: 1.35; }
+    .order-proof-links { display: flex; flex-wrap: wrap; gap: 10px; }
     .order-top {
       display: flex;
       justify-content: space-between;
@@ -642,6 +651,7 @@
     }
     .order-main h3 { margin: 0; font-family: Georgia, serif; font-size: 24px; font-weight: 400; }
     .order-main p { margin: 5px 0 10px; color: var(--muted); font-size: 11px; }
+    .order-main > .status-chip { justify-self: end; }
     .primary-small {
       padding: 11px 13px;
       border: 0;
@@ -859,6 +869,11 @@
       .order-main { grid-template-columns: 68px 1fr; }
       .order-symbol { width: 68px; height: 68px; }
       .order-main .primary-small { grid-column: 1 / -1; }
+      .order-main > .status-chip { grid-column: 1 / -1; justify-self: start; }
+      .order-top { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+      .order-top > span:first-child { line-height: 1.5; }
+      .order-finance-grid { margin-right: 16px; margin-left: 16px; }
+      .escrow-strip { align-items: flex-start; flex-direction: column; }
       .seller-row { grid-template-columns: 1fr auto; }
       .seller-row .status-chip { grid-column: 1; }
       .checkout-grid { grid-template-columns: 1fr; }
@@ -866,6 +881,8 @@
       .app-kit-controls { grid-template-columns: 1fr 1fr; }
       .app-kit-controls input { grid-column: 1 / -1; }
       .debt-grid, .credit-terms { grid-template-columns: 1fr 1fr; }
+      .buyer-finance-summary { grid-template-columns: 1fr; }
+      .order-finance-grid { grid-template-columns: 1fr 1fr; }
       .onchain-controls { grid-template-columns: 1fr; }
       .onchain-steps, .contract-facts { grid-template-columns: 1fr; }
     }
@@ -975,6 +992,11 @@
       <div class="dashboard-hero">
         <div><div class="eyebrow">BUYER DASHBOARD</div><h1>My orders</h1><p>Track purchases, delivery and payment status in one place.</p></div>
         <button class="outline-button" type="button" data-view="market">Continue shopping</button>
+      </div>
+      <div class="buyer-finance-summary" aria-label="Buyer payment summary">
+        <article class="buyer-finance-stat"><span>Paid orders</span><strong id="paidOrderCount">0</strong></article>
+        <article class="buyer-finance-stat"><span>Active debts</span><strong id="activeDebtCount">0</strong></article>
+        <article class="buyer-finance-stat"><span>Total due now</span><strong id="activeDebtTotal">0.00 USDC</strong></article>
       </div>
       <article class="debt-card" id="debtCard" hidden>
         <div class="debt-heading">
@@ -1140,6 +1162,10 @@
     const CREDIT_REQUESTS_KEY = "vporkpay-credit-requests-v1";
     const DEPLOYMENT_EVIDENCE_KEY = "vporkpay-deployment-evidence-v1";
     const WALLET_DISCONNECTED_KEY = "vporkpay-wallet-disconnected-v1";
+    const CREDIT_DEPLOYMENT_BLOCK = 55799303;
+    const DEBT_OPENED_TOPIC = "0xad505d493d6d8809fd2ed2047004c87e07237849c60e7555cb0c360e52c0dd57";
+    const DEBT_REPAID_TOPIC = "0xa7e3334dcefe7cac00fb627e53fe0a03f0027ac7d3b075d02c55435ca548f391";
+    const TRANSFER_TOPIC = "0xddf252ad1be2c89b69c2b068fc378daa952ba7f163c4a11628f55a4df523b3ef";
     const DEFAULT_CREDIT_CONTRACT = "0xd9dab755431664ada2d13868674ddb43ffdef396";
     const DEFAULT_DEPLOYMENT_EVIDENCE = Object.freeze({
       address: DEFAULT_CREDIT_CONTRACT,
@@ -1206,6 +1232,9 @@
     const appKitProofs = document.querySelector("#appKitProofs");
     const sellerOrdersContainer = document.querySelector("#sellerOrders");
     const savedOrderCards = document.querySelector("#savedOrderCards");
+    const paidOrderCount = document.querySelector("#paidOrderCount");
+    const activeDebtCount = document.querySelector("#activeDebtCount");
+    const activeDebtTotal = document.querySelector("#activeDebtTotal");
     const toast = document.querySelector("#toast");
     const creditOption = document.querySelector("#creditOption");
     const useStoreCredit = document.querySelector("#useStoreCredit");
@@ -1248,6 +1277,12 @@
     const sellerNav = document.querySelector("#sellerNav");
 
     const formatUSDC = value => value.toFixed(2) + " USDC";
+    const formatOrderDate = value => {
+      const date = new Date(Number(value));
+      return Number.isFinite(date.getTime())
+        ? new Intl.DateTimeFormat("vi-VN", { dateStyle: "medium", timeStyle: "short", timeZone: "Asia/Ho_Chi_Minh" }).format(date)
+        : "Time unavailable";
+    };
     const cartSubtotal = () => [...cart.values()].reduce((sum, item) => sum + item.price * item.quantity, 0);
     const shortenAddress = address => address.slice(0, 6) + "…" + address.slice(-4);
     const formatTokenUnits = units => {
@@ -1411,7 +1446,7 @@
         id: row.id,
         buyer: row.buyer_wallet,
         createdAt: Date.parse(row.created_at),
-        updatedAt: Date.parse(row.updated_at),
+        updatedAt: Date.parse(row.updated_at || row.created_at),
         lines: (row.order_items || []).map(item => ({
           id: Number(item.product_id),
           name: item.product_name,
@@ -1433,6 +1468,142 @@
       };
     }
 
+    const topicAddress = address => "0x" + address.slice(2).toLowerCase().padStart(64, "0");
+    const hexWord = (value, index) => value.slice(2 + index * 64, 2 + (index + 1) * 64);
+
+    async function readOnchainDebt(orderId, address = creditContractAddress) {
+      const result = await readContractCall("debts(bytes32)", address, orderId.slice(2));
+      return {
+        buyer: "0x" + hexWord(result, 0).slice(-40),
+        principalUnits: BigInt("0x" + hexWord(result, 1)),
+        repaidUnits: BigInt("0x" + hexWord(result, 2)),
+        openedAt: Number(BigInt("0x" + hexWord(result, 3))) * 1000,
+        apr: Number(BigInt("0x" + hexWord(result, 4))) / 100,
+        closed: BigInt("0x" + hexWord(result, 5)) !== 0n
+      };
+    }
+
+    async function blockTimestamp(blockNumber) {
+      const block = await window.ethereum.request({ method: "eth_getBlockByNumber", params: [blockNumber, false] });
+      return block?.timestamp ? Number(BigInt(block.timestamp)) * 1000 : Date.now();
+    }
+
+    async function recoverOnchainBuyerActivity() {
+      if (!window.ethereum || !isInjectedWallet || !isAddress(walletAddress) || !isAddress(creditContractAddress)) return;
+      const buyerTopic = topicAddress(walletAddress);
+      const merchantTopic = topicAddress(shopOwnerAddress());
+      const fromBlock = "0x" + CREDIT_DEPLOYMENT_BLOCK.toString(16);
+      const [debtLogs, repaymentLogs, paymentLogs] = await Promise.all([
+        window.ethereum.request({
+          method: "eth_getLogs",
+          params: [{ address: creditContractAddress, fromBlock, toBlock: "latest", topics: [DEBT_OPENED_TOPIC, null, buyerTopic] }]
+        }),
+        window.ethereum.request({
+          method: "eth_getLogs",
+          params: [{ address: creditContractAddress, fromBlock, toBlock: "latest", topics: [DEBT_REPAID_TOPIC, null, buyerTopic, merchantTopic] }]
+        }),
+        window.ethereum.request({
+          method: "eth_getLogs",
+          params: [{ address: USDC_CONTRACT, fromBlock, toBlock: "latest", topics: [TRANSFER_TOPIC, buyerTopic, merchantTopic] }]
+        })
+      ]);
+      const repaymentByOrder = new Map((repaymentLogs || [])
+        .filter(log => /^0x[0-9a-fA-F]{64}$/.test(log.topics?.[1] || ""))
+        .map(log => [log.topics[1].toLowerCase(), log.transactionHash]));
+
+      for (const log of debtLogs || []) {
+        const orderId = log.topics?.[1];
+        if (!/^0x[0-9a-fA-F]{64}$/.test(orderId || "")) continue;
+        const [debt, dueUnits] = await Promise.all([
+          readOnchainDebt(orderId),
+          readOnchainAmountDue(orderId)
+        ]);
+        if (debt.buyer.toLowerCase() !== walletAddress.toLowerCase()) continue;
+        const principal = Number(debt.principalUnits) / 1000000;
+        const amountDue = Number(dueUnits) / 1000000;
+        const existing = buyerOrders.find(order => order.orderId?.toLowerCase() === orderId.toLowerCase());
+        const recovered = {
+          id: "ARC-" + orderId.slice(2, 10).toUpperCase(),
+          buyer: walletAddress,
+          createdAt: debt.openedAt,
+          updatedAt: Date.now(),
+          lines: [{ name: "Onchain store-credit purchase", seller: "VPorkPay shop owner", price: principal, quantity: 1 }],
+          total: principal,
+          status: debt.closed ? "Credit repaid" : "Credit active",
+          fulfilmentStatus: "Onchain record",
+          transactionHash: "",
+          credit: true,
+          orderId,
+          principal,
+          apr: debt.apr,
+          amountDue,
+          interestAccrued: Math.max(0, amountDue - principal),
+          openedAt: debt.openedAt,
+          onchainStatus: debt.closed ? "repaid" : "active",
+          openTxHash: log.transactionHash,
+          approveTxHash: "",
+          repayTxHash: repaymentByOrder.get(orderId.toLowerCase()) || "",
+          recoveredOnchain: true
+        };
+        if (existing) Object.assign(existing, recovered, {
+          id: existing.id,
+          lines: existing.lines?.length ? existing.lines : recovered.lines,
+          total: Number(existing.total) || recovered.total,
+          fulfilmentStatus: existing.fulfilmentStatus || recovered.fulfilmentStatus,
+          recoveredOnchain: Boolean(existing.recoveredOnchain)
+        });
+        else buyerOrders.push(recovered);
+      }
+
+      for (const log of paymentLogs || []) {
+        if (buyerOrders.some(order => [order.transactionHash, order.repayTxHash]
+          .some(hash => hash?.toLowerCase() === log.transactionHash?.toLowerCase()))) continue;
+        const amount = Number(BigInt(log.data || "0x0")) / 1000000;
+        const createdAt = await blockTimestamp(log.blockNumber);
+        buyerOrders.push({
+          id: "ARC-" + log.transactionHash.slice(2, 10).toUpperCase(),
+          buyer: walletAddress,
+          createdAt,
+          updatedAt: createdAt,
+          lines: [{ name: "Direct USDC purchase", seller: "VPorkPay shop owner", price: amount, quantity: 1 }],
+          total: amount,
+          status: "Settled",
+          fulfilmentStatus: "Onchain payment",
+          transactionHash: log.transactionHash,
+          credit: false,
+          recoveredOnchain: true
+        });
+      }
+
+      buyerOrders.sort((left, right) => Number(right.createdAt || 0) - Number(left.createdAt || 0));
+      syncCustomerDebtFromBuyerOrders();
+      renderBuyerOrders();
+    }
+
+    function syncCustomerDebtFromBuyerOrders() {
+      const canInspect = order => order.credit && order.orderId && isAddress(order.buyer)
+        && (order.buyer.toLowerCase() === walletAddress.toLowerCase() || hasSellerAccess());
+      const creditOrder = buyerOrders.find(order => order.credit && order.orderId
+        && canInspect(order) && order.onchainStatus !== "repaid")
+        || buyerOrders.find(canInspect);
+      customerDebt = creditOrder ? {
+        principal: Number(creditOrder.principal || creditOrder.total || 0),
+        apr: Number(creditOrder.apr || calculateCreditApr()),
+        porkPriceChange: currentPorkPriceChange,
+        seller: creditOrder.lines[0]?.seller || "Shop owner",
+        createdAt: creditOrder.openedAt || creditOrder.createdAt,
+        displayId: creditOrder.id,
+        orderId: creditOrder.orderId,
+        buyer: creditOrder.buyer,
+        contractAddress: creditContractAddress,
+        onchainStatus: creditOrder.onchainStatus || "pending",
+        openTxHash: creditOrder.openTxHash,
+        approveTxHash: creditOrder.approveTxHash,
+        repayTxHash: creditOrder.repayTxHash
+      } : null;
+      renderCustomerDebt();
+    }
+
     async function hydrateCloudData() {
       setDatabaseStatus("SYNCING…");
       const profilePayload = { user_id: cloudUser.id, wallet_address: walletAddress.toLowerCase() };
@@ -1447,30 +1618,15 @@
         .select("*,order_items(*)")
         .order("created_at", { ascending: false });
       if (ordersError) throw ordersError;
-      buyerOrders = (cloudOrders || []).map(mapCloudOrder).filter(order => order.lines.length);
+      buyerOrders = (cloudOrders || []).map(mapCloudOrder).filter(order => isAddress(order.buyer));
       try {
         window.localStorage.removeItem(BUYER_ORDERS_KEY);
         window.localStorage.removeItem(SELLER_ORDERS_KEY);
         window.localStorage.removeItem(CREDIT_REQUESTS_KEY);
       } catch {}
 
-      const creditOrder = buyerOrders.find(order => order.credit && order.orderId
-        && (["seller", "admin"].includes(cloudProfile.role) || order.buyer.toLowerCase() === walletAddress.toLowerCase()));
-      customerDebt = creditOrder ? {
-        principal: creditOrder.principal,
-        apr: calculateCreditApr(),
-        porkPriceChange: currentPorkPriceChange,
-        seller: creditOrder.lines[0]?.seller || "Shop owner",
-        createdAt: creditOrder.createdAt,
-        displayId: creditOrder.id,
-        orderId: creditOrder.orderId,
-        buyer: creditOrder.buyer,
-        contractAddress: creditContractAddress,
-        onchainStatus: creditOrder.onchainStatus || "pending",
-        openTxHash: creditOrder.openTxHash,
-        approveTxHash: creditOrder.approveTxHash,
-        repayTxHash: creditOrder.repayTxHash
-      } : null;
+      await recoverOnchainBuyerActivity();
+      syncCustomerDebtFromBuyerOrders();
 
       const { data: cloudCart, error: cartError } = await supabaseClient
         .from("cart_items")
@@ -2285,6 +2441,9 @@
         : "#" + view;
       history.replaceState(null, "", nextUrl);
       window.scrollTo({ top: 0, behavior: "smooth" });
+      if (view === "orders" && isInjectedWallet) {
+        recoverOnchainBuyerActivity().catch(error => console.warn("Could not refresh Arc order history", error));
+      }
     }
 
     function renderProducts() {
@@ -2389,6 +2548,7 @@
           await ensureArcTestnet();
           await refreshTestnetBalance();
           if (creditContractAddress) await refreshContractDashboard();
+          await recoverOnchainBuyerActivity();
         } catch (error) {
           walletBalanceUnits = null;
           setPaymentStatus(error.message || "Switch to Arc Testnet to continue.", "error");
@@ -2446,6 +2606,7 @@
         if (chainId?.toLowerCase() === ARC_CHAIN_ID) {
           await refreshTestnetBalance();
           if (creditContractAddress) await refreshContractDashboard();
+          await recoverOnchainBuyerActivity();
         } else {
           walletBalanceUnits = null;
           testnetBalance.textContent = "Wrong network";
@@ -2534,37 +2695,76 @@
       const visibleOrders = isAddress(walletAddress)
         ? buyerOrders.filter(order => isAddress(order.buyer) && order.buyer.toLowerCase() === walletAddress.toLowerCase())
         : [];
+      const paidOrders = visibleOrders.filter(order => (!order.credit && Boolean(order.transactionHash))
+        || (order.credit && (order.onchainStatus === "repaid" || Boolean(order.repayTxHash))));
+      const activeDebts = visibleOrders.filter(order => order.credit && order.onchainStatus === "active");
+      const totalDue = activeDebts.reduce((sum, order) => sum + Number(order.amountDue ?? order.principal ?? order.total ?? 0), 0);
+      paidOrderCount.textContent = String(paidOrders.length);
+      activeDebtCount.textContent = String(activeDebts.length);
+      activeDebtTotal.textContent = formatUSDC(totalDue);
       if (!visibleOrders.length) {
         savedOrderCards.innerHTML = `<article class="order-card"><div class="order-main"><div class="order-symbol" aria-hidden="true">P</div><div><h3>${walletAddress ? "No orders for this wallet" : "Connect your wallet"}</h3><p>${walletAddress ? "Place an order from the marketplace to begin." : "Your orders will appear here after sign-in."}</p></div></div></article>`;
         return;
       }
       savedOrderCards.innerHTML = visibleOrders.map(order => {
-        const primary = order.lines[0];
-        const totalKg = order.lines.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
-        const complete = ["Delivered", "Settled", "Credit repaid"].includes(order.status);
+        const lines = Array.isArray(order.lines) ? order.lines : [];
+        const primary = lines[0] || {
+          name: order.credit ? "Onchain store-credit purchase" : "Direct USDC purchase",
+          seller: "VPorkPay shop owner"
+        };
+        const totalKg = lines.reduce((sum, item) => sum + Number(item.quantity || 0), 0);
         const credit = Boolean(order.credit);
+        const debtActive = credit && order.onchainStatus === "active";
+        const debtRepaid = credit && (order.onchainStatus === "repaid" || Boolean(order.repayTxHash));
+        const directlyPaid = !credit && Boolean(order.transactionHash);
+        const complete = debtRepaid || ["Delivered", "Settled", "Credit repaid"].includes(order.status);
         const fulfilmentStatus = order.fulfilmentStatus || (order.status === "Preparing" || order.status === "Delivered" ? order.status : "Awaiting acceptance");
         const deliveryConfirmed = fulfilmentStatus === "Delivered";
-        const transactionMarkup = credit
-          ? order.repayTxHash
-            ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.repayTxHash}" target="_blank" rel="noreferrer">View repayment on Arcscan ↗</a>`
-            : order.openTxHash
-              ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.openTxHash}" target="_blank" rel="noreferrer">View active debt on Arcscan ↗</a>`
-              : `${formatUSDC(order.principal || 0)} awaiting merchant approval`
-          : order.transactionHash
-            ? `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${order.transactionHash}" target="_blank" rel="noreferrer">View payment on Arcscan ↗</a>`
-            : "No onchain transaction submitted";
-        const paymentLabel = credit ? (order.status === "Credit repaid" ? "Repaid" : "Credit") : "Paid";
+        const principal = Number(order.principal || order.total || 0);
+        const due = debtRepaid ? 0 : Number(order.amountDue ?? principal);
+        const interest = debtActive ? Math.max(0, Number(order.interestAccrued ?? due - principal)) : 0;
+        const apr = Number(order.apr || calculateCreditApr());
+        const orderedAt = formatOrderDate(order.openedAt || order.createdAt);
+        const statusLabel = debtActive ? "DEBT ACTIVE" : debtRepaid ? "DEBT REPAID" : directlyPaid ? "PAID IN FULL" : credit ? "AWAITING CREDIT" : String(order.status || "PENDING").toUpperCase();
+        const proofLinks = [
+          [order.transactionHash, "Payment"],
+          [order.openTxHash, "Open debt"],
+          [order.approveTxHash, "Approve USDC"],
+          [order.repayTxHash, "Repayment"]
+        ].filter(([hash]) => hash).map(([hash, label]) =>
+          `<a class="transaction-link" href="${ARC_EXPLORER_URL}/tx/${hash}" target="_blank" rel="noreferrer">${label} on Arcscan ↗</a>`
+        ).join("");
+        const financeMarkup = credit ? `
+          <div class="order-finance-grid" aria-label="Credit details">
+            <div class="order-finance-item"><span>Ordered at</span><strong>${orderedAt}</strong></div>
+            <div class="order-finance-item"><span>Principal</span><strong>${formatUSDC(principal)}</strong></div>
+            <div class="order-finance-item"><span>Fixed APR</span><strong>${apr.toFixed(2)}%</strong></div>
+            <div class="order-finance-item"><span>Interest now</span><strong>${formatUSDC(interest)}</strong></div>
+            <div class="order-finance-item"><span>Total due now</span><strong>${formatUSDC(due)}</strong></div>
+          </div>` : `
+          <div class="order-finance-grid" aria-label="Payment details">
+            <div class="order-finance-item"><span>Ordered at</span><strong>${orderedAt}</strong></div>
+            <div class="order-finance-item"><span>Payment method</span><strong>USDC · Arc</strong></div>
+            <div class="order-finance-item"><span>Amount paid</span><strong>${formatUSDC(order.total || 0)}</strong></div>
+            <div class="order-finance-item"><span>Debt created</span><strong>0.00 USDC</strong></div>
+            <div class="order-finance-item"><span>Payment status</span><strong>${directlyPaid ? "Paid in full" : "Not submitted"}</strong></div>
+          </div>`;
+        const orderAction = order.recoveredOnchain
+          ? `<span class="status-chip complete">RECOVERED FROM ARC</span>`
+          : `<button class="primary-small" type="button" data-confirm-saved="${order.id}" ${deliveryConfirmed ? "disabled" : ""}>${deliveryConfirmed ? "Delivery confirmed" : "Confirm delivery"}</button>`;
+        const progressMarkup = order.recoveredOnchain ? "" : `
+          <div class="order-progress"><span class="done">${credit ? debtRepaid ? "Repaid" : "Credit" : directlyPaid ? "Paid" : "Pending"}</span><span class="${fulfilmentStatus === "Awaiting acceptance" ? "current" : "done"}">Accepted</span><span class="${fulfilmentStatus === "Preparing" ? "current" : deliveryConfirmed ? "done" : ""}">Preparing</span><span class="${deliveryConfirmed ? "done" : ""}">Delivered</span><span class="${complete ? "current" : ""}">Settled</span></div>`;
         return `
           <article class="order-card featured" ${order.orderId ? `data-order-card="${order.orderId}"` : ""}>
-            <div class="order-top"><span>ORDER ${order.id}</span><span class="status-chip ${complete ? "complete" : ""}">${order.status.toUpperCase()}</span></div>
+            <div class="order-top"><span>ORDER ${order.id} · ${orderedAt}</span><span class="status-chip ${complete || directlyPaid ? "complete" : ""}">${statusLabel}</span></div>
             <div class="order-main">
               <div class="order-symbol" aria-hidden="true">P</div>
-              <div><h3>${primary.name}${order.lines.length > 1 ? " +" + (order.lines.length - 1) + " more" : ""}</h3><p>${totalKg} kg · ${formatUSDC(order.total)}</p><span class="status-chip ${complete ? "complete" : ""}">${fulfilmentStatus}</span></div>
-              <button class="primary-small" type="button" data-confirm-saved="${order.id}" ${deliveryConfirmed ? "disabled" : ""}>${deliveryConfirmed ? "Delivery confirmed" : "Confirm delivery"}</button>
+              <div><h3>${primary.name}${lines.length > 1 ? " +" + (lines.length - 1) + " more" : ""}</h3><p>${totalKg ? totalKg + " kg · " : ""}${formatUSDC(order.total || principal)} · ${primary.seller || "VPorkPay shop owner"}</p><span class="status-chip ${complete ? "complete" : ""}">${fulfilmentStatus}</span></div>
+              ${orderAction}
             </div>
-            <div class="order-progress"><span class="done">${paymentLabel}</span><span class="${fulfilmentStatus === "Awaiting acceptance" ? "current" : "done"}">Accepted</span><span class="${fulfilmentStatus === "Preparing" ? "current" : deliveryConfirmed ? "done" : ""}">Preparing</span><span class="${deliveryConfirmed ? "done" : ""}">Delivered</span><span class="${complete ? "current" : ""}">Settled</span></div>
-            <div class="escrow-strip"><span><b>${credit ? formatUSDC(order.principal || 0) : order.transactionHash ? formatUSDC(order.total) : "0.00 USDC"}</b> ${credit ? "store credit lifecycle" : order.transactionHash ? "paid directly to shop owner" : "no funds moved"}</span><span>${transactionMarkup}</span></div>
+            ${financeMarkup}
+            ${progressMarkup}
+            <div class="escrow-strip"><span><b>${credit ? debtActive ? formatUSDC(due) + " due now" : debtRepaid ? "Debt fully repaid" : "Awaiting merchant approval" : directlyPaid ? formatUSDC(order.total || 0) + " paid to shop owner" : "Payment pending"}</b></span><span class="order-proof-links">${proofLinks || "No onchain transaction submitted"}</span></div>
           </article>`;
       }).join("");
     }
