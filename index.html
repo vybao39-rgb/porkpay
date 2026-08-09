@@ -768,6 +768,22 @@
     .credit-switch { display: flex; align-items: start; gap: 10px; color: var(--ink); font-size: 9px; font-weight: 900; line-height: 1.45; cursor: pointer; }
     .credit-switch input { margin-top: 2px; accent-color: var(--coral); }
     .credit-option p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
+    .app-kit-panel {
+      display: grid;
+      gap: 10px;
+      padding: 15px;
+      border: 1px solid #bcd5c8;
+      border-radius: 11px;
+      background: #edf6ef;
+    }
+    .app-kit-panel p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
+    .app-kit-route { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--green); font-size: 8px; font-weight: 900; }
+    .app-kit-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
+    .app-kit-controls input { min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: white; }
+    .app-kit-controls button { padding: 9px 11px; border: 0; border-radius: 8px; color: white; background: var(--green); font-size: 8px; font-weight: 900; cursor: pointer; }
+    .app-kit-controls button:last-child { background: var(--coral); }
+    .app-kit-controls button:disabled { cursor: wait; opacity: .55; }
+    .app-kit-proofs { display: flex; flex-wrap: wrap; gap: 8px; }
     .credit-terms { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     .credit-term { padding: 10px; border-radius: 8px; background: white; }
     .credit-term span { display: block; color: var(--muted); font-size: 7px; font-weight: 900; text-transform: uppercase; }
@@ -845,6 +861,8 @@
       .seller-row .status-chip { grid-column: 1; }
       .checkout-grid { grid-template-columns: 1fr; }
       .checkout-form { border-right: 0; border-bottom: 1px solid var(--line); }
+      .app-kit-controls { grid-template-columns: 1fr 1fr; }
+      .app-kit-controls input { grid-column: 1 / -1; }
       .debt-grid, .credit-terms { grid-template-columns: 1fr 1fr; }
       .onchain-controls { grid-template-columns: 1fr; }
       .onchain-steps, .contract-facts { grid-template-columns: 1fr; }
@@ -1052,6 +1070,18 @@
             <div class="payment-status" id="paymentStatus">Ready after an Arc Testnet wallet is connected.</div>
             <a class="transaction-link" id="transactionLink" target="_blank" rel="noreferrer" hidden>View transaction on Arcscan ↗</a>
           </div>
+          <div class="app-kit-panel">
+            <div class="testnet-heading"><strong>Fund Arc with Circle App Kit</strong><span class="live-badge">CCTP</span></div>
+            <p>Estimate or bridge test USDC from Ethereum Sepolia to Arc Testnet using the connected MetaMask wallet and Circle's official App Kit.</p>
+            <div class="app-kit-route"><span>Ethereum Sepolia</span><span>USDC →</span><span>Arc Testnet</span></div>
+            <div class="app-kit-controls">
+              <input id="appKitAmount" type="number" min="0.01" max="1000" step="0.01" value="5.00" aria-label="USDC amount to bridge">
+              <button id="estimateBridge" type="button">Estimate</button>
+              <button id="executeBridge" type="button">Bridge</button>
+            </div>
+            <div class="payment-status" id="appKitStatus">App Kit loads only when you request an estimate.</div>
+            <div class="app-kit-proofs" id="appKitProofs"></div>
+          </div>
           <div class="credit-option" id="creditOption" hidden>
             <div class="testnet-heading"><strong>Not enough USDC?</strong><span class="live-badge" style="background:var(--coral)">STORE CREDIT</span></div>
             <p>Your available balance does not cover this order. Request the missing amount as credit from the shop owner.</p>
@@ -1137,6 +1167,7 @@
     let cloudSignInPromise = null;
     let cloudVerifiedWalletAddress = "";
     let pendingCheckoutPayment = null;
+    let appKitLoadPromise = null;
 
     const productGrid = document.querySelector("#productGrid");
     const productCount = document.querySelector("#productCount");
@@ -1159,6 +1190,11 @@
     const paymentStatus = document.querySelector("#paymentStatus");
     const transactionLink = document.querySelector("#transactionLink");
     const paymentDisclosure = document.querySelector("#paymentDisclosure");
+    const appKitAmount = document.querySelector("#appKitAmount");
+    const estimateBridgeButton = document.querySelector("#estimateBridge");
+    const executeBridgeButton = document.querySelector("#executeBridge");
+    const appKitStatus = document.querySelector("#appKitStatus");
+    const appKitProofs = document.querySelector("#appKitProofs");
     const sellerOrdersContainer = document.querySelector("#sellerOrders");
     const savedOrderCards = document.querySelector("#savedOrderCards");
     const toast = document.querySelector("#toast");
@@ -1814,6 +1850,80 @@
     function setPaymentStatus(message, state = "") {
       paymentStatus.textContent = message;
       paymentStatus.className = "payment-status" + (state ? " " + state : "");
+    }
+
+    function setAppKitStatus(message, state = "") {
+      appKitStatus.textContent = message;
+      appKitStatus.className = "payment-status" + (state ? " " + state : "");
+    }
+
+    function loadCircleAppKit() {
+      if (window.VPorkCircleAppKit) return Promise.resolve(window.VPorkCircleAppKit);
+      if (appKitLoadPromise) return appKitLoadPromise;
+      appKitLoadPromise = new Promise((resolve, reject) => {
+        const script = document.createElement("script");
+        script.src = "assets/circle-app-kit.bundle.js";
+        script.onload = () => window.VPorkCircleAppKit
+          ? resolve(window.VPorkCircleAppKit)
+          : reject(new Error("Circle App Kit did not initialize."));
+        script.onerror = () => reject(new Error("Could not load Circle App Kit."));
+        document.head.appendChild(script);
+      }).catch(error => {
+        appKitLoadPromise = null;
+        throw error;
+      });
+      return appKitLoadPromise;
+    }
+
+    function appKitExplorerUrls(value, urls = new Set()) {
+      if (typeof value === "string" && /^https:\/\/[a-z0-9.-]+\/tx\//i.test(value)) urls.add(value);
+      else if (Array.isArray(value)) value.forEach(item => appKitExplorerUrls(item, urls));
+      else if (value && typeof value === "object") Object.values(value).forEach(item => appKitExplorerUrls(item, urls));
+      return [...urls];
+    }
+
+    function renderAppKitProofs(result) {
+      appKitProofs.innerHTML = "";
+      appKitExplorerUrls(result).forEach((url, index) => {
+        const link = document.createElement("a");
+        link.className = "transaction-link";
+        link.href = url;
+        link.target = "_blank";
+        link.rel = "noreferrer";
+        link.textContent = "Bridge step " + (index + 1) + " ↗";
+        appKitProofs.appendChild(link);
+      });
+    }
+
+    async function runAppKitBridge(execute = false) {
+      if (!isInjectedWallet || !window.ethereum) {
+        setAppKitStatus("Connect MetaMask before using App Kit.", "error");
+        return;
+      }
+      if (execute && !window.confirm("Bridge test USDC from Ethereum Sepolia to Arc Testnet? Review every wallet prompt. Never use real funds.")) return;
+      estimateBridgeButton.disabled = true;
+      executeBridgeButton.disabled = true;
+      appKitProofs.innerHTML = "";
+      setAppKitStatus(execute ? "Circle App Kit is preparing the CCTP bridge…" : "Loading Circle App Kit and estimating the route…", "pending");
+      try {
+        const circleKit = await loadCircleAppKit();
+        const result = execute
+          ? await circleKit.bridge(window.ethereum, appKitAmount.value)
+          : await circleKit.estimateBridge(window.ethereum, appKitAmount.value);
+        renderAppKitProofs(result);
+        setAppKitStatus(execute
+          ? "Bridge completed. Explorer evidence is listed below."
+          : "Estimate ready. Review the route and wallet fees before bridging.", "success");
+        if (execute) {
+          await ensureArcTestnet();
+          await refreshTestnetBalance();
+        }
+      } catch (error) {
+        setAppKitStatus(error.message || "Circle App Kit could not complete the request.", "error");
+      } finally {
+        estimateBridgeButton.disabled = false;
+        executeBridgeButton.disabled = false;
+      }
     }
 
     async function ensureArcTestnet() {
@@ -2555,6 +2665,8 @@
     checkoutButton.addEventListener("click", openCheckout);
     document.querySelector("#modalClose").addEventListener("click", closeCheckout);
     document.querySelector("#modalBackdrop").addEventListener("click", closeCheckout);
+    estimateBridgeButton.addEventListener("click", () => runAppKitBridge(false));
+    executeBridgeButton.addEventListener("click", () => runAppKitBridge(true));
     confirmPayment.addEventListener("click", async () => {
       if (!checkoutForm.reportValidity()) return;
       const lines = [...cart.values()];

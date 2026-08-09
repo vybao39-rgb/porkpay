@@ -41,8 +41,28 @@ Buyers compare products, prepare an order and connect an injected EVM wallet. If
 - Require an injected EVM wallet; there is no fake wallet or browser-payment fallback.
 - Add or switch the wallet to Arc Testnet (chain ID `5042002`).
 - Read the official Arc Testnet USDC balance.
-- Submit an explicitly labelled `0.01` test-USDC self-transfer as a wallet/payment proof.
+- Transfer the full order value in test USDC directly to the verified merchant when the connected balance is sufficient; no shop debt is created for that order.
 - Wait for the receipt and link the finalized transaction to Arcscan.
+
+### Circle App Kit liquidity onboarding
+
+- Lazy-load the official `@circle-fin/app-kit` only when the buyer requests it.
+- Use the official EIP-1193 Viem adapter with the already connected MetaMask wallet.
+- Estimate or execute a CCTP bridge from Ethereum Sepolia to Arc Testnet so the buyer can fund checkout with test USDC.
+- Require an explicit wallet confirmation and return every bridge-step explorer link.
+
+The browser integration is [`src/circle-app-kit.js`](src/circle-app-kit.js); the reproducible browser bundle is [`assets/circle-app-kit.bundle.js`](assets/circle-app-kit.bundle.js).
+Implementation follows the official [Arc App Kit bridge quickstart](https://docs.arc.network/app-kit/quickstarts/bridge-tokens-across-blockchains).
+
+### Circle Agent Stack procurement
+
+- Use the official `@circle-fin/cli` and a Circle Agent Wallet on `ARC-TESTNET`.
+- Calculate supplier payment from a machine-readable product catalog.
+- Restrict the recipient to the verified VPorkPay merchant and cap each agent order at 100 USDC.
+- Default to a dry-run plan and refuse execution without the exact `ARC_TESTNET_ONLY` human-confirmation phrase.
+
+See [`agent/README.md`](agent/README.md), [`agent/vporkpay-agent.json`](agent/vporkpay-agent.json) and the executable [`agent/vporkpay-agent.mjs`](agent/vporkpay-agent.mjs).
+Wallet setup and commands follow Circle's official [Agent Stack](https://developers.circle.com/agent-stack) and [Agent Wallet quickstart](https://developers.circle.com/agent-stack/agent-wallets/quickstart).
 
 ### Onchain store credit
 
@@ -101,6 +121,8 @@ Buyer / Merchant
 Injected EVM wallet
        |
 VPorkPay web app on vpork.xyz
+       |-- Circle App Kit -> CCTP test-USDC bridge to Arc
+       |-- Circle Agent Stack -> policy-bounded Agent Wallet payment
        |
 Supabase Postgres + Web3 Auth + RLS
        |
@@ -131,12 +153,16 @@ The frontend contains only the Supabase project URL and publishable key. Never c
 
 ```bash
 pnpm install
+pnpm build:app-kit
 pnpm build:contract
 pnpm test:contract
 pnpm test:ui
+pnpm test:supabase
+pnpm test:circle-stack
+pnpm agent:quote -- --wallet 0xYOUR_AGENT_WALLET --product 1 --quantity 2
 ```
 
-The contract test compiles Solidity `0.8.24` and exercises merchant controls, buyer authorization, price-linked APR, interest accrual, repayment caps and full repayment on a local EVM. The UI test simulates verified deployment, a persistent request, merchant approval, bounded USDC approval and repayment.
+The contract test compiles Solidity `0.8.24` and exercises merchant controls, buyer authorization, price-linked APR, interest accrual, repayment caps and full repayment on a local EVM. The UI and Supabase tests cover verified deployment, cloud-owned orders, seller role gating, merchant approval, bounded USDC approval and repayment. The Circle stack test verifies the browser App Kit bundle, CCTP route, agent quotation, merchant allowlist, official-USDC token pinning, payment cap, idempotency and mandatory human confirmation.
 
 ## Run locally
 

@@ -1,0 +1,20 @@
+{
+  "name": "VPorkPay Procurement Agent",
+  "version": "1.0.0",
+  "network": "ARC-TESTNET",
+  "chainId": 5042002,
+  "currency": "USDC",
+  "usdcContract": "0x3600000000000000000000000000000000000000",
+  "merchantAllowlist": ["0xf2d062b3920b342f6c6c4ecfd22c39a79e1e33d0"],
+  "maxOrderUsdc": 100,
+  "requiresHumanConfirmation": true,
+  "requiresStableOrderId": true,
+  "catalog": "./products.json",
+  "checkout": "https://vpork.xyz/",
+  "circleAgentStack": {
+    "cliPackage": "@circle-fin/cli",
+    "walletType": "agent",
+    "operation": "circle wallet transfer --token USDC --idempotency-key",
+    "chain": "ARC-TESTNET"
+  }
+}

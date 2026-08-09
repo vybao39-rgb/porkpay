@@ -36,9 +36,18 @@
     .deployment strong { display:block; margin-bottom:6px; color:var(--lime); }
     .deployment code { font-size:13px; }
     .deployment a { color:white; font-weight:900; }
+    .stack { margin-top:42px; }
+    .stack h2 { margin:10px 0 8px; font-family:Georgia,serif; font-size:36px; font-weight:400; }
+    .stack > p { max-width:760px; margin:0; color:var(--muted); line-height:1.55; }
+    .stack-grid { display:grid; grid-template-columns:repeat(2,1fr); gap:18px; margin-top:20px; }
+    .stack-card { padding:24px; border:1px solid var(--line); border-radius:18px; background:var(--paper); }
+    .stack-card .status { display:inline-block; padding:6px 8px; border-radius:999px; color:white; background:var(--green); font-size:10px; font-weight:900; }
+    .stack-card h3 { margin:18px 0 8px; font-size:21px; }
+    .stack-card p { margin:0; color:var(--muted); line-height:1.5; }
+    .stack-card a { display:inline-block; margin-top:16px; color:var(--green); font-weight:900; }
     footer { display:flex; flex-wrap:wrap; justify-content:space-between; gap:14px; padding:24px clamp(24px,6vw,84px); color:var(--muted); border-top:1px solid var(--line); background:var(--paper); font-size:13px; }
     footer a { color:var(--green); font-weight:800; }
-    @media (max-width:720px) { .grid { grid-template-columns:1fr; } header { align-items:flex-start; gap:14px; } .badge { text-align:center; } }
+    @media (max-width:720px) { .grid, .stack-grid { grid-template-columns:1fr; } header { align-items:flex-start; gap:14px; } .badge { text-align:center; } }
   </style>
 </head>
 <body>
@@ -55,6 +64,15 @@
       <a class="card" href="https://github.com/vybao39-rgb/porkpay" target="_blank" rel="noreferrer"><span class="number">02</span><h2>Public code repository</h2><p>Frontend, Solidity v1.1 contract, reproducible browser artifact, lifecycle tests and implementation documentation.</p><strong>View GitHub repository ↗</strong></a>
       <a class="card" href="VPorkPay-Final-Demo.mp4"><span class="number">03</span><h2>3-minute pitch / demo</h2><p>A 180-second walkthrough of the problem, product, trust boundaries, credit lifecycle and Arc fit.</p><strong>Play final video ↗</strong></a>
       <a class="card" href="VPorkPay-Final-Submission-Deck.pptx"><span class="number">04</span><h2>Final presentation deck</h2><p>Editable eight-slide PowerPoint with public links and source notes. An interactive web version is also available.</p><strong>Download PowerPoint ↗</strong></a>
+    </section>
+    <section class="stack" aria-labelledby="circle-stack-title">
+      <p class="eyebrow">Meaningful Circle stack use</p>
+      <h2 id="circle-stack-title">Arc-native commerce, funded and automated with Circle.</h2>
+      <p>These integrations extend the core DeFi checkout without replacing it: App Kit brings test USDC onto Arc, while Agent Stack supports policy-bounded supplier payments from a Circle Agent Wallet.</p>
+      <div class="stack-grid">
+        <article class="stack-card"><span class="status">LIVE IN CHECKOUT</span><h3>Circle App Kit · CCTP bridge</h3><p>The connected browser wallet can estimate and bridge test USDC from Ethereum Sepolia to Arc Testnet with <code>@circle-fin/app-kit</code> and the official Viem adapter.</p><a href="https://github.com/vybao39-rgb/porkpay/blob/main/src/circle-app-kit.js" target="_blank" rel="noreferrer">Inspect App Kit integration ↗</a></article>
+        <article class="stack-card"><span class="status">AGENT-READY</span><h3>Circle Agent Stack · procurement payment</h3><p>The official Circle CLI drives an Arc Testnet Agent Wallet with a verified-merchant allowlist, a 100 USDC order cap and mandatory human confirmation.</p><a href="https://github.com/vybao39-rgb/porkpay/tree/main/agent" target="_blank" rel="noreferrer">Inspect Agent Stack runner ↗</a></article>
+      </div>
     </section>
     <div class="deployment"><div><strong>Verified Arc Testnet deployment</strong><code>0xd9dab755431664ada2d13868674ddb43ffdef396</code><br><span>Fully verified Solidity source + ABI · merchant 0xf2d0…33d0 · official test USDC</span></div><span><a href="https://testnet.arcscan.app/address/0xd9dab755431664ada2d13868674ddb43ffdef396?tab=contract" target="_blank" rel="noreferrer">Verified source ↗</a> · <a href="https://testnet.arcscan.app/tx/0x07acbc8ad1f7a2a2ef0dddafd457b93de30a08d4dc33d6881452cc16049a0067" target="_blank" rel="noreferrer">Deployment tx ↗</a></span></div>
     <div class="guide"><div><strong>Hướng dẫn sử dụng VPorkPay</strong><span>Tài liệu tiếng Việt cho người mua và chủ cửa hàng: cấu hình Arc, checkout, tín dụng, phê duyệt, trả nợ và xử lý lỗi.</span></div><span><a href="VPorkPay-User-Guide-VI.pdf">PDF</a> · <a href="VPorkPay-User-Guide-VI.docx">DOCX</a></span></div>

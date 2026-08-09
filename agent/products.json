@@ -1,0 +1,8 @@
+[
+  { "id": 1, "name": "Premium Pork Belly", "priceUsdcPerKg": 6.8, "minimumKg": 2 },
+  { "id": 2, "name": "Bone-in Pork Chops", "priceUsdcPerKg": 5.4, "minimumKg": 2 },
+  { "id": 3, "name": "Meaty Pork Ribs", "priceUsdcPerKg": 7.2, "minimumKg": 3 },
+  { "id": 4, "name": "Lean Pork Shoulder", "priceUsdcPerKg": 5.9, "minimumKg": 2 },
+  { "id": 5, "name": "Pork Tenderloin", "priceUsdcPerKg": 8.6, "minimumKg": 1 },
+  { "id": 6, "name": "Ground Pork", "priceUsdcPerKg": 4.7, "minimumKg": 2 }
+]

@@ -2,12 +2,22 @@
   "name": "vporkpay",
   "private": true,
   "scripts": {
+    "build:app-kit": "esbuild src/circle-app-kit.js --bundle --platform=browser --format=iife --target=es2022 --minify --outfile=assets/circle-app-kit.bundle.js",
     "build:contract": "node contracts/build-artifact.cjs",
+    "agent:quote": "node agent/vporkpay-agent.mjs",
     "test:contract": "node contracts/test/VPorkPayStoreCredit.test.cjs",
+    "test:circle-stack": "node test/circle-stack.test.cjs",
     "test:ui": "node test/onchain-credit-ui.test.cjs",
     "test:supabase": "node test/supabase-integration.test.cjs"
   },
+  "dependencies": {
+    "@circle-fin/adapter-viem-v2": "1.15.0",
+    "@circle-fin/app-kit": "1.12.0",
+    "viem": "2.38.5"
+  },
   "devDependencies": {
+    "@circle-fin/cli": "0.0.6",
+    "esbuild": "0.25.12",
     "ethers": "6.17.0",
     "ganache": "7.9.2",
     "jsdom": "26.1.0",
