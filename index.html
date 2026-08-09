@@ -777,7 +777,7 @@
       background: #edf6ef;
     }
     .app-kit-panel p { margin: 0; color: var(--muted); font-size: 8px; line-height: 1.5; }
-    .app-kit-route { display: flex; align-items: center; justify-content: space-between; gap: 8px; color: var(--green); font-size: 8px; font-weight: 900; }
+    .app-kit-route { width: 100%; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; color: var(--green); background: white; font-size: 8px; font-weight: 900; }
     .app-kit-controls { display: grid; grid-template-columns: minmax(0, 1fr) auto auto; gap: 8px; }
     .app-kit-controls input { min-width: 0; padding: 9px 10px; border: 1px solid var(--line); border-radius: 8px; background: white; }
     .app-kit-controls button { padding: 9px 11px; border: 0; border-radius: 8px; color: white; background: var(--green); font-size: 8px; font-weight: 900; cursor: pointer; }
@@ -1071,11 +1071,14 @@
             <a class="transaction-link" id="transactionLink" target="_blank" rel="noreferrer" hidden>View transaction on Arcscan ↗</a>
           </div>
           <div class="app-kit-panel">
-            <div class="testnet-heading"><strong>Fund Arc with Circle App Kit</strong><span class="live-badge">CCTP</span></div>
-            <p>Estimate or bridge test USDC from Ethereum Sepolia to Arc Testnet using the connected MetaMask wallet and Circle's official App Kit.</p>
-            <div class="app-kit-route"><span>Ethereum Sepolia</span><span>USDC →</span><span>Arc Testnet</span></div>
+            <div class="testnet-heading"><strong>Move USDC with Circle App Kit</strong><span class="live-badge">CCTP</span></div>
+            <p>Estimate or bridge test USDC in either direction between Arc Testnet and Ethereum Sepolia with the connected MetaMask wallet.</p>
+            <select class="app-kit-route" id="appKitDirection" aria-label="App Kit bridge direction">
+              <option value="arc-to-sepolia">Arc Testnet → Ethereum Sepolia</option>
+              <option value="sepolia-to-arc">Ethereum Sepolia → Arc Testnet</option>
+            </select>
             <div class="app-kit-controls">
-              <input id="appKitAmount" type="number" min="0.01" max="1000" step="0.01" value="5.00" aria-label="USDC amount to bridge">
+              <input id="appKitAmount" type="number" min="0.01" max="1000" step="0.01" value="1.00" aria-label="USDC amount to bridge">
               <button id="estimateBridge" type="button">Estimate</button>
               <button id="executeBridge" type="button">Bridge</button>
             </div>
@@ -1191,6 +1194,7 @@
     const transactionLink = document.querySelector("#transactionLink");
     const paymentDisclosure = document.querySelector("#paymentDisclosure");
     const appKitAmount = document.querySelector("#appKitAmount");
+    const appKitDirection = document.querySelector("#appKitDirection");
     const estimateBridgeButton = document.querySelector("#estimateBridge");
     const executeBridgeButton = document.querySelector("#executeBridge");
     const appKitStatus = document.querySelector("#appKitStatus");
@@ -1900,7 +1904,8 @@
         setAppKitStatus("Connect MetaMask before using App Kit.", "error");
         return;
       }
-      if (execute && !window.confirm("Bridge test USDC from Ethereum Sepolia to Arc Testnet? Review every wallet prompt. Never use real funds.")) return;
+      const directionLabel = appKitDirection.selectedOptions[0]?.textContent || "the selected testnet route";
+      if (execute && !window.confirm("Bridge test USDC via " + directionLabel + "? Review every wallet prompt. Never use real funds.")) return;
       estimateBridgeButton.disabled = true;
       executeBridgeButton.disabled = true;
       appKitProofs.innerHTML = "";
@@ -1908,8 +1913,8 @@
       try {
         const circleKit = await loadCircleAppKit();
         const result = execute
-          ? await circleKit.bridge(window.ethereum, appKitAmount.value)
-          : await circleKit.estimateBridge(window.ethereum, appKitAmount.value);
+          ? await circleKit.bridge(window.ethereum, appKitAmount.value, appKitDirection.value)
+          : await circleKit.estimateBridge(window.ethereum, appKitAmount.value, appKitDirection.value);
         renderAppKitProofs(result);
         setAppKitStatus(execute
           ? "Bridge completed. Explorer evidence is listed below."

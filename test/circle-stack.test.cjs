@@ -14,11 +14,15 @@ if (!packageJson.devDependencies?.["@circle-fin/cli"]) throw new Error("Missing 
 if (!appKitSource.includes("kit.estimateBridge") || !appKitSource.includes("kit.bridge")) {
   throw new Error("App Kit integration must estimate and execute a real bridge");
 }
-if (!appKitSource.includes('chain: "Ethereum_Sepolia"') || !appKitSource.includes('chain: "Arc_Testnet"')) {
-  throw new Error("App Kit bridge route must terminate on Arc Testnet");
+if (!appKitSource.includes('"Ethereum_Sepolia"') || !appKitSource.includes('"Arc_Testnet"') ||
+    !appKitSource.includes('direction === "arc-to-sepolia"')) {
+  throw new Error("App Kit bridge must support the Arc Testnet and Ethereum Sepolia route in both directions");
 }
-if (!page.includes("Fund Arc with Circle App Kit") || !page.includes("assets/circle-app-kit.bundle.js")) {
+if (!page.includes("Move USDC with Circle App Kit") || !page.includes("assets/circle-app-kit.bundle.js")) {
   throw new Error("Live checkout does not expose the lazy-loaded App Kit flow");
+}
+if (!page.includes('value="arc-to-sepolia"') || !page.includes('value="sepolia-to-arc"')) {
+  throw new Error("Live checkout does not expose both App Kit bridge directions");
 }
 if (!submission.includes("Circle Agent Stack") || !submission.includes("Circle App Kit")) {
   throw new Error("Submission page does not disclose the Circle stack integrations");

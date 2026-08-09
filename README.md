@@ -48,7 +48,7 @@ Buyers compare products, prepare an order and connect an injected EVM wallet. If
 
 - Lazy-load the official `@circle-fin/app-kit` only when the buyer requests it.
 - Use the official EIP-1193 Viem adapter with the already connected MetaMask wallet.
-- Estimate or execute a CCTP bridge from Ethereum Sepolia to Arc Testnet so the buyer can fund checkout with test USDC.
+- Estimate or execute a two-way CCTP bridge between Ethereum Sepolia and Arc Testnet so the buyer can fund checkout or move Arc liquidity with test USDC.
 - Require an explicit wallet confirmation and return every bridge-step explorer link.
 
 The browser integration is [`src/circle-app-kit.js`](src/circle-app-kit.js); the reproducible browser bundle is [`assets/circle-app-kit.bundle.js`](assets/circle-app-kit.bundle.js).

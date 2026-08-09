@@ -11,12 +11,16 @@ function normalizedAmount(value) {
   return amount.toFixed(2);
 }
 
-async function bridgeParams(provider, amount) {
+async function bridgeParams(provider, amount, direction = "sepolia-to-arc") {
   if (!provider?.request) throw new Error("Connect an EIP-1193 wallet such as MetaMask first.");
+  if (!["sepolia-to-arc", "arc-to-sepolia"].includes(direction)) {
+    throw new Error("Choose a supported App Kit bridge direction.");
+  }
   const adapter = await createViemAdapterFromProvider({ provider });
+  const arcToSepolia = direction === "arc-to-sepolia";
   return {
-    from: { adapter, chain: "Ethereum_Sepolia" },
-    to: { adapter, chain: "Arc_Testnet" },
+    from: { adapter, chain: arcToSepolia ? "Arc_Testnet" : "Ethereum_Sepolia" },
+    to: { adapter, chain: arcToSepolia ? "Ethereum_Sepolia" : "Arc_Testnet" },
     amount: normalizedAmount(amount)
   };
 }
@@ -25,12 +29,12 @@ function safeResult(value) {
   return JSON.parse(JSON.stringify(value, (_, item) => typeof item === "bigint" ? item.toString() : item));
 }
 
-async function estimateBridge(provider, amount) {
-  return safeResult(await kit.estimateBridge(await bridgeParams(provider, amount)));
+async function estimateBridge(provider, amount, direction) {
+  return safeResult(await kit.estimateBridge(await bridgeParams(provider, amount, direction)));
 }
 
-async function bridge(provider, amount) {
-  return safeResult(await kit.bridge(await bridgeParams(provider, amount)));
+async function bridge(provider, amount, direction) {
+  return safeResult(await kit.bridge(await bridgeParams(provider, amount, direction)));
 }
 
 window.VPorkCircleAppKit = Object.freeze({ estimateBridge, bridge });
